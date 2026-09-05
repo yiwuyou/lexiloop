@@ -1,0 +1,6 @@
+{
+  "desc": "个人离线词汇学习工具",
+  "rules": [
+    { "action": "disallow", "page": "*" }
+  ]
+}

@@ -1,0 +1,94 @@
+<view class="study-page">
+  <block wx:if="{{!completed}}">
+    <view class="study-head">
+      <button class="head-button" bindtap="exitStudy">返回</button>
+      <view class="counter">
+        <text class="phase">{{phaseLabel}}</text>
+        <text class="counter-value">{{currentInPhase}} / {{phaseTotal}}</text>
+      </view>
+      <button class="head-button" bindtap="exitStudy">退出</button>
+    </view>
+    <view class="study-progress"><view style="width: {{progress}}%"></view></view>
+
+    <block wx:if="{{!isContext}}">
+      <view class="word-card card">
+        <view class="word-meta">
+          <text>{{word.sourceLabel}}</text>
+          <text class="kind">{{phaseLabel}}</text>
+        </view>
+        <view class="word-main">
+          <text class="word">{{word.word}}</text>
+          <view class="pronunciation" wx:if="{{word.enhanced}}">
+            <view class="audio-button" bindtap="playPronunciation" role="button" aria-label="播放单词发音">▶</view>
+            <text class="ipa">{{word.ipa}}</text>
+          </view>
+          <text class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>
+          <view class="answer" wx:else>
+            <block wx:if="{{word.enhanced}}">
+              <text class="target-label">机构释义 · 记忆目标</text>
+              <text class="target-meaning">{{word.meaning}}</text>
+              <view class="understanding-panel"><text class="understanding-label">理解提示</text><text class="understanding-text">{{word.core}}</text></view>
+              <view class="memory-panel"><text class="memory-label">这样关联</text><text>{{word.cue}}</text></view>
+              <view class="detail-line" wx:if="{{word.family}}"><text>词族</text><text>{{word.family}}</text></view>
+              <view class="detail-line contrast" wx:if="{{word.contrast}}"><text>易混</text><text>{{word.contrast}}</text></view>
+            </block>
+            <text class="meaning" wx:else>{{word.meaning}}</text>
+          </view>
+        </view>
+        <button class="primary-button" wx:if="{{!revealed}}" bindtap="revealAnswer">显示答案</button>
+      </view>
+
+      <view class="rating-area" wx:if="{{revealed}}">
+        <text class="rating-label">选择最符合刚才回忆的情况</text>
+        <view class="rating-grid">
+          <button class="rating again" data-grade="again" bindtap="rate"><view class="rating-copy"><text>没想起</text><text>无法说出正确含义</text></view><view class="rating-depth"></view></button>
+          <button class="rating hard" data-grade="hard" bindtap="rate"><view class="rating-copy"><text>部分想起</text><text>只想起部分义项</text></view><view class="rating-depth"></view></button>
+          <button class="rating good" data-grade="good" bindtap="rate"><view class="rating-copy"><text>主要义想起</text><text>能说出主要义项</text></view><view class="rating-depth"></view></button>
+          <button class="rating easy" data-grade="easy" bindtap="rate"><view class="rating-copy"><text>秒答完整</text><text>快速说出全部义项</text></view><view class="rating-depth"></view></button>
+        </view>
+      </view>
+    </block>
+
+    <block wx:else>
+      <view class="context-card card">
+        <view class="word-meta">
+          <text>{{word.sourceLabel}}</text>
+          <text class="kind">语境辨义</text>
+        </view>
+        <text class="context-word">{{word.word}}</text>
+        <text class="sentence">{{question.sentence}}</text>
+        <text class="context-prompt">这里的词义是：</text>
+        <view class="choice-list">
+          <button
+            wx:for="{{question.choices}}"
+            wx:key="*this"
+            class="choice {{contextAnswered && index === question.answer ? 'is-correct' : ''}} {{contextAnswered && index === selectedChoice && index !== question.answer ? 'is-wrong' : ''}}"
+            data-index="{{index}}"
+            bindtap="chooseContext"
+          >{{item}}</button>
+        </view>
+        <view class="context-result {{contextCorrect ? 'correct' : 'wrong'}}" wx:if="{{contextAnswered}}">
+          <text class="result-title">{{contextCorrect ? '判断正确' : '这次选错了'}}</text>
+          <text class="translation">{{question.translation}}</text>
+          <text class="explanation">{{question.explanation}}</text>
+        </view>
+      </view>
+      <button class="primary-button next-button" wx:if="{{contextAnswered}}" bindtap="nextContext">继续</button>
+    </block>
+  </block>
+
+  <block wx:else>
+    <view class="complete-view">
+      <view class="complete-check">✓</view>
+      <view class="complete-title">今天完成了</view>
+      <text class="complete-note">所有作答均已保存在这部iPhone，下次出现时间也已安排。</text>
+      <view class="complete-grid">
+        <view><text>{{sessionSummary.minutes}}</text><text>分钟</text></view>
+        <view><text>{{sessionSummary.newDone}}</text><text>新词</text></view>
+        <view><text>{{sessionSummary.dueDone}}</text><text>复习</text></view>
+      </view>
+      <view class="context-summary" wx:if="{{sessionSummary.contextDone}}">语境辨义 {{sessionSummary.contextCorrect}} / {{sessionSummary.contextDone}}</view>
+      <button class="primary-button" bindtap="exitStudy">返回首页</button>
+    </view>
+  </block>
+</view>

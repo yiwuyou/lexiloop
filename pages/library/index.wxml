@@ -1,0 +1,51 @@
+<view class="page-shell library-page">
+  <page-header
+    eyebrow="机构词表原始顺序"
+    title="词库"
+    detail="核心 + 高频 · 2522词"
+  ></page-header>
+
+  <view class="search-wrap">
+    <text class="search-icon">⌕</text>
+    <input
+      class="search-input"
+      type="text"
+      value="{{query}}"
+      placeholder="搜索英文或中文释义"
+      confirm-type="search"
+      bindinput="onSearch"
+    />
+  </view>
+
+  <scroll-view class="filter-scroll" scroll-x enable-flex>
+    <button class="filter {{activeFilter === 'all' ? 'is-active' : ''}}" data-filter="all" bindtap="selectFilter">全部</button>
+    <button class="filter {{activeFilter === 'core' ? 'is-active' : ''}}" data-filter="core" bindtap="selectFilter">核心</button>
+    <button class="filter {{activeFilter === 'high' ? 'is-active' : ''}}" data-filter="high" bindtap="selectFilter">高频</button>
+    <button class="filter {{activeFilter === 'weak' ? 'is-active' : ''}}" data-filter="weak" bindtap="selectFilter">易忘</button>
+  </scroll-view>
+
+  <view class="source-card card">
+    <view class="source-row"><view><text>核心词汇</text><text>9天</text></view><text>436条</text></view>
+    <view class="source-row"><view><text>高频词汇</text><text>42天</text></view><text>2086条</text></view>
+  </view>
+
+  <view class="warning">源文件“高频 day 32”缺少编号19，程序保留缺号，不自动补造单词。</view>
+
+  <view class="result-head"><text>共 {{resultCount}} 条</text><text class="muted">按机构顺序排列</text></view>
+  <view class="word-list card" wx:if="{{visibleWords.length}}">
+    <view class="word-row" wx:for="{{visibleWords}}" wx:key="id">
+      <view class="word-copy">
+        <view class="word-title-line">
+          <text class="word-name">{{item.word}}</text>
+          <button class="mini-audio" wx:if="{{item.enhanced}}" data-source="{{item.audio}}" bindtap="playPronunciation">▶</button>
+        </view>
+        <text class="word-ipa" wx:if="{{item.enhanced}}">{{item.ipa}}</text>
+        <text class="word-meaning">{{item.meaning}}</text>
+        <text class="word-source">{{item.sourceLabel}}</text>
+      </view>
+      <text class="state state-{{item.state}}">{{item.stateLabel}}</text>
+    </view>
+  </view>
+  <view class="empty" wx:else>没有找到匹配的单词</view>
+  <button class="secondary-button more-button" wx:if="{{hasMore}}" bindtap="loadMore">继续显示</button>
+</view>

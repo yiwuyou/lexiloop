@@ -1,0 +1,7 @@
+<view class="page-header">
+  <view class="header-meta">
+    <text class="header-eyebrow">{{eyebrow}}</text>
+    <text class="header-detail" wx:if="{{detail}}">{{detail}}</text>
+  </view>
+  <view class="header-title">{{title}}</view>
+</view>

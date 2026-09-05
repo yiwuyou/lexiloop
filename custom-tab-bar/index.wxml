@@ -1,0 +1,29 @@
+<view class="tab-bar" role="navigation" aria-label="主要导航">
+  <view
+    wx:for="{{items}}"
+    wx:key="pagePath"
+    class="tab-item {{selected === index ? 'is-active' : ''}}"
+    role="button"
+    aria-label="{{item.text}}"
+    data-index="{{index}}"
+    bindtap="switchTab"
+    hover-class="tab-item-hover"
+  >
+    <view class="tab-icon icon-{{item.icon}}" aria-hidden="true">
+      <block wx:if="{{item.icon === 'home'}}">
+        <view class="home-roof"></view>
+        <view class="home-body"></view>
+      </block>
+      <block wx:elif="{{item.icon === 'book'}}">
+        <view class="book-left"></view>
+        <view class="book-right"></view>
+      </block>
+      <block wx:else>
+        <view class="chart-bar chart-bar-one"></view>
+        <view class="chart-bar chart-bar-two"></view>
+        <view class="chart-bar chart-bar-three"></view>
+      </block>
+    </view>
+    <text>{{item.text}}</text>
+  </view>
+</view>

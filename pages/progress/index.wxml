@@ -1,0 +1,52 @@
+<view class="page-shell progress-page">
+  <page-header
+    eyebrow="累计学习情况"
+    title="学习进度"
+    detail="英语（二）· 目标60分"
+  ></page-header>
+
+  <view class="progress-card card">
+    <view class="progress-head"><text>已学习 {{stats.learned}} / {{stats.total}}</text><text class="muted">{{progress}}%</text></view>
+    <view class="progress-track"><view style="width: {{progress}}%"></view></view>
+    <text class="progress-note">按当前节奏，首轮预计{{firstRoundEstimate}}完成</text>
+  </view>
+
+  <view class="summary-grid">
+    <view class="card"><text>{{stats.stable}}</text><text>稳定记得</text></view>
+    <view class="card"><text>{{stats.learning}}</text><text>学习中</text></view>
+    <view class="card"><text>{{stats.weak}}</text><text>易忘词</text></view>
+  </view>
+
+  <view class="section-card card">
+    <view class="section-head"><text>近7天完成情况</text></view>
+    <view class="week-chart">
+      <view class="day-column" wx:for="{{week}}" wx:key="key">
+        <view class="day-track"><view class="day-fill {{item.status}}" style="height: {{item.height}}%"></view></view>
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+    <text class="legend">绿色：完成　橙色：部分完成　灰色：未学习</text>
+  </view>
+
+  <view class="section-card card">
+    <view class="section-head"><text>近7天学习质量</text></view>
+    <view class="quality-row"><text>到期复习完成率</text><text>{{dueCompletionRate}}%</text></view>
+    <view class="quality-row"><text>新词首次能认出</text><text>{{firstRecognitionRate}}%</text></view>
+    <view class="quality-row"><text>当前易忘词</text><text>{{stats.weak}}词</text></view>
+  </view>
+
+  <view class="section-card card">
+    <view class="section-head"><text>词表进度</text></view>
+    <view class="source-row"><view><text>核心词汇</text><text>9天 · {{stats.coreTotal}}条</text></view><text>{{stats.coreLearned}} / {{stats.coreTotal}}</text></view>
+    <view class="source-row"><view><text>高频词汇</text><text>42天 · {{stats.highTotal}}条</text></view><text>{{stats.highLearned}} / {{stats.highTotal}}</text></view>
+  </view>
+
+  <view class="section-card card backup-card">
+    <view class="section-head"><text>本地数据备份</text></view>
+    <text class="backup-note">体验版记录只保存在当前iPhone。建议每周导出一次，并把文件发到自己的微信文件传输助手。</text>
+    <view class="backup-actions">
+      <button class="secondary-button" bindtap="exportBackup">导出备份</button>
+      <button class="secondary-button" bindtap="importBackup">恢复备份</button>
+    </view>
+  </view>
+</view>

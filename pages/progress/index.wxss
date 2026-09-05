@@ -1,0 +1,164 @@
+.progress-page {
+  padding-top: calc(56rpx + env(safe-area-inset-top));
+}
+
+.progress-card,
+.section-card {
+  margin-bottom: 24rpx;
+  padding: 30rpx;
+}
+
+.progress-head,
+.section-head,
+.quality-row,
+.source-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.progress-head {
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.progress-track {
+  height: 16rpx;
+  overflow: hidden;
+  border-radius: 999rpx;
+  background: var(--line);
+}
+
+.progress-track view {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--main);
+}
+
+.progress-note,
+.legend,
+.backup-note {
+  display: block;
+  margin-top: 20rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+  line-height: 1.5;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+
+.summary-grid view {
+  padding: 28rpx 8rpx;
+  text-align: center;
+}
+
+.summary-grid text {
+  display: block;
+}
+
+.summary-grid text:first-child {
+  margin-bottom: 7rpx;
+  font-size: 40rpx;
+  font-weight: 500;
+}
+
+.summary-grid text:last-child {
+  color: var(--muted);
+  font-size: 22rpx;
+}
+
+.section-head {
+  margin-bottom: 24rpx;
+  font-size: 29rpx;
+  font-weight: 500;
+}
+
+.week-chart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8rpx;
+}
+
+.day-column {
+  text-align: center;
+}
+
+.day-track {
+  position: relative;
+  height: 116rpx;
+  margin-bottom: 10rpx;
+  overflow: hidden;
+  border-radius: 14rpx;
+  background: var(--soft);
+}
+
+.day-fill {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 7rpx;
+  background: var(--main);
+}
+
+.day-fill.partial { background: var(--warn); }
+.day-fill.missed { background: var(--line); }
+
+.day-column > text {
+  color: var(--muted);
+  font-size: 19rpx;
+}
+
+.quality-row,
+.source-row {
+  min-height: 88rpx;
+  border-bottom: 2rpx solid var(--line);
+  font-size: 26rpx;
+}
+
+.quality-row:last-child,
+.source-row:last-child {
+  border-bottom: 0;
+}
+
+.quality-row text:last-child,
+.source-row > text {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.source-row view text {
+  display: block;
+}
+
+.source-row view text:last-child {
+  margin-top: 5rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+}
+
+.backup-card {
+  margin-bottom: 20rpx;
+}
+
+.backup-note {
+  margin-top: -8rpx;
+}
+
+.backup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14rpx;
+  margin-top: 24rpx;
+}
+
+.backup-actions .secondary-button {
+  min-height: 84rpx;
+  font-size: 26rpx;
+}

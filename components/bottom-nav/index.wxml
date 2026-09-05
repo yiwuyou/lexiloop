@@ -1,0 +1,14 @@
+<view class="bottom-nav" role="navigation" aria-label="主要导航">
+  <view class="nav-item {{active === 'today' ? 'is-active' : ''}}" role="button" aria-label="今日" data-target="today" bindtap="navigate" hover-class="nav-item-hover">
+    <text class="nav-icon">⌂</text>
+    <text>今日</text>
+  </view>
+  <view class="nav-item {{active === 'library' ? 'is-active' : ''}}" role="button" aria-label="词库" data-target="library" bindtap="navigate" hover-class="nav-item-hover">
+    <text class="nav-icon">词</text>
+    <text>词库</text>
+  </view>
+  <view class="nav-item {{active === 'progress' ? 'is-active' : ''}}" role="button" aria-label="进度" data-target="progress" bindtap="navigate" hover-class="nav-item-hover">
+    <text class="nav-icon">▥</text>
+    <text>进度</text>
+  </view>
+</view>

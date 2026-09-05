@@ -1,0 +1,34 @@
+.page-header {
+  margin-bottom: 34rpx;
+}
+
+.header-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 10rpx;
+  color: #657169;
+  font-size: 24rpx;
+  line-height: 1.35;
+}
+
+.header-eyebrow {
+  min-width: 0;
+  flex: 1;
+}
+
+.header-detail {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 22rpx;
+}
+
+.header-title {
+  color: #172019;
+  font-size: 52rpx;
+  font-weight: 500;
+  line-height: 1.22;
+  letter-spacing: -1rpx;
+}

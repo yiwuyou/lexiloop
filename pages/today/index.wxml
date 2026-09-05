@@ -1,0 +1,59 @@
+<view class="page-shell today-page">
+  <page-header
+    eyebrow="{{dateText}} · 距离考试约{{daysToExam}}天"
+    title="{{greetingText}}，今天按节奏完成。"
+    detail="英语（二）· 目标60分"
+  ></page-header>
+
+  <block wx:if="{{!completed}}">
+    <view class="hero">
+      <view class="hero-head">
+        <view>
+          <view class="time tabular">{{estimatedMinutes}}<text>分钟</text></view>
+          <text class="muted">今日预计用时</text>
+        </view>
+        <text class="day-tag">{{sourceTag}}</text>
+      </view>
+
+      <view class="task-grid">
+        <view class="task-item"><text class="task-value tabular">{{dueCount}}</text><text class="task-label">到期复习</text></view>
+        <view class="task-item"><text class="task-value tabular">{{newCount}}</text><text class="task-label">今日新词</text></view>
+        <view class="task-item"><text class="task-value tabular">{{overdueCount}}</text><text class="task-label">积压修复</text></view>
+      </view>
+
+      <button class="primary-button" bindtap="startStudy">{{resume ? '继续今日学习' : '开始今日学习'}}</button>
+    </view>
+
+    <view class="route card">
+      <view class="route-title">今天不是只看一遍</view>
+      <view class="route-row"><text class="route-index">1</text><view><text class="route-name">到期回忆</text><text class="route-note">优先处理该复习的词</text></view></view>
+      <view class="route-row"><text class="route-index">2</text><view><text class="route-name">新词建联</text><text class="route-note">先回忆，再以机构释义为目标建立关联</text></view></view>
+      <view class="route-row"><text class="route-index">3</text><view><text class="route-name">难词强化</text><text class="route-note">没想起和部分想起会再次出现</text></view></view>
+      <view class="route-row"><text class="route-index">4</text><view><text class="route-name">延迟抽测</text><text class="route-note">多义词使用客观选项辨义</text></view></view>
+    </view>
+  </block>
+
+  <block wx:else>
+    <view class="done-panel">
+      <view class="done-check">✓</view>
+      <view class="done-title">今日任务已完成</view>
+      <text class="done-note">基础任务完成。记忆需要间隔；时间充裕时也可以按 25 词加量。</text>
+      <view class="done-grid">
+        <view><text>{{todaySummary.minutes || 0}}</text><text>分钟</text></view>
+        <view><text>{{todaySummary.newDone || 0}}</text><text>新词</text></view>
+        <view><text>{{todaySummary.dueDone || 0}}</text><text>复习</text></view>
+      </view>
+      <view class="extra-actions" wx:if="{{canAdd25 || canAdd50}}">
+        <button class="secondary-button" wx:if="{{canAdd25}}" data-amount="25" bindtap="addExtraStudy">再学 25 词</button>
+        <button class="secondary-button" wx:if="{{canAdd50}}" data-amount="50" bindtap="addExtraStudy">再学 50 词</button>
+      </view>
+      <text class="extra-limit" wx:if="{{canAdd25 || canAdd50}}">每日最多 100 个新词；到期复习仍优先</text>
+    </view>
+  </block>
+
+  <view class="progress-card card">
+    <view class="progress-head"><text>总进度 {{learned}} / {{total}}</text><text class="muted">{{progress}}%</text></view>
+    <view class="progress-track"><view class="progress-fill" style="width: {{progress}}%"></view></view>
+    <text class="progress-note">按当前节奏，首轮完成后继续按遗忘规律复习</text>
+  </view>
+</view>

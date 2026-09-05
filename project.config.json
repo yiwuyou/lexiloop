@@ -1,0 +1,26 @@
+{
+  "description": "词序 - MEM英语（二）离线词汇学习",
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "projectname": "mem-vocab",
+  "appid": "wxee41f64becac8cf2",
+  "packOptions": {
+    "ignore": [
+      { "type": "folder", "value": "tests" },
+      { "type": "folder", "value": "scripts" },
+      { "type": "file", "value": "README.md" },
+      { "type": "prefix", "value": "preview-" },
+      { "type": "prefix", "value": "upload-info" }
+    ],
+    "include": []
+  },
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": false
+  },
+  "simulatorType": "wechat",
+  "condition": {}
+}

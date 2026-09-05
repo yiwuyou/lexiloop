@@ -1,0 +1,23 @@
+# WeChat Developer Tools local settings
+project.private.config.json
+
+# Generated preview and upload artifacts
+preview-*.png
+preview-*.json
+upload-*.json
+scripts/preview-*.png
+scripts/preview-*.json
+scripts/upload-*.json
+
+# Local dependencies and editor files
+node_modules/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secrets and private keys
+*.key
+*.pem
+.env
+.env.*

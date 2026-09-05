@@ -1,0 +1,38 @@
+{
+  "pages": [
+    "pages/today/index",
+    "pages/study/index",
+    "pages/library/index",
+    "pages/progress/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "词序",
+    "navigationBarBackgroundColor": "#f8faf7",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#eef2ed",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#657169",
+    "selectedColor": "#174f32",
+    "backgroundColor": "#f8faf7",
+    "list": [
+      {
+        "pagePath": "pages/today/index",
+        "text": "今日"
+      },
+      {
+        "pagePath": "pages/library/index",
+        "text": "词库"
+      },
+      {
+        "pagePath": "pages/progress/index",
+        "text": "进度"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

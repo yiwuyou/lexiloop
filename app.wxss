@@ -1,0 +1,92 @@
+page {
+  --page: #eef2ed;
+  --surface: #f8faf7;
+  --card: #ffffff;
+  --soft: #edf4ee;
+  --text: #172019;
+  --muted: #657169;
+  --line: #dce4dd;
+  --main: #226a43;
+  --main-strong: #174f32;
+  --on-main: #ffffff;
+  --warn: #996019;
+  --warn-soft: #fff4df;
+  --danger: #a4413f;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 30rpx;
+}
+
+view, text, button, input, scroll-view {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  font: inherit;
+}
+
+button::after {
+  border: 0;
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 28rpx 30rpx calc(150rpx + env(safe-area-inset-bottom));
+  background: var(--surface);
+}
+
+.eyebrow {
+  margin-bottom: 10rpx;
+  color: var(--muted);
+  font-size: 26rpx;
+}
+
+.page-title {
+  margin-bottom: 34rpx;
+  font-size: 52rpx;
+  font-weight: 500;
+  line-height: 1.22;
+  letter-spacing: -1rpx;
+}
+
+.card {
+  border: 2rpx solid var(--line);
+  border-radius: 34rpx;
+  background: var(--card);
+}
+
+.primary-button {
+  display: flex;
+  min-height: 104rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: var(--main);
+  color: var(--on-main);
+  font-size: 32rpx;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.secondary-button {
+  display: flex;
+  min-height: 92rpx;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid var(--line);
+  border-radius: 26rpx;
+  background: var(--card);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
