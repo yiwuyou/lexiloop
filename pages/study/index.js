@@ -2,6 +2,8 @@ const context = require('../../utils/context');
 const { DAY_MS } = require('../../utils/date');
 const scheduler = require('../../utils/scheduler');
 const store = require('../../utils/store');
+const practice = require('../../utils/practice');
+const audioResources = require('../../utils/audio');
 const { getWord } = require('../../utils/words');
 
 const PHASE_LABELS = {
@@ -9,11 +11,13 @@ const PHASE_LABELS = {
   new: '新词建联',
   reinforcement: '难词强化',
   context: '延迟抽测',
+  practice: '主动复习',
 };
 
 Page({
   data: {
     completed: false,
+    isPractice: false,
     contextAnswered: false,
     contextCorrect: false,
     current: 1,
@@ -30,7 +34,7 @@ Page({
     word: null,
   },
 
-  onLoad() {
+  onLoad(options = {}) {
     this.audio = wx.createInnerAudioContext();
     this.audio.obeyMuteSwitch = false;
     this.audioPlaying = false;
@@ -46,7 +50,8 @@ Page({
       this.audioPlaying = false;
       if (!this.audioStarted) wx.showToast({ title: '发音播放失败', icon: 'none' });
     });
-    this.session = store.getSession();
+    this.setData({ isPractice: options.mode === 'practice' });
+    this.session = store.getSession(options.mode);
     if (!this.session || !this.session.queue || !this.session.queue.length) {
       wx.reLaunch({ url: '/pages/today/index' });
       return;
@@ -60,14 +65,19 @@ Page({
   },
 
   onHide() {
+    this.audioRequest = (this.audioRequest || 0) + 1;
+    if (this.audioPlaying && this.audio) this.audio.stop();
     this.captureElapsed();
-    if (this.session) store.saveSession(this.session);
+    this.activeStartedAt = 0;
+    if (this.session && !this.data.completed) store.saveSession(this.session);
   },
 
   onUnload() {
+    this.audioRequest = (this.audioRequest || 0) + 1;
     this.captureElapsed();
     if (this.session && !this.data.completed) store.saveSession(this.session);
     if (this.audio) this.audio.destroy();
+    this.audio = null;
   },
 
   captureElapsed() {
@@ -78,6 +88,7 @@ Page({
   },
 
   writeDailyProgress(state, completedAt) {
+    if (this.data.isPractice) return null;
     const previous = state.daily[this.session.day] || {};
     state.daily[this.session.day] = Object.assign({}, previous, {
       completedAt: completedAt || previous.completedAt || 0,
@@ -100,6 +111,8 @@ Page({
   },
 
   renderCurrent() {
+    this.audioRequest = (this.audioRequest || 0) + 1;
+    if (this.audioPlaying && this.audio) this.audio.stop();
     if (this.session.index >= this.session.queue.length) {
       this.finishSession();
       return;
@@ -137,17 +150,36 @@ Page({
     this.setData({ revealed: true });
   },
 
-  playPronunciation() {
+  async playPronunciation() {
     if (!this.data.word || !this.data.word.audio || !this.audio) return;
+    const request = this.audioRequest = (this.audioRequest || 0) + 1;
+    try {
+    const source = await audioResources.sourceFor(this.data.word);
+    if (request !== this.audioRequest || !this.audio) return;
     if (this.audioPlaying) this.audio.stop();
     this.audioStarted = false;
-    this.audio.src = this.data.word.audio;
+    this.audio.src = source;
     this.audio.play();
+    } catch (error) {
+      if (request === this.audioRequest) wx.showToast({ title: '请联网准备该词发音后再试', icon: 'none' });
+    }
   },
 
   rate(event) {
+    if (!this.data.revealed || this.data.completed || this.ratingBusy) return;
     const grade = event.currentTarget.dataset.grade;
     if (!['again', 'hard', 'good', 'easy'].includes(grade)) return;
+    this.ratingBusy = true;
+    try {
+    if (this.data.isPractice) {
+      const state = store.getState();
+      practice.recordAnswer(state, this.session, grade);
+      this.captureElapsed();
+      store.saveState(state);
+      store.saveSession(this.session);
+      this.renderCurrent();
+      return;
+    }
     const item = this.currentItem();
     const word = getWord(item.wordId);
     const now = Date.now();
@@ -187,6 +219,9 @@ Page({
     store.saveState(state);
     store.saveSession(this.session);
     this.renderCurrent();
+    } finally {
+      this.ratingBusy = false;
+    }
   },
 
   chooseContext(event) {
@@ -236,6 +271,14 @@ Page({
     const now = Date.now();
     const state = store.getState();
     const minutes = Math.max(1, Math.round((this.session.elapsedSeconds || 0) / 60));
+    if (this.data.isPractice) {
+      store.clearSession('practice');
+      this.setData({ completed: true, sessionSummary: {
+        minutes, practiceDone: this.session.answers.length,
+        remembered: this.session.ratings.good + this.session.ratings.easy,
+      } });
+      return;
+    }
     const summary = this.writeDailyProgress(state, now);
     summary.minutes = minutes;
     store.saveState(state);

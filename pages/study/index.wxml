@@ -9,6 +9,7 @@
       <button class="head-button" bindtap="exitStudy">退出</button>
     </view>
     <view class="study-progress"><view style="width: {{progress}}%"></view></view>
+    <text class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
 
     <block wx:if="{{!isContext}}">
       <view class="word-card card">
@@ -18,9 +19,9 @@
         </view>
         <view class="word-main">
           <text class="word">{{word.word}}</text>
-          <view class="pronunciation" wx:if="{{word.enhanced}}">
+          <view class="pronunciation" wx:if="{{word.audio}}">
             <view class="audio-button" bindtap="playPronunciation" role="button" aria-label="播放单词发音">▶</view>
-            <text class="ipa">{{word.ipa}}</text>
+            <text class="ipa">{{word.ipa || '播放发音'}}</text>
           </view>
           <text class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>
           <view class="answer" wx:else>
@@ -33,6 +34,12 @@
               <view class="detail-line contrast" wx:if="{{word.contrast}}"><text>易混</text><text>{{word.contrast}}</text></view>
             </block>
             <text class="meaning" wx:else>{{word.meaning}}</text>
+            <view class="example-panel" wx:if="{{word.example}}">
+              <text class="memory-label">例句 · 放进场景记</text>
+              <text class="example-en">{{word.example}}</text>
+              <text class="example-zh">{{word.translation}}</text>
+              <text class="example-credit">{{word.exampleCredit}}</text>
+            </view>
           </view>
         </view>
         <button class="primary-button" wx:if="{{!revealed}}" bindtap="revealAnswer">显示答案</button>
@@ -80,9 +87,14 @@
   <block wx:else>
     <view class="complete-view">
       <view class="complete-check">✓</view>
-      <view class="complete-title">今天完成了</view>
-      <text class="complete-note">所有作答均已保存在这部iPhone，下次出现时间也已安排。</text>
-      <view class="complete-grid">
+      <view class="complete-title">{{isPractice ? '本轮复习完成' : '今天完成了'}}</view>
+      <text class="complete-note">{{isPractice ? '这次练习已单独记录，今日任务和之后的复习安排保持不变。' : '所有作答均已保存在这部手机，下次出现时间也已安排。'}}</text>
+      <view class="complete-grid" wx:if="{{isPractice}}">
+        <view><text>{{sessionSummary.minutes}}</text><text>分钟</text></view>
+        <view><text>{{sessionSummary.practiceDone}}</text><text>练习词数</text></view>
+        <view><text>{{sessionSummary.remembered}}</text><text>想起主要义</text></view>
+      </view>
+      <view class="complete-grid" wx:else>
         <view><text>{{sessionSummary.minutes}}</text><text>分钟</text></view>
         <view><text>{{sessionSummary.newDone}}</text><text>新词</text></view>
         <view><text>{{sessionSummary.dueDone}}</text><text>复习</text></view>

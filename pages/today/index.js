@@ -1,6 +1,7 @@
 const dates = require('../../utils/date');
 const plan = require('../../utils/study-plan');
 const store = require('../../utils/store');
+const practice = require('../../utils/practice');
 
 function greeting(hour) {
   if (hour < 6) return '夜深了';
@@ -81,6 +82,25 @@ Page({
       store.saveSession(session);
     }
     wx.navigateTo({ url: '/pages/study/index' });
+  },
+
+  startPractice() {
+    const existing = store.getSession('practice');
+    const options = existing && existing.index < existing.queue.length
+      ? ['继续上次主动复习', '最近学过的 50 词', '易忘词（最多 50 词）']
+      : ['最近学过的 50 词', '易忘词（最多 50 词）'];
+    wx.showActionSheet({ itemList: options, success: (result) => {
+      const selected = options[result.tapIndex];
+      if (selected !== '继续上次主动复习') {
+        const session = practice.buildSession(store.getState(), { scope: selected.indexOf('易忘') === 0 ? 'weak' : 'recent' });
+        if (!session.queue.length) {
+          wx.showToast({ title: '这个范围还没有已学词', icon: 'none' });
+          return;
+        }
+        store.saveSession(session);
+      }
+      wx.navigateTo({ url: '/pages/study/index?mode=practice' });
+    } });
   },
 
   addExtraStudy(event) {

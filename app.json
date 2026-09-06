@@ -32,6 +32,20 @@
       }
     ]
   },
+  "subPackages": [
+    {"name":"speech01","root":"speech01","pages":["index"]},
+    {"name":"speech02","root":"speech02","pages":["index"]},
+    {"name":"speech03","root":"speech03","pages":["index"]},
+    {"name":"speech04","root":"speech04","pages":["index"]},
+    {"name":"speech05","root":"speech05","pages":["index"]},
+    {"name":"speech06","root":"speech06","pages":["index"]},
+    {"name":"speech07","root":"speech07","pages":["index"]},
+    {"name":"speech08","root":"speech08","pages":["index"]},
+    {"name":"speech09","root":"speech09","pages":["index"]},
+    {"name":"speech10","root":"speech10","pages":["index"]},
+    {"name":"speech11","root":"speech11","pages":["index"]},
+    {"name":"speech12","root":"speech12","pages":["index"]}
+  ],
   "style": "v2",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents"

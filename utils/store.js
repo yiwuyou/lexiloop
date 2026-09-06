@@ -3,6 +3,7 @@ const migrations = require('./migrations');
 
 const STATE_KEY = 'mem_vocab_state_v1';
 const SESSION_KEY = 'mem_vocab_session_v1';
+const PRACTICE_SESSION_KEY = 'mem_vocab_practice_session_v1';
 const SETTINGS_KEY = 'mem_vocab_settings_v1';
 const MIGRATION_BACKUP_KEY = 'mem_vocab_state_before_v2';
 
@@ -85,17 +86,17 @@ function saveSettings(settings) {
   return safeSet(SETTINGS_KEY, Object.assign(defaultSettings(), settings || {}, { schemaVersion: 2 }));
 }
 
-function getSession() {
-  return safeGet(SESSION_KEY, null);
+function getSession(mode) {
+  return safeGet(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, null);
 }
 
 function saveSession(session) {
-  return safeSet(SESSION_KEY, session);
+  return safeSet(session.mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, session);
 }
 
-function clearSession() {
+function clearSession(mode) {
   try {
-    wx.removeStorageSync(SESSION_KEY);
+    wx.removeStorageSync(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY);
   } catch (error) {
     // A failed cleanup must not discard completed review records.
   }

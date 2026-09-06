@@ -11,6 +11,7 @@ scripts/upload-*.json
 
 # Local dependencies and editor files
 node_modules/
+scripts/work/
 .DS_Store
 Thumbs.db
 .vscode/

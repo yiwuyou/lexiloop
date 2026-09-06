@@ -4,6 +4,13 @@
   background: var(--surface);
 }
 
+.practice-note { display: block; color: var(--main-strong); font-size: 23rpx; text-align: center; margin: -12rpx 0 24rpx; }
+.example-panel { margin-top: 20rpx; padding: 20rpx 22rpx; border-radius: 22rpx; background: var(--soft); text-align: left; }
+.example-panel text { display: block; }
+.example-en { font-size: 28rpx; line-height: 1.5; }
+.example-zh { margin-top: 10rpx; font-size: 24rpx; line-height: 1.5; color: var(--muted); }
+.example-credit { margin-top: 12rpx; font-size: 18rpx; line-height: 1.4; color: var(--muted); overflow-wrap: anywhere; }
+
 .study-head {
   display: grid;
   grid-template-columns: 100rpx 1fr 100rpx;

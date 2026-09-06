@@ -52,6 +52,10 @@
   </block>
 
   <view class="progress-card card">
+    <button class="secondary-button" bindtap="startPractice">主动复习已学单词</button>
+    <text class="progress-note">随时加练，原定复习时间不变；也可在词库按天选择</text>
+  </view>
+  <view class="progress-card card">
     <view class="progress-head"><text>总进度 {{learned}} / {{total}}</text><text class="muted">{{progress}}%</text></view>
     <view class="progress-track"><view class="progress-fill" style="width: {{progress}}%"></view></view>
     <text class="progress-note">按当前节奏，首轮完成后继续按遗忘规律复习</text>

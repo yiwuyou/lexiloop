@@ -1,5 +1,6 @@
 const tuples = require('../data/vocabulary');
 const enrichment = require('../data/enrichment');
+const learningContent = require('../data/learning-content');
 
 let cache;
 let mapCache;
@@ -19,8 +20,7 @@ function inflate(tuple, position) {
     sourceLabel: `${category === 'core' ? '核心' : '高频'} day ${tuple[1]} · #${tuple[2]}`,
     searchText: `${tuple[3]} ${tuple[4]}`.toLowerCase(),
     enhanced: Boolean(enrichment[id]),
-    audio: enrichment[id] ? `/assets/audio/${id}.wav` : '',
-  }, extra);
+  }, learningContent[id] || {}, extra);
 }
 
 function getWords() {

@@ -31,8 +31,10 @@
   white-space: nowrap;
 }
 
-.filter {
+.library-page button.filter {
   display: inline-flex;
+  width: auto;
+  flex: 0 0 auto;
   min-height: 72rpx;
   align-items: center;
   justify-content: center;
@@ -46,7 +48,7 @@
   line-height: 72rpx;
 }
 
-.filter.is-active {
+.library-page button.filter.is-active {
   border-color: var(--main);
   background: var(--main);
   color: #fff;
@@ -139,17 +141,36 @@
   font-weight: 600;
 }
 
-.mini-audio {
-  width: 52rpx;
-  min-width: 52rpx;
-  height: 52rpx;
+.library-page button.mini-audio {
+  display: inline-flex;
+  flex: 0 0 64rpx;
+  align-items: center;
+  justify-content: center;
+  max-width: 64rpx;
+  width: 64rpx;
+  min-width: 64rpx;
+  height: 64rpx;
+  min-height: 64rpx;
   padding: 0;
+  margin: 0;
   border-radius: 50%;
   background: var(--soft);
   color: var(--main-strong);
   font-size: 19rpx;
   line-height: 52rpx;
 }
+
+.library-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12rpx; margin-bottom: 24rpx; }
+.library-page .library-controls button.filter { width: auto; flex: 1; margin: 0; padding: 0 16rpx; border-radius: 18rpx; }
+.library-controls picker { width: 100%; }
+.day-picker { padding: 18rpx 22rpx; border: 2rpx solid var(--line); border-radius: 18rpx; background: var(--card); font-size: 25rpx; color: var(--main-strong); }
+.day-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; }
+.day-card { width: 100%; padding: 24rpx 18rpx; text-align: left; border: 2rpx solid var(--line); border-radius: 22rpx; background: var(--card); line-height: 1.5; }
+.day-card text { display: block; font-size: 28rpx; }
+.day-card text:last-child { color: var(--muted); font-size: 23rpx; margin-top: 8rpx; }
+.library-page button.day-practice { width: 100%; margin: 0 0 20rpx; padding: 20rpx; font-size: 26rpx; }
+.library-example { margin-top: 16rpx; padding-top: 14rpx; border-top: 2rpx solid var(--line); font-size: 24rpx; line-height: 1.5; }
+.library-example text:last-child { margin-top: 6rpx; color: var(--muted); font-size: 22rpx; }
 
 .word-ipa {
   margin-bottom: 7rpx;

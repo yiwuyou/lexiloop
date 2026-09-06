@@ -123,6 +123,7 @@ Page({
                   store.saveState(migrated.state);
                   store.saveSettings(migrated.settings);
                   store.clearSession();
+                  store.clearSession('practice');
                   wx.showToast({ title: '恢复成功' });
                   this.refresh();
                 },
