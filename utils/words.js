@@ -22,11 +22,12 @@ function inflate(tuple, position) {
     enhanced: true,
   }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {});
   const generated = learningContent[id] || {};
-  // Preserve authored guidance first. Mechanical Chinese-overlap groups and generic
-  // meaning anchors add noise but little memory value, so never show them as advice.
+  // Preserve authored guidance first. The generated fallback is an actual lexical
+  // chunk, never the old mechanical meaning grouping or "repeat the definition" text.
   const generatedHint = generated.associationHint || '';
   const usefulGeneratedHint = /^(语义归组|词义锚点)：/.test(generatedHint) ? '' : generatedHint;
   word.memoryHint = extra.cue || generated.cue || usefulGeneratedHint;
+  word.associationLabel = extra.cue ? '助记' : (word.associationLabel || '短语钩子');
   word.shortHint = word.memoryHint.length <= 60 ? word.memoryHint : '';
   word.associationHint = word.memoryHint;
   word.cue = word.associationHint || word.contrast || word.family || word.breakdown || word.meaning;

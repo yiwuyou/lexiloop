@@ -1,134 +1,154 @@
-"""Generate explicit spelling contrasts from real course words, never invented roots."""
+"""Build one useful memory route per word without pretending one rule fits all.
+
+Priority:
+1. reviewed, word-specific cue;
+2. reviewed/transparent construction;
+3. reviewed confusion contrast;
+4. verified word family;
+5. a short lexical chunk taken from the word's real example.
+
+The fallback deliberately keeps the target word inside a short English chunk. It
+does not invent roots, compare unrelated spellings, or repeat a Chinese semantic
+group as though that were a mnemonic.
+"""
 import json
 import re
 from pathlib import Path
-from difflib import SequenceMatcher
 
 root = Path(__file__).resolve().parents[1]
 path = root / 'data/learning-content.js'
 data = json.loads(path.read_text('utf-8').split('module.exports')[1].lstrip(' =').rstrip(';\r\n'))
-heads = {}
-for item in data.values():
-    heads.setdefault(item['spokenWord'], item)
+
 
 def gloss(item):
     return re.split('[;；]', item['meaning'])[0].strip()
 
-def diff_parts(first, second):
-    prefix = 0
-    while prefix < min(len(first), len(second)) and first[prefix] == second[prefix]:
-        prefix += 1
-    suffix = 0
-    while suffix < min(len(first), len(second)) - prefix and first[-suffix-1] == second[-suffix-1]:
-        suffix += 1
-    return first[prefix:len(first)-suffix if suffix else len(first)], second[prefix:len(second)-suffix if suffix else len(second)]
 
-def chinese_terms(value):
-    """Return meaningful definition fragments for conservative semantic grouping."""
-    ignored = {'一种', '事物', '东西', '人员', '有关', '进行', '表示', '具有', '使得', '方面', '行为'}
-    terms = set()
-    for segment in re.findall(r'[\u4e00-\u9fff]{2,}', value):
-        if segment not in ignored:
-            terms.add(segment[:6])
-        for size in (4, 3, 2):
-            for start in range(max(0, len(segment) - size + 1)):
-                term = segment[start:start + size]
-                if term not in ignored:
-                    terms.add(term)
-    return terms
+def words_in(value):
+    return re.findall(r"[A-Za-z]+(?:[-'][A-Za-z]+)*", value or '')
 
-semantic_index = {}
-for peer_head, peer_item in heads.items():
-    for term in chinese_terms(peer_item['meaning']):
-        semantic_index.setdefault(term, []).append(peer_head)
 
-def semantic_hint(head, item):
-    matches = []
-    for term in chinese_terms(item['meaning']):
-        for other in semantic_index.get(term, []):
-            if other != head:
-                matches.append((len(term), -len(other), term, other))
-    if not matches:
-        return ''
-    _, _, term, other = max(matches)
-    return f'语义归组：{head} 和 {other} 都涉及“{term}”；先用这个共同概念定位，再辨清各自的完整释义。'
+def lexical_chunk(item):
+    """Extract a compact, POS-aware chunk around the actual target form."""
+    tokens = words_in(item.get('example', ''))
+    if not tokens:
+        return item['spokenWord']
 
-PREFIXES = {
-    'un': '否定或相反', 're': '再次或返回', 'over': '过度或在上方', 'under': '不足或在下方',
-    'fore': '在前或预先', 'pre': '在前或预先', 'post': '在后', 'anti': '反对或抵抗',
-    'inter': '在……之间', 'sub': '在下或次一级', 'super': '在上或超出', 'mis': '错误地',
-    'out': '超过或向外', 'up': '向上', 'down': '向下', 'with': '向后或离开',
-}
+    forms = {item['spokenWord'].lower()}
+    forms.update(form['word'].lower() for form in item.get('wordForms', []))
+    index = next((i for i, token in enumerate(tokens) if token.lower() in forms), -1)
+    if index < 0:
+        return item['spokenWord']
 
-def structure_hint(head):
-    if ' ' in head or '/' in head:
-        return f'把 {head} 作为一个完整词组或同词变体来记，不要拆成互不相关的单词。'
-    for prefix, meaning in sorted(PREFIXES.items(), key=lambda row: -len(row[0])):
-        base = head[len(prefix):]
-        if head.startswith(prefix) and base in heads:
-            return f'构词联系：{prefix}- 表示“{meaning}”，联系 {base} 一起理解 {head}。'
-    return ''
-
-counts = {'curated':0, 'contrast':0, 'family':0, 'spelling':0, 'structure':0, 'semantic':0, 'anchor':0}
-pending = []
-for item in data.values():
-    head = item['spokenWord']
-    if item['cue']:
-        item['associationHint'] = item['cue']
-        kind = 'curated'
-    elif item['contrast']:
-        item['associationHint'] = item['contrast'].split('\n')[0]
-        kind = 'contrast'
-    elif item['family']:
-        item['associationHint'] = head + '（' + gloss(item) + '） ↔ ' + item['family']
-        kind = 'family'
-    else:
-        candidates = []
-        for other, peer in heads.items():
-            if head == other or abs(len(head)-len(other)) > 2 or len(head) < 4 or len(other) < 4:
-                continue
-            if not (head[:2] == other[:2] or head[-3:] == other[-3:]):
-                continue
-            if gloss(item) == gloss(peer):
-                continue
-            score = SequenceMatcher(None, head, other, autojunk=False).ratio()
-            # Only surface very close spellings. Loose matches (for example,
-            # words sharing a common suffix) distract more than they help.
-            if score >= .80:
-                candidates.append((score, -len(other), other))
-        if candidates:
-            other = max(candidates)[2]
-            first_part, second_part = diff_parts(head, other)
-            difference = ('；区分 ' + first_part + ' / ' + second_part) if first_part and second_part else ''
-            item['associationHint'] = head + '（' + gloss(item) + '）与 ' + other + '（' + gloss(heads[other]) + '）对照记' + difference + '。'
-            item['associationPeer'] = other
-            kind = 'spelling'
+    pos = item.get('partOfSpeech', '')
+    if '形容词' in pos:
+        if index + 1 < len(tokens):
+            start, end = index, index + 2
         else:
-            hint = structure_hint(head)
-            if hint:
-                item['associationHint'] = hint
-                kind = 'structure'
-            else:
-                hint = semantic_hint(head, item)
-                if hint:
-                    item['associationHint'] = hint
-                    kind = 'semantic'
-                else:
-                    item['associationHint'] = f'词义锚点：看到 {head}，先立即说出“{gloss(item)}”，再展开机构释义中的其他义项。'
-                    kind = 'anchor'
-                    pending.append((head, item['meaning']))
-    item['associationKind'] = kind
-    counts[kind] += 1
-    # These values are reproducible audit data, not runtime content. Keep the
-    # main mini-program package small by deriving curated/family/contrast text
-    # from the fields already present and dropping build-only fields.
-    if kind in ('curated', 'contrast', 'family', 'semantic', 'anchor'):
-        item.pop('associationHint', None)
+            start, end = max(0, index - 1), index + 1
+    elif '名词' in pos and '动词' not in pos:
+        if index + 1 < len(tokens) and tokens[index + 1].lower() == 'of':
+            start, end = index, min(len(tokens), index + 5)
+        elif index >= 2 and tokens[index - 1].lower() in {'a', 'an', 'the', 'this', 'that', 'my', 'your', 'his', 'her', 'our', 'their'}:
+            start, end = max(0, index - 2), index + 1
+        else:
+            start, end = max(0, index - 1), index + 1
+    elif '动词' in pos:
+        boundaries = {'and', 'but', 'while', 'when', 'during', 'after', 'before', 'because', 'who', 'which', 'that'}
+        end = index + 1
+        while end < len(tokens) and end < index + 4:
+            if end > index + 1 and tokens[end].lower() in boundaries:
+                break
+            end += 1
+        start = index
+        if end == index + 1:
+            start = max(0, index - 2)
+    else:
+        start, end = max(0, index - 1), min(len(tokens), index + 3)
+
+    chunk = ' '.join(tokens[start:end])
+    return chunk if len(chunk) <= 52 else ' '.join(tokens[index:min(len(tokens), index + 3)])
+
+
+def chunk_label(item):
+    pos = item.get('partOfSpeech', '')
+    if '形容词' in pos:
+        return '状态短语'
+    if '名词' in pos and '动词' not in pos:
+        return '名词短语'
+    if '动词' in pos:
+        return '动作短语'
+    return '用法短语'
+
+
+def informative_chunk(chunk, head):
+    fillers = {'a', 'an', 'the', 'this', 'that', 'my', 'your', 'his', 'her', 'our', 'their'}
+    content = [token.lower() for token in words_in(chunk)
+               if token.lower() not in fillers and token.lower() != head.lower()]
+    return bool(content)
+
+
+def scene_hint(item):
+    scene = re.split(r'[。！？!?]', item.get('translation', ''))[0].strip()
+    if len(scene) > 38:
+        scene = scene[:37].rstrip('，,；; ') + '…'
+    return f'把这幕定格：{scene}；在画面出现时说 {item["spokenWord"]}。'
+
+
+counts = {'curated': 0, 'construction': 0, 'contrast': 0, 'family': 0, 'chunk': 0, 'scene': 0}
+missing = []
+samples = {key: [] for key in counts}
+
+for item in data.values():
+    item.pop('associationHint', None)
     item.pop('associationPeer', None)
     item.pop('associationKind', None)
+
+    if item.get('cue'):
+        kind = 'curated'
+        item['associationHint'] = item['cue']
+        item['associationLabel'] = item.get('associationLabel') or '主钩子'
+    elif item.get('breakdown') and item.get('breakdownNote'):
+        kind = 'construction'
+        item.pop('associationLabel', None)
+    elif item.get('contrast'):
+        kind = 'contrast'
+        item.pop('associationLabel', None)
+    elif item.get('family'):
+        kind = 'family'
+        item.pop('associationLabel', None)
+    else:
+        chunk = lexical_chunk(item)
+        if chunk and informative_chunk(chunk, item['spokenWord']):
+            kind = 'chunk'
+            item['associationHint'] = f'“{chunk}”整块记：{gloss(item)}。'
+            item['associationLabel'] = chunk_label(item)
+        elif item.get('translation'):
+            kind = 'scene'
+            item['associationHint'] = scene_hint(item)
+            item['associationLabel'] = '画面钩子'
+        else:
+            kind = 'scene'
+            missing.append((item['spokenWord'], item['meaning']))
+
+    counts[kind] += 1
+    if len(samples[kind]) < 12:
+        samples[kind].append({
+            'word': item['spokenWord'],
+            'breakdown': item.get('breakdown', ''),
+            'hint': item.get('associationHint', ''),
+            'contrast': item.get('contrast', ''),
+            'family': item.get('family', ''),
+        })
+
     item.pop('memoryPhrase', None)
     item.pop('cueLabel', None)
-path.write_text('// Generated learning content and explicit word associations\nmodule.exports = ' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
+
+path.write_text('// Generated learning content with adaptive memory routes\nmodule.exports = '
+                + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
 report = root / 'scripts/work/association-audit.json'
-report.write_text(json.dumps({'counts':counts, 'pending':pending}, ensure_ascii=False, indent=2), 'utf-8')
-print(json.dumps({'counts':counts, 'pending':pending}, ensure_ascii=False))
+report.write_text(json.dumps({'counts': counts, 'missing': missing, 'samples': samples},
+                             ensure_ascii=False, indent=2), 'utf-8')
+print(json.dumps({'counts': counts, 'missing': missing}, ensure_ascii=False))
+if missing:
+    raise SystemExit('Every word must have a memory route.')

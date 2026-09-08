@@ -16,6 +16,7 @@ words.forEach((word, index) => {
   assert.ok(word.enhanced && word.partOfSpeech && word.cue, word.id);
   assert.ok(word.example && word.translation && word.exampleSourceDetail, word.id);
   assert.ok(word.core || word.meaning, 'understanding content missing: ' + word.id);
+  assert.ok(word.hasMemoryContent, 'adaptive memory route missing: ' + word.id);
   assert.ok(Array.isArray(word.wordForms));
   if (word.exampleCredit !== 'LexiLoop 编写') {
     assert.ok(word.exampleSourceDetail.includes(word.exampleCredit));
@@ -47,9 +48,19 @@ assert.ok(detain.contrast.includes('custody'));
 assert.ok(custody.contrast.includes('detain'));
 const device = words.find((word) => word.word.toLowerCase() === 'device');
 const dictate = words.find((word) => word.word.toLowerCase() === 'dictate');
+const desperate = getWord('c-3-15');
+const deteriorate = getWord('c-3-17');
+const drawback = getWord('c-3-24');
 assert.strictEqual(device.breakdown, '', 'device must not be mechanically split into dev + ice');
 assert.ok(device.associationHint.includes('devise'));
 assert.strictEqual(dictate.breakdown, 'dict·ate');
+assert.ok(desperate.breakdown.includes('sper'));
+assert.ok(desperate.breakdownNote.includes('希望'));
+assert.strictEqual(deteriorate.breakdown, '');
+assert.strictEqual(deteriorate.associationLabel, '声音画面');
+assert.ok(deteriorate.associationHint.includes('地铁里又热'));
+assert.strictEqual(drawback.breakdown, 'draw·back');
+assert.ok(drawback.breakdownNote.includes('往后拉'));
 for (const page of ['study', 'library']) {
   const markup = fs.readFileSync(path.join(root, 'pages', page, 'index.wxml'), 'utf8');
   assert.ok(markup.includes('partOfSpeech'));
