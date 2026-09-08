@@ -14,10 +14,13 @@ const store = require('../utils/store');
 const scheduler = require('../utils/scheduler');
 const plan = require('../utils/study-plan');
 const migrations = require('../utils/migrations');
+const weakBook = require('../utils/weak-book');
 const words = getWords();
 const now = new Date(2026, 8, 6, 10).getTime();
-const state = { schemaVersion: 2, cards: {}, daily: {}, recentReviews: [] };
+const state = { schemaVersion: 3, cards: {}, daily: {}, weakBook: {}, recentReviews: [] };
 words.slice(0, 100).forEach((word) => { state.cards[word.id] = scheduler.review(null, 'hard', now); });
+weakBook.mark(state, 'c-1-1', 'manual', now);
+weakBook.mark(state, 'c-2-1', 'formal', now);
 const before = clone(state);
 const settings = { dailyNewCount: 50, examDate: '2026-12-15' };
 const future = plan.buildSession(state, settings, now + 86400000);
@@ -31,7 +34,18 @@ for (const key of ['cards', 'daily', 'recentReviews']) assert.deepStrictEqual(st
 assert.deepStrictEqual(plan.buildSession(state, settings, now + 86400000), future);
 assert.strictEqual(practice.buildSession(state, {}, now).queue.length, 50);
 assert.strictEqual(practice.buildSession(state, { category: 'high', day: 1 }, now).queue.length, 0);
+assert.strictEqual(practice.buildSession(state, { scope: 'weak' }, now).queue.length, 2);
 assert.deepStrictEqual(migrations.migrateState(state).practice, state.practice);
+
+const isolated = { schemaVersion: 3, cards: {}, daily: {}, weakBook: {}, recentReviews: [] };
+isolated.cards['c-1-1'] = scheduler.review(null, 'good', now);
+weakBook.mark(isolated, 'c-1-1', 'manual', now);
+assert.strictEqual(plan.buildSession(isolated, { dailyNewCount: 0 }, now + 86400000).dueGoal, 0,
+  'permanent weak list must not create daily due reviews');
+let twiceHard = scheduler.review(null, 'hard', now);
+assert.strictEqual(weakBook.shouldAutoMark(twiceHard, 'hard'), false);
+twiceHard = scheduler.review(twiceHard, 'hard', now + 1000);
+assert.strictEqual(weakBook.shouldAutoMark(twiceHard, 'hard'), true);
 store.saveState(state);
 store.saveSession(future);
 store.saveSession(session);
@@ -57,8 +71,13 @@ library.showDays();
 assert.strictEqual(library.data.dayGroups.length, 51);
 library.selectFilter({ currentTarget: { dataset: { filter: 'high' } } });
 assert.strictEqual(library.data.dayGroups.length, 42);
-library.changeDay({ detail: { value: 1 } });
-assert.strictEqual(library.data.visibleWords[0].id, 'c-1-1', 'day selection clears conflicting category filter');
+library.selectFilter({ currentTarget: { dataset: { filter: 'weak' } } });
+assert.strictEqual(library.data.dayGroups.length, 2);
+library.showDays();
+library.openDay({ currentTarget: { dataset: { key: 'core-1' } } });
+assert.strictEqual(library.data.activeFilter, 'weak', 'opening a day must preserve the weak filter');
+assert.strictEqual(library.data.resultCount, 1);
+assert.strictEqual(library.data.visibleWords[0].id, 'c-1-1');
 const app = require('../app.json');
 app.subPackages.forEach((pack) => pack.pages.forEach((page) => {
   ['.js', '.json', '.wxml'].forEach((extension) => assert.ok(fs.existsSync(path.join(__dirname, '..', pack.root, page + extension))));
@@ -82,10 +101,11 @@ console.log('Practice isolation, session persistence, migration, 51 days, 2522 c
 async function testAudio() {
   let calls = 0;
   let fail = true;
-  wx.loadSubpackage = ({ success, fail: failure }) => {
+  const loaders = require('../utils/audio-packages');
+  Object.keys(loaders).forEach((key) => { loaders[key] = () => new Promise((resolve, reject) => {
     calls++;
-    setTimeout(() => fail ? failure(new Error('offline')) : success(), 0);
-  };
+    setTimeout(() => fail ? reject(new Error('offline')) : resolve(), 0);
+  }); });
   const audio = require('../utils/audio');
   await assert.rejects(audio.sourceFor(words[0]));
   fail = false;

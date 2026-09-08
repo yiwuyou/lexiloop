@@ -13,6 +13,7 @@ function defaultState() {
     createdAt: Date.now(),
     cards: {},
     daily: {},
+    weakBook: {},
     recentReviews: [],
   };
 }

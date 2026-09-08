@@ -1,8 +1,21 @@
 .study-page {
-  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: calc(28rpx + env(safe-area-inset-top)) 30rpx calc(34rpx + env(safe-area-inset-bottom));
   background: var(--surface);
 }
+.study-page.is-completed { overflow-y: auto; }
+.study-head, .study-progress, .practice-note, .rating-area, .reveal-dock, .next-button { flex-shrink: 0; }
+.study-content { flex: 1; height: 0; min-height: 0; width: 100%; }
+.details-toggle { margin: 0; padding: 14rpx 8rpx; font-size: 23rpx; color: var(--main-strong); background: transparent; line-height: 1.4; }
+.help-links { display: flex; justify-content: space-between; gap: 16rpx; margin-top: 6rpx; }
+.meaning-heading { display: flex; align-items: center; justify-content: center; gap: 16rpx; margin-bottom: 8rpx; font-size: 23rpx; color: var(--main-strong); }
+.meaning-heading > view { display: flex; flex-wrap: wrap; justify-content: center; gap: 6rpx 16rpx; }
+.extra-help { text-align: left; padding-top: 12rpx; }
+.scroll-hint { padding: 14rpx; text-align: center; font-size: 21rpx; color: var(--muted); }
+.reveal-dock { margin-top: 20rpx; }
 
 .practice-note { display: block; color: var(--main-strong); font-size: 23rpx; text-align: center; margin: -12rpx 0 24rpx; }
 .example-panel { margin-top: 20rpx; padding: 20rpx 22rpx; border-radius: 22rpx; background: var(--soft); text-align: left; }
@@ -49,7 +62,7 @@
 
 .study-progress {
   height: 8rpx;
-  margin: 0 72rpx 34rpx;
+  margin: 0 72rpx 20rpx;
   overflow: hidden;
   border-radius: 999rpx;
   background: var(--line);
@@ -64,8 +77,8 @@
 
 .word-card,
 .context-card {
-  min-height: 740rpx;
-  padding: 36rpx 34rpx 34rpx;
+  min-height: 0;
+  padding: 20rpx 24rpx;
   box-shadow: 0 18rpx 58rpx rgba(40, 67, 50, .1);
 }
 
@@ -93,7 +106,7 @@
 }
 
 .word-main {
-  padding: 48rpx 0 42rpx;
+  padding: 18rpx 0 4rpx;
   text-align: center;
 }
 
@@ -102,7 +115,7 @@
   margin-bottom: 18rpx;
   overflow-wrap: anywhere;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 86rpx;
+  font-size: 62rpx;
   line-height: 1.06;
 }
 
@@ -111,7 +124,7 @@
   align-items: center;
   justify-content: center;
   gap: 14rpx;
-  margin-bottom: 34rpx;
+  margin-bottom: 20rpx;
   padding: 10rpx 18rpx 10rpx 10rpx;
   border-radius: 999rpx;
   background: var(--soft);
@@ -153,23 +166,22 @@
 
 .target-meaning {
   margin-bottom: 24rpx;
-  font-size: 38rpx;
+  font-size: 36rpx;
   font-weight: 500;
   line-height: 1.4;
 }
 
 .understanding-panel {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 14rpx;
   margin-bottom: 14rpx;
-  padding: 18rpx 22rpx;
-  border: 2rpx solid var(--line);
-  border-radius: 22rpx;
-  background: var(--card);
+  padding: 0 4rpx;
   text-align: left;
 }
 
 .understanding-label {
-  margin-bottom: 6rpx;
+  flex: 0 0 auto;
   color: var(--main-strong);
   font-size: 22rpx;
   line-height: 1.4;
@@ -180,6 +192,16 @@
   font-size: 27rpx;
   line-height: 1.55;
 }
+
+.memory-head { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-bottom: 6rpx; }
+.memory-head .memory-label { margin-bottom: 0; }
+.weak-link { width: auto; min-height: 42rpx; margin: 0; padding: 0 4rpx; border: 0; border-radius: 0; background: transparent; color: var(--muted); font-size: 20rpx; line-height: 42rpx; white-space: nowrap; }
+.weak-link.is-marked { color: var(--warn); }
+.memory-row { display: grid; grid-template-columns: 58rpx 1fr; gap: 10rpx; padding: 7rpx 0; text-align: left; }
+.memory-row > text:first-child { color: var(--main-strong); font-size: 22rpx; }
+.memory-row > text:last-child, .memory-row > view { color: var(--text); font-size: 24rpx; line-height: 1.42; }
+.breakdown { display: block; color: var(--text); font-family: Georgia, "Times New Roman", serif; font-size: 28rpx; letter-spacing: 1rpx; }
+.memory-note { display: block; margin-top: 2rpx; color: var(--muted); font-size: 21rpx; line-height: 1.4; }
 
 .memory-panel {
   margin-bottom: 14rpx;
@@ -235,12 +257,15 @@
 }
 
 .rating-area {
-  margin-top: 30rpx;
+  margin-top: 16rpx;
+  padding-top: 12rpx;
+  border-top: 2rpx solid var(--line);
+  background: var(--surface);
 }
 
 .rating-label {
   display: block;
-  margin-bottom: 18rpx;
+  margin-bottom: 12rpx;
   color: var(--muted);
   font-size: 25rpx;
   text-align: center;
@@ -256,10 +281,10 @@
   position: relative;
   display: flex;
   overflow: hidden;
-  min-height: 116rpx;
+  min-height: 104rpx;
   align-items: center;
   justify-content: center;
-  padding: 18rpx 18rpx 28rpx;
+  padding: 12rpx 16rpx 22rpx;
   border: 2rpx solid #cad5cd;
   border-radius: 24rpx;
   background: #f7faf7;
@@ -482,3 +507,47 @@
   color: var(--muted);
   font-size: 26rpx;
 }
+.part-of-speech { display: block; margin: 10rpx 0 8rpx; color: var(--main-strong); font-size: 26rpx; line-height: 1.5; }
+.word-forms { margin: 16rpx 0; padding: 0 22rpx; text-align: left; }
+.word-forms > text { display: block; font-size: 24rpx; line-height: 1.65; color: var(--muted); }
+.source-link { display: inline-block; padding: 16rpx 0 4rpx; text-decoration: underline; font-size: 23rpx; }
+
+/* Compact spacing on shorter phones; never truncate meanings or examples. */
+@media (max-height: 740px) {
+  .study-page { padding-top: calc(12rpx + env(safe-area-inset-top)); padding-bottom: calc(12rpx + env(safe-area-inset-bottom)); }
+  .study-progress { margin-bottom: 16rpx; }
+  .word-card { padding: 18rpx 22rpx; }
+  .word-main { padding-top: 16rpx; }
+  .word { font-size: 60rpx; margin-bottom: 12rpx; }
+  .pronunciation { margin-bottom: 12rpx; padding-top: 4rpx; padding-bottom: 4rpx; }
+  .target-meaning { margin-bottom: 12rpx; font-size: 34rpx; }
+  .example-panel, .memory-panel { margin-top: 12rpx; padding: 12rpx 16rpx; }
+  .example-zh { margin-top: 6rpx; }
+  .rating { min-height: 104rpx; padding: 12rpx 12rpx 20rpx; }
+  .rating-label { font-size: 23rpx; margin-bottom: 8rpx; }
+  .rating-area { margin-top: 10rpx; }
+}
+
+.help-links { justify-content: flex-end; margin-top: 0; }
+.compact-help { display: grid; grid-template-columns: 56rpx 1fr; column-gap: 12rpx; margin-top: 8rpx; text-align: left; font-size: 25rpx; line-height: 1.4; }
+.help-label { color: var(--main-strong); font-size: 23rpx; padding-top: 2rpx; }
+.inline-form { display: inline; margin-right: 12rpx; color: var(--muted); font-size: 23rpx; }
+.is-answer .target-meaning { margin-bottom: 12rpx; }
+.is-answer .example-panel { margin-top: 12rpx; padding: 12rpx 16rpx; }
+.is-answer .details-toggle { padding: 6rpx 4rpx; font-size: 21rpx; }
+
+/* Restore the original unrevealed card, including its internal reveal action. */
+.is-recall .word-card { min-height: 740rpx; padding: 36rpx 34rpx 34rpx; }
+.is-recall .word-main { padding: 48rpx 0 42rpx; }
+.is-recall .word { font-size: 86rpx; margin-bottom: 18rpx; }
+.is-recall .pronunciation { margin-bottom: 34rpx; padding: 10rpx 18rpx 10rpx 10rpx; }
+.recall-reveal { width: 100%; flex-shrink: 0; }
+
+/* Three readable learning sections; ratings follow short cards without a filler gap. */
+.is-answer .understanding-panel { padding: 0 4rpx; margin: 10rpx 0; }
+.is-answer .understanding-text { font-size: 27rpx; line-height: 1.45; }
+.is-answer .memory-panel { padding: 14rpx 18rpx; margin-bottom: 14rpx; font-size: 26rpx; line-height: 1.45; }
+.is-answer .memory-label, .is-answer .understanding-label { font-size: 23rpx; margin-bottom: 6rpx; }
+.related-line { margin-top: 8rpx; font-size: 23rpx; color: var(--muted); line-height: 1.4; }
+.memory-panel .form-inline { display: inline; }
+.is-answer .rating-area { border-top: 0; margin-top: 20rpx; padding-top: 0; }

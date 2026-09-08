@@ -2,6 +2,15 @@
   padding-top: calc(56rpx + env(safe-area-inset-top));
 }
 
+.home-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  color: var(--muted);
+  font-size: 22rpx;
+}
+
 .hero-head,
 .progress-head {
   display: flex;

@@ -3,24 +3,25 @@ const store = require('../../utils/store');
 const { getWords, getWord } = require('../../utils/words');
 const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
+const weakBook = require('../../utils/weak-book');
 
 const PAGE_SIZE = 60;
 
-function decorate(word, card) {
+function decorate(word, card, marked) {
   let state = 'unseen';
   let stateLabel = '未学习';
-  if (card && card.seen) {
+  if (marked) {
+    state = 'weak';
+    stateLabel = '易忘';
+  } else if (card && card.seen) {
     state = 'learning';
     stateLabel = '学习中';
     if (scheduler.isStable(card)) {
       state = 'stable';
       stateLabel = '稳定记得';
-    } else if (scheduler.isWeak(card)) {
-      state = 'weak';
-      stateLabel = '易忘';
     }
   }
-  return Object.assign({}, word, { state, stateLabel });
+  return Object.assign({}, word, { state, stateLabel, isWeakMarked: Boolean(marked) });
 }
 
 Page({
@@ -37,6 +38,9 @@ Page({
     viewMode: 'days',
     audioDownloadLabel: '下载全部发音，备好地铁离线学习',
     audioDownloading: false,
+    audioSize: audioResources.sizeLabel,
+    audioDownloadError: '',
+    audioLoadingId: '',
   },
 
   onLoad() {
@@ -74,6 +78,7 @@ Page({
   },
 
   onHide() {
+    this.setData({ audioLoadingId: '' });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
   },
@@ -90,7 +95,7 @@ Page({
     const query = this.data.query.trim().toLowerCase();
     const filter = this.data.activeFilter;
     const filtered = getWords()
-      .map((word) => decorate(word, state.cards[word.id]))
+      .map((word) => decorate(word, state.cards[word.id], weakBook.isMarked(state, word.id)))
       .filter((word) => {
         const matchesQuery = !query || word.searchText.includes(query);
         const matchesFilter = filter === 'all'
@@ -103,7 +108,8 @@ Page({
     this.filteredWords = filtered;
     const dayGroups = this.groups.map((group) => {
       const members = filtered.filter((word) => word.category === group.category && word.day === group.day);
-      return Object.assign({}, group, { total: members.length, learned: members.filter((word) => word.state !== 'unseen').length });
+      return Object.assign({}, group, { total: members.length, learned: members.filter((word) => word.state !== 'unseen').length,
+        countLabel: filter === 'weak' ? `易忘 ${members.length} 词` : `已学 ${members.filter((word) => word.state !== 'unseen').length} / ${members.length} 词` });
     }).filter((group) => group.total);
     this.setData({
       dayGroups,
@@ -120,13 +126,13 @@ Page({
 
   selectFilter(event) {
     this.limit = PAGE_SIZE;
-    this.setData({ activeFilter: event.currentTarget.dataset.filter }, () => this.refresh());
+    this.setData({ activeFilter: event.currentTarget.dataset.filter, dayIndex: 0, selectedDayLabel: '全部天数' }, () => this.refresh());
   },
 
   changeDay(event) {
     const dayIndex = Number(event.detail.value);
     this.limit = PAGE_SIZE;
-    this.setData({ dayIndex, activeFilter: 'all', selectedDayLabel: this.data.dayOptions[dayIndex].label, viewMode: 'words' }, () => this.refresh());
+    this.setData({ dayIndex, selectedDayLabel: this.data.dayOptions[dayIndex].label, viewMode: 'words' }, () => this.refresh());
   },
 
   openDay(event) {
@@ -142,13 +148,22 @@ Page({
 
   practiceDay() {
     const selected = this.data.dayOptions[this.data.dayIndex];
-    const session = practice.buildSession(store.getState(), selected.key === 'all' ? {} : selected);
+    const scope = this.data.activeFilter === 'weak' ? { scope: 'weak' } : {};
+    const session = practice.buildSession(store.getState(), Object.assign(scope, selected.key === 'all' ? {} : selected));
     if (!session.queue.length) {
       wx.showToast({ title: '这一天还没有已学词', icon: 'none' });
       return;
     }
     store.saveSession(session);
     wx.navigateTo({ url: '/pages/study/index?mode=practice' });
+  },
+
+  toggleWeak(event) {
+    const state = store.getState();
+    const marked = weakBook.toggle(state, event.currentTarget.dataset.id, Date.now());
+    store.saveState(state);
+    wx.showToast({ title: marked ? '已加入易忘' : '已移出易忘', icon: 'none' });
+    this.refresh();
   },
 
   loadMore() {
@@ -158,12 +173,12 @@ Page({
 
   async downloadAudio() {
     if (this.data.audioDownloading) return;
-    this.setData({ audioDownloading: true });
+    this.setData({ audioDownloading: true, audioDownloadError: '', audioDownloadLabel: '正在准备语音…' });
     try {
-      await audioResources.downloadAll((count, total) => this.setData({ audioDownloadLabel: `准备发音 ${count} / ${total}` }));
+      await audioResources.downloadAll((count, total, bytes) => this.setData({ audioDownloadLabel: `已准备 ${count}/${total} 包 · ${(bytes / 1000000).toFixed(1)}/${audioResources.sizeLabel}` }));
       this.setData({ audioDownloadLabel: '全部发音已准备好' });
     } catch (error) {
-      this.setData({ audioDownloadLabel: '下载中断，联网后点此继续' });
+      this.setData({ audioDownloadLabel: '下载未完成，点此重试', audioDownloadError: audioResources.describeError(error) });
     } finally { this.setData({ audioDownloading: false }); }
   },
 
@@ -171,6 +186,7 @@ Page({
     const word = getWord(event.currentTarget.dataset.id);
     if (!word || !this.audio) return;
     const request = this.audioRequest = (this.audioRequest || 0) + 1;
+    this.setData({ audioLoadingId: word.id });
     try {
     const source = await audioResources.sourceFor(word);
     if (request !== this.audioRequest || !this.audio) return;
@@ -179,7 +195,14 @@ Page({
     this.audio.src = source;
     this.audio.play();
     } catch (error) {
-      if (request === this.audioRequest) wx.showToast({ title: '请联网准备该词发音后再试', icon: 'none' });
+      if (request === this.audioRequest) wx.showModal({ title: '发音准备失败', content: audioResources.describeError(error), showCancel: false });
+    } finally {
+      if (request === this.audioRequest) this.setData({ audioLoadingId: '' });
     }
+  },
+
+  showExampleSource(event) {
+    const word = getWord(event.currentTarget.dataset.id);
+    if (word) wx.showModal({ title: '例句来源与说明', content: word.exampleSourceDetail, showCancel: false });
   },
 });

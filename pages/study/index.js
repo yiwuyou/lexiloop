@@ -1,10 +1,12 @@
 const context = require('../../utils/context');
-const { DAY_MS } = require('../../utils/date');
+const mastery = require('../../utils/mastery');
+const { DAY_MS, dayKey, startOfDay } = require('../../utils/date');
 const scheduler = require('../../utils/scheduler');
 const store = require('../../utils/store');
 const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
 const { getWord } = require('../../utils/words');
+const weakBook = require('../../utils/weak-book');
 
 const PHASE_LABELS = {
   review: '到期复习',
@@ -32,6 +34,13 @@ Page({
     sessionSummary: null,
     total: 1,
     word: null,
+    audioLoading: false,
+    waiting: false,
+    waitSeconds: 0,
+    pendingCount: 0,
+    contentScrollTop: 0,
+    contentHeight: 0,
+    isWeakMarked: false,
   },
 
   onLoad(options = {}) {
@@ -56,15 +65,28 @@ Page({
       wx.reLaunch({ url: '/pages/today/index' });
       return;
     }
+    if (!this.data.isPractice && !this.session.masteryVersion) {
+      const state = store.getState();
+      this.session.queue.slice(0, this.session.index).forEach(item => {
+        const card = state.cards[item.wordId];
+        if (card && ['again', 'hard'].includes(card.lastGrade)) card.needsRecall = true;
+      });
+      this.session.masteryVersion = 1;
+      store.saveState(state);
+      store.saveSession(this.session);
+    }
     this.activeStartedAt = Date.now();
     this.renderCurrent();
   },
 
   onShow() {
     this.activeStartedAt = Date.now();
+    if (this.session && !this.data.completed) this.renderCurrent();
   },
 
   onHide() {
+    clearTimeout(this.waitTimer);
+    this.setData({ audioLoading: false });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
     this.captureElapsed();
@@ -73,6 +95,7 @@ Page({
   },
 
   onUnload() {
+    clearTimeout(this.waitTimer);
     this.audioRequest = (this.audioRequest || 0) + 1;
     this.captureElapsed();
     if (this.session && !this.data.completed) store.saveSession(this.session);
@@ -91,7 +114,8 @@ Page({
     if (this.data.isPractice) return null;
     const previous = state.daily[this.session.day] || {};
     state.daily[this.session.day] = Object.assign({}, previous, {
-      completedAt: completedAt || previous.completedAt || 0,
+      completedAt: completedAt || 0,
+      pendingCount: mastery.remaining(this.session, state.cards).length,
       contextCorrect: this.session.contextCorrect,
       contextDone: this.session.contextDone,
       dueDone: this.session.dueDone,
@@ -111,10 +135,21 @@ Page({
   },
 
   renderCurrent() {
+    clearTimeout(this.waitTimer);
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
     if (this.session.index >= this.session.queue.length) {
+      if (!this.data.isPractice) mastery.recover(this.session, store.getState().cards);
+    }
+    if (this.session.index >= this.session.queue.length) {
       this.finishSession();
+      return;
+    }
+    if (!mastery.available(this.session, Date.now())) {
+      const waitSeconds = Math.max(1, Math.ceil((this.currentItem().availableAt - Date.now()) / 1000));
+      this.setData({ waiting: true, waitSeconds });
+      store.saveSession(this.session);
+      this.waitTimer = setTimeout(() => this.renderCurrent(), 1000);
       return;
     }
     const item = this.currentItem();
@@ -128,10 +163,21 @@ Page({
       .slice(0, this.session.index + 1)
       .filter((candidate) => candidate.phase === item.phase).length;
     const phaseTotal = this.session.queue.filter((candidate) => candidate.phase === item.phase).length;
-    const question = item.phase === 'context' ? context.getById(item.questionId) : null;
+    let question = item.phase === 'context' ? context.getById(item.questionId) : null;
+    if (question && item.retry) {
+      const shift = item.retry % question.choices.length;
+      question = Object.assign({}, question, { choices: question.choices.slice(shift).concat(question.choices.slice(0, shift)),
+        answer: (question.answer - shift + question.choices.length) % question.choices.length });
+    }
+    const state = store.getState();
     this.setData({
-      contextAnswered: false,
-      contextCorrect: false,
+      waiting: false,
+      contentScrollTop: this.data.contentScrollTop === 0 ? 1 : 0,
+      contentHeight: 0,
+      pendingCount: this.data.isPractice ? 0 : mastery.remaining(this.session, state.cards).length,
+      contextAnswered: Boolean(item.answered),
+      audioLoading: false,
+      contextCorrect: Boolean(item.correct),
       current: this.session.index + 1,
       currentInPhase: samePhaseBefore,
       isContext: item.phase === 'context',
@@ -140,19 +186,38 @@ Page({
       progress: Math.round(((this.session.index + 1) / this.session.queue.length) * 100),
       question,
       revealed: false,
-      selectedChoice: -1,
+      selectedChoice: item.selectedChoice == null ? -1 : item.selectedChoice,
       total: this.session.queue.length,
       word,
+      isWeakMarked: weakBook.isMarked(state, word.id),
     });
   },
 
   revealAnswer() {
-    this.setData({ revealed: true });
+    this.setData({ revealed: true, contentHeight: 0 }, () => this.fitAnswerContent());
+  },
+  fitAnswerContent() {
+    if (!this.data.revealed || this.data.isContext || this.data.completed || typeof wx.createSelectorQuery !== 'function') return;
+    const wordId = this.data.word.id;
+    const measure = () => {
+      const query = wx.createSelectorQuery().in(this);
+      query.select('.study-content').boundingClientRect();
+      query.select('.word-card').boundingClientRect();
+      query.exec(rects => {
+        if (!rects[0] || !rects[1] || !this.data.revealed || this.data.word.id !== wordId) return;
+        this.setData({ contentHeight: Math.max(1, Math.ceil(Math.min(rects[0].height, rects[1].height))) });
+      });
+    };
+    if (wx.nextTick) wx.nextTick(measure); else measure();
+  },
+  onResize() {
+    this.setData({ contentHeight: 0 }, () => this.fitAnswerContent());
   },
 
   async playPronunciation() {
     if (!this.data.word || !this.data.word.audio || !this.audio) return;
     const request = this.audioRequest = (this.audioRequest || 0) + 1;
+    this.setData({ audioLoading: true });
     try {
     const source = await audioResources.sourceFor(this.data.word);
     if (request !== this.audioRequest || !this.audio) return;
@@ -161,8 +226,14 @@ Page({
     this.audio.src = source;
     this.audio.play();
     } catch (error) {
-      if (request === this.audioRequest) wx.showToast({ title: '请联网准备该词发音后再试', icon: 'none' });
+      if (request === this.audioRequest) wx.showModal({ title: '发音准备失败', content: audioResources.describeError(error) + '。无需先下载全部语音，可联网后直接点播放重试。', showCancel: false });
+    } finally {
+      if (request === this.audioRequest) this.setData({ audioLoading: false });
     }
+  },
+
+  showExampleSource() {
+    if (this.data.word) wx.showModal({ title: '例句来源与说明', content: this.data.word.exampleSourceDetail, showCancel: false });
   },
 
   rate(event) {
@@ -186,6 +257,7 @@ Page({
     const state = store.getState();
     const previous = state.cards[word.id];
     state.cards[word.id] = scheduler.review(previous, grade, now);
+    if (weakBook.shouldAutoMark(state.cards[word.id], grade)) weakBook.mark(state, word.id, 'formal', now);
     store.appendReview(state, {
       at: now,
       day: this.session.day,
@@ -199,17 +271,12 @@ Page({
     if (item.phase === 'reinforcement') this.session.reinforcementDone += 1;
     this.session.ratings[grade] = (this.session.ratings[grade] || 0) + 1;
 
-    if ((grade === 'again' || grade === 'hard') && !item.reinforced) {
+    if (grade === 'again' || grade === 'hard') {
       const alreadyQueued = this.session.queue
         .slice(this.session.index + 1)
         .some((candidate) => candidate.wordId === word.id && candidate.phase === 'reinforcement');
       if (!alreadyQueued) {
-        const insertAt = Math.min(this.session.queue.length, this.session.index + 9);
-        this.session.queue.splice(insertAt, 0, {
-          wordId: word.id,
-          phase: 'reinforcement',
-          reinforced: true,
-        });
+        mastery.retry(this.session, item, now);
       }
     }
 
@@ -224,6 +291,15 @@ Page({
     }
   },
 
+  toggleWeak() {
+    if (!this.data.word) return;
+    const state = store.getState();
+    const marked = weakBook.toggle(state, this.data.word.id, Date.now());
+    store.saveState(state);
+    this.setData({ isWeakMarked: marked });
+    wx.showToast({ title: marked ? '已加入易忘' : '已移出易忘', icon: 'none' });
+  },
+
   chooseContext(event) {
     if (this.data.contextAnswered) return;
     const index = Number(event.currentTarget.dataset.index);
@@ -234,10 +310,16 @@ Page({
     const state = store.getState();
     const card = state.cards[item.wordId];
     if (!correct && card) {
-      card.dueAt = Math.min(card.dueAt || now + DAY_MS, now + DAY_MS);
+      card.dueAt = Math.min(card.dueAt || now + DAY_MS, startOfDay(now) + DAY_MS);
+      card.failedDay = dayKey(now);
       card.lastGrade = 'hard';
+      card.interval = Math.min(card.interval || 1, 1);
+      card.needsContext = item.questionId;
       state.cards[item.wordId] = card;
+      weakBook.mark(state, item.wordId, 'context', now);
     }
+    if (correct && card) card.needsContext = '';
+    if (!correct) mastery.retry(this.session, item, now);
     store.appendReview(state, {
       at: now,
       day: this.session.day,
@@ -246,6 +328,11 @@ Page({
       result: correct ? 'correct' : 'wrong',
     });
     store.saveState(state);
+    // Save the answered state before leaving the explanation screen.
+    item.answered = true;
+    item.correct = correct;
+    item.selectedChoice = index;
+    store.saveSession(this.session);
     this.setData({
       contextAnswered: true,
       contextCorrect: correct,

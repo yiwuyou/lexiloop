@@ -2,10 +2,14 @@
 import csv
 import json
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / 'scripts' / 'work'
+sys.path.insert(0, str(WORK / 'tools'))
+from opencc import OpenCC
+to_simplified = OpenCC('t2s').convert
 rows = json.loads((ROOT / 'data' / 'vocabulary.js').read_text('utf-8').split('module.exports=')[1].rstrip(';\n\r'))
 ALIASES = {'airconditioning': 'air conditioning', 'organisation/-z ation': 'organization',
            'theatre/-ter': 'theater', 'judg(e)ment': 'judgment', 'catalog(ue)': 'catalog',
@@ -47,6 +51,7 @@ for head in heads:
 candidates = {}
 for line in (WORK / 'tatoeba' / 'cmn.txt').read_text('utf-8').splitlines():
     en, zh, credit = line.split('\t')
+    zh = to_simplified(zh)
     if not 5 <= len(en.split()) <= 20 or len(en) > 145:
         continue
     tokens = re.findall(r"[a-z]+(?:['-][a-z]+)*", en.lower())
@@ -65,7 +70,7 @@ if manual_path.exists():
             continue
         head, en, zh = line.split('\t')
         for key in head.split('|'):
-            manual[key] = (en, zh, 'LexiLoop 编写')
+            manual[key] = (en, to_simplified(zh), 'LexiLoop 编写')
 
 content, missing, missing_ipa = {}, [], []
 manifest = []

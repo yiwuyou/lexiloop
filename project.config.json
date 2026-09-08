@@ -8,6 +8,8 @@
     "ignore": [
       { "type": "folder", "value": "assets/audio" },
       { "type": "file", "value": "data/authored-examples.tsv" },
+      { "type": "file", "value": "data/memory-guides.json" },
+      { "type": "file", "value": "data/word-relations.json" },
       { "type": "folder", "value": "tests" },
       { "type": "folder", "value": "scripts" },
       { "type": "file", "value": "README.md" },

@@ -1,13 +1,14 @@
 const { getWords } = require('./words');
 const scheduler = require('./scheduler');
 const { dayKey } = require('./date');
+const weakBook = require('./weak-book');
 
 // Free practice owns its own session and counters. It never calls the scheduler.
 function buildSession(state, options = {}, now = Date.now()) {
   let words = getWords().filter((word) => state.cards[word.id] && state.cards[word.id].seen);
   if (options.category) words = words.filter((word) => word.category === options.category);
   if (options.day) words = words.filter((word) => word.day === Number(options.day));
-  if (options.scope === 'weak') words = words.filter((word) => scheduler.isWeak(state.cards[word.id]));
+  if (options.scope === 'weak') words = words.filter((word) => weakBook.isMarked(state, word.id));
   if (!options.day) {
     words.sort((a, b) => (state.cards[b.id].lastAt || 0) - (state.cards[a.id].lastAt || 0) || b.position - a.position);
     words = words.slice(0, 50);

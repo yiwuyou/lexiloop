@@ -1,0 +1,1 @@
+module.exports = {"speech01": 811280, "speech02": 794576, "speech03": 778736, "speech04": 780176, "speech05": 802160, "speech06": 763088, "speech07": 747632, "speech08": 754352, "speech09": 765584, "speech10": 807728, "speech11": 763376, "speech12": 298472};

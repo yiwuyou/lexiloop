@@ -1,7 +1,8 @@
 const { dayKey, startOfDay } = require('./date');
 const context = require('./context');
-const { isStable, isWeak } = require('./scheduler');
+const { isStable } = require('./scheduler');
 const { getWord, getWords } = require('./words');
+const weakBook = require('./weak-book');
 
 function summarize(state, settings, now) {
   const time = now || Date.now();
@@ -23,8 +24,8 @@ function summarize(state, settings, now) {
     }
     learned += 1;
     if (isStable(card)) stable += 1;
-    if (isWeak(card)) weak += 1;
-    if (card.dueAt <= time && card.lastAt < todayStart) {
+    if (weakBook.isMarked(state, word.id)) weak += 1;
+    if (card.needsRecall || card.needsContext || (card.dueAt <= time && card.lastAt < todayStart)) {
       due.push(word);
       if (card.dueAt < todayStart) overdue.push(word);
     }
@@ -57,7 +58,7 @@ function appendContextItems(queue) {
   queue.forEach((item) => {
     const word = getWord(item.wordId);
     const question = word && context.getByWord(word.word);
-    if (question && !seenQuestions[question.id] && contextItems.length < 18) {
+    if (question && !seenQuestions[question.id]) {
       seenQuestions[question.id] = true;
       contextItems.push({ wordId: word.id, phase: 'context', questionId: question.id, reinforced: true });
     }
@@ -150,7 +151,7 @@ function progressStats(state) {
     if (word.category === 'core') coreLearned += 1;
     else highLearned += 1;
     if (isStable(card)) stable += 1;
-    if (isWeak(card)) weak += 1;
+    if (weakBook.isMarked(state, word.id)) weak += 1;
   });
 
   return {

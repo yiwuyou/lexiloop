@@ -1,5 +1,5 @@
-const CURRENT_STATE_SCHEMA = 2;
-const CURRENT_BACKUP_FORMAT = 2;
+const CURRENT_STATE_SCHEMA = 3;
+const CURRENT_BACKUP_FORMAT = 3;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -26,6 +26,22 @@ function migrateV1ToV2(source) {
   return state;
 }
 
+function migrateV2ToV3(source) {
+  const state = clone(source);
+  state.schemaVersion = 3;
+  state.weakBook = state.weakBook || {};
+  Object.keys(state.cards || {}).forEach((wordId) => {
+    const card = state.cards[wordId] || {};
+    const wasWeak = card.seen
+      && (Number(card.lapses || 0) >= 2 || card.lastGrade === 'again')
+      && !(Number(card.interval || 0) >= 14 && card.lastGrade !== 'again');
+    if (wasWeak && !state.weakBook[wordId]) {
+      state.weakBook[wordId] = { addedAt: card.lastAt || state.createdAt || 0, source: 'migration' };
+    }
+  });
+  return state;
+}
+
 function stateVersion(state) {
   if (!state || typeof state !== 'object') return 0;
   return Number(state.schemaVersion || state.version || 1);
@@ -37,6 +53,7 @@ function validateState(state) {
     && state.schemaVersion === CURRENT_STATE_SCHEMA
     && state.cards && typeof state.cards === 'object'
     && state.daily && typeof state.daily === 'object'
+    && state.weakBook && typeof state.weakBook === 'object'
     && Array.isArray(state.recentReviews)
   );
 }
@@ -51,6 +68,10 @@ function migrateState(source) {
   if (version === 1) {
     state = migrateV1ToV2(state);
     version = 2;
+  }
+  if (version === 2) {
+    state = migrateV2ToV3(state);
+    version = 3;
   }
   if (version !== CURRENT_STATE_SCHEMA || !validateState(state)) {
     throw new Error('invalid-state');

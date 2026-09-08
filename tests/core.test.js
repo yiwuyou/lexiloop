@@ -80,17 +80,32 @@ function testMigration() {
     recentReviews: [{ wordId: 'c-1-1' }],
   };
   const migrated = migrations.migrateState(old);
-  assert.strictEqual(migrated.schemaVersion, 2);
+  assert.strictEqual(migrated.schemaVersion, 3);
   assert.strictEqual(migrated.cards['c-1-1'].interval, 3);
   assert.strictEqual(migrated.daily['2026-09-04'].newDone, 50);
   assert.strictEqual(migrated.daily['2026-09-04'].extraNew, 0);
+  assert.deepStrictEqual(migrated.weakBook, {});
   const backup = migrations.migrateBackup({ type: 'mem-vocab-backup', version: 1, state: old });
-  assert.strictEqual(backup.state.schemaVersion, 2, 'v1 backup should remain importable');
+  assert.strictEqual(backup.state.schemaVersion, 3, 'v1 backup should remain importable');
+
+  const v2 = {
+    schemaVersion: 2,
+    createdAt: 456,
+    cards: {
+      'c-1-1': { seen: true, lapses: 2, lastGrade: 'hard', interval: 1, lastAt: 789 },
+      'c-1-2': { seen: true, lapses: 0, lastGrade: 'good', interval: 3, lastAt: 790 },
+    },
+    daily: {},
+    recentReviews: [],
+  };
+  const migratedV2 = migrations.migrateState(v2);
+  assert.deepStrictEqual(migratedV2.weakBook['c-1-1'], { addedAt: 789, source: 'migration' });
+  assert.strictEqual(migratedV2.weakBook['c-1-2'], undefined);
 }
 
 function testExtraPlan() {
   const now = new Date(2026, 8, 5, 9, 0, 0).getTime();
-  const state = { schemaVersion: 2, cards: {}, daily: {}, recentReviews: [] };
+  const state = { schemaVersion: 3, cards: {}, daily: {}, weakBook: {}, recentReviews: [] };
   for (let index = 1; index <= 50; index += 1) {
     state.cards[`c-1-${index}`] = scheduler.review(null, 'good', now);
   }

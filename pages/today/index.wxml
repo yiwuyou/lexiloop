@@ -4,6 +4,7 @@
     title="{{greetingText}}，今天按节奏完成。"
     detail="英语（二）· 目标60分"
   ></page-header>
+  <view class="home-status"><text>{{audioStatus}}</text><text>版本 {{appVersion}}</text></view>
 
   <block wx:if="{{!completed}}">
     <view class="hero">
@@ -28,7 +29,7 @@
       <view class="route-title">今天不是只看一遍</view>
       <view class="route-row"><text class="route-index">1</text><view><text class="route-name">到期回忆</text><text class="route-note">优先处理该复习的词</text></view></view>
       <view class="route-row"><text class="route-index">2</text><view><text class="route-name">新词建联</text><text class="route-note">先回忆，再以机构释义为目标建立关联</text></view></view>
-      <view class="route-row"><text class="route-index">3</text><view><text class="route-name">难词强化</text><text class="route-note">没想起和部分想起会再次出现</text></view></view>
+      <view class="route-row"><text class="route-index">3</text><view><text class="route-name">逐词过关</text><text class="route-note">每个词独立想起一次；没想起的词间隔后再练</text></view></view>
       <view class="route-row"><text class="route-index">4</text><view><text class="route-name">延迟抽测</text><text class="route-note">多义词使用客观选项辨义</text></view></view>
     </view>
   </block>

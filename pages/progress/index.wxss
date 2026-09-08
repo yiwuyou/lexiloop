@@ -162,3 +162,7 @@
   min-height: 84rpx;
   font-size: 26rpx;
 }
+.backup-result { margin-top: 24rpx; padding: 22rpx; background: var(--soft); border-radius: 18rpx; color: var(--main-strong); font-size: 25rpx; line-height: 1.6; overflow-wrap: anywhere; }
+.backup-card button.secondary-button { width: 100%; min-width: 0; padding: 18rpx 10rpx; }
+.backup-card button.text-restore-button { width: 100%; margin-top: 18rpx; padding: 18rpx; background: transparent; color: var(--main-strong); font-size: 25rpx; line-height: 1.5; }
+.restore-text { width: 100%; height: 260rpx; margin: 16rpx 0; padding: 18rpx; border: 2rpx solid var(--line); border-radius: 18rpx; font-size: 24rpx; }

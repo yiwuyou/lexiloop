@@ -45,8 +45,18 @@
     <view class="section-head"><text>本地数据备份</text></view>
     <text class="backup-note">体验版记录只保存在当前iPhone。建议每周导出一次，并把文件发到自己的微信文件传输助手。</text>
     <view class="backup-actions">
-      <button class="secondary-button" bindtap="exportBackup">导出备份</button>
+      <button class="secondary-button" loading="{{backupBusy}}" disabled="{{backupBusy}}" bindtap="exportBackup">导出备份</button>
       <button class="secondary-button" bindtap="importBackup">恢复备份</button>
+    </view>
+    <view class="backup-result" wx:if="{{backupStatus}}"><text selectable>{{backupStatus}}</text></view>
+    <view class="backup-actions" wx:if="{{backupReady}}">
+      <button class="secondary-button" bindtap="sendBackupFile">发送备份文件</button>
+      <button class="secondary-button" bindtap="copyBackupText">复制备份文本</button>
+    </view>
+    <button class="text-restore-button" bindtap="toggleTextRestore">{{restoreTextOpen ? '收起文本恢复' : '用备份文本恢复'}}</button>
+    <view wx:if="{{restoreTextOpen}}">
+      <textarea class="restore-text" value="{{restoreText}}" bindinput="onRestoreText" maxlength="-1" placeholder="在此粘贴之前保存的完整备份文本" />
+      <button class="secondary-button" bindtap="restoreFromText">检查并恢复</button>
     </view>
   </view>
 </view>

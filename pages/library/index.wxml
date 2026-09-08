@@ -17,12 +17,12 @@
     />
   </view>
 
-  <scroll-view class="filter-scroll" scroll-x enable-flex>
+  <view class="filter-scroll">
     <button class="filter {{activeFilter === 'all' ? 'is-active' : ''}}" data-filter="all" bindtap="selectFilter">全部</button>
     <button class="filter {{activeFilter === 'core' ? 'is-active' : ''}}" data-filter="core" bindtap="selectFilter">核心</button>
     <button class="filter {{activeFilter === 'high' ? 'is-active' : ''}}" data-filter="high" bindtap="selectFilter">高频</button>
     <button class="filter {{activeFilter === 'weak' ? 'is-active' : ''}}" data-filter="weak" bindtap="selectFilter">易忘</button>
-  </scroll-view>
+  </view>
 
   <view class="library-controls">
     <button class="filter {{viewMode === 'days' ? 'is-active' : ''}}" bindtap="showDays">按天查看</button>
@@ -32,30 +32,36 @@
     </picker>
   </view>
   <button class="secondary-button day-practice" loading="{{audioDownloading}}" bindtap="downloadAudio">{{audioDownloadLabel}}</button>
+  <view class="audio-info">全部语音约 {{audioSize}}，12 个小包，支持 5G / Wi-Fi。单词旁点播放会按需准备所属小包，无需先下载全部。</view>
+  <view class="audio-error" wx:if="{{audioDownloadError}}" selectable>{{audioDownloadError}}</view>
 
   <view class="warning">源文件“高频 day 32”缺少编号19，程序保留缺号，不自动补造单词。</view>
 
   <view class="result-head"><text>共 {{resultCount}} 条</text><text class="muted">按机构顺序排列</text></view>
   <view class="day-grid" wx:if="{{viewMode === 'days'}}">
     <button class="day-card" wx:for="{{dayGroups}}" wx:key="key" data-key="{{item.key}}" bindtap="openDay">
-      <text>{{item.label}}</text><text>已学 {{item.learned}} / {{item.total}} 词</text>
+      <text>{{item.label}}</text><text>{{item.countLabel}}</text>
     </button>
   </view>
   <block wx:else>
-  <button class="secondary-button day-practice" bindtap="practiceDay">{{dayIndex ? '主动复习这一天的已学词' : '主动复习最近已学的 50 词'}}</button>
+  <button class="secondary-button day-practice" bindtap="practiceDay">{{activeFilter === 'weak' ? (dayIndex ? '主动复习这一天的易忘词' : '主动复习易忘词') : (dayIndex ? '主动复习这一天的已学词' : '主动复习最近已学的 50 词')}}</button>
   <view class="word-list card" wx:if="{{visibleWords.length}}">
     <view class="word-row" wx:for="{{visibleWords}}" wx:key="id">
       <view class="word-copy">
         <view class="word-title-line">
           <text class="word-name">{{item.word}}</text>
-          <button class="mini-audio" wx:if="{{item.audio}}" data-id="{{item.id}}" bindtap="playPronunciation" aria-label="播放{{item.word}}的发音">▶</button>
+          <button class="mini-audio" wx:if="{{item.audio}}" data-id="{{item.id}}" bindtap="playPronunciation" aria-label="播放{{item.word}}的发音">{{audioLoadingId === item.id ? '…' : '▶'}}</button>
         </view>
         <text class="word-ipa" wx:if="{{item.ipa}}">{{item.ipa}}</text>
         <text class="word-meaning">{{item.meaning}}</text>
+        <text class="word-pos">{{item.partOfSpeech}}</text>
         <text class="word-source">{{item.sourceLabel}}</text>
-        <view class="library-example" wx:if="{{item.example}}"><text>{{item.example}}</text><text>{{item.translation}}</text><text>{{item.exampleCredit}}</text></view>
+        <view class="library-example" wx:if="{{item.example}}"><text>{{item.example}}</text><text>{{item.translation}}</text><text class="source-link" data-id="{{item.id}}" bindtap="showExampleSource" role="button">例句来源与说明</text></view>
       </view>
-      <text class="state state-{{item.state}}">{{item.stateLabel}}</text>
+      <view class="state-actions">
+        <text class="state state-{{item.state}}">{{item.stateLabel}}</text>
+        <button class="weak-manage {{item.isWeakMarked ? 'is-marked' : ''}}" wx:if="{{item.state !== 'unseen'}}" data-id="{{item.id}}" bindtap="toggleWeak">{{item.isWeakMarked ? '移出' : '加入易忘'}}</button>
+      </view>
     </view>
   </view>
   <view class="empty" wx:else>没有找到匹配的单词</view>

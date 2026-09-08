@@ -1,4 +1,4 @@
-const { DAY_MS } = require('./date');
+const { DAY_MS, dayKey, startOfDay } = require('./date');
 
 const MINUTE_MS = 60 * 1000;
 
@@ -19,6 +19,7 @@ function initialState() {
     dueAt: 0,
     lastAt: 0,
     lastGrade: '',
+    hardStreak: 0,
   };
 }
 
@@ -34,6 +35,10 @@ function review(previous, grade, now) {
   let ease = state.ease || 2.4;
   let dueAt;
   let lapses = state.lapses || 0;
+  const today = dayKey(time);
+  const failed = grade === GRADE.AGAIN || grade === GRADE.HARD;
+  const failedToday = failed || state.failedDay === today;
+  const sameDaySuccess = state.passedDay === today;
 
   if (grade === GRADE.AGAIN) {
     interval = 0;
@@ -53,7 +58,17 @@ function review(previous, grade, now) {
     dueAt = time + interval * DAY_MS;
   }
 
-  return {
+  // Within-session repetitions are not independent spaced successes.
+  if (!failed && failedToday) {
+    interval = 1;
+    dueAt = startOfDay(time) + DAY_MS;
+    ease = state.ease;
+  } else if (!failed && sameDaySuccess) {
+    interval = state.interval;
+    dueAt = state.dueAt;
+    ease = state.ease;
+  }
+  return Object.assign({}, state, {
     seen: true,
     reps: state.reps + 1,
     lapses,
@@ -62,7 +77,11 @@ function review(previous, grade, now) {
     dueAt,
     lastAt: time,
     lastGrade: grade,
-  };
+    hardStreak: grade === GRADE.HARD ? Number(state.hardStreak || 0) + 1 : 0,
+    needsRecall: failed,
+    failedDay: failed ? today : state.failedDay || '',
+    passedDay: failed ? state.passedDay || '' : today,
+  });
 }
 
 function isWeak(state) {

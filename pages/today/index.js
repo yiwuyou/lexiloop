@@ -2,6 +2,8 @@ const dates = require('../../utils/date');
 const plan = require('../../utils/study-plan');
 const store = require('../../utils/store');
 const practice = require('../../utils/practice');
+const audio = require('../../utils/audio');
+const appVersion = require('../../utils/version');
 
 function greeting(hour) {
   if (hour < 6) return '夜深了';
@@ -14,6 +16,7 @@ function greeting(hour) {
 Page({
   data: {
     completed: false,
+    audioStatus: '',
     dateText: '',
     daysToExam: 0,
     dueCount: 0,
@@ -29,13 +32,19 @@ Page({
     resume: false,
     canAdd25: false,
     canAdd50: false,
+    appVersion,
   },
 
   onShow() {
     const tabBar = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tabBar) tabBar.setData({ selected: 0 });
     this.refresh();
+    clearInterval(this.audioTimer);
+    this.setData({ audioStatus: audio.getStatus() });
+    this.audioTimer = setInterval(() => this.setData({ audioStatus: audio.getStatus() }), 1000);
   },
+  onHide() { clearInterval(this.audioTimer); },
+  onUnload() { clearInterval(this.audioTimer); },
 
   refresh() {
     const now = Date.now();
@@ -49,7 +58,7 @@ Page({
     const todayNew = summary ? (summary.newGoal || summary.newDone || 0) : 0;
     const remainingCapacity = Math.max(0, (settings.dailyMaxNewCount || 100) - Math.max(settings.dailyNewCount, todayNew));
     this.setData({
-      completed: Boolean(summary && summary.completedAt),
+      completed: Boolean(summary && summary.completedAt && !(session && session.day === dates.dayKey(now) && session.index < session.queue.length)),
       dateText: dates.formatMonthDay(now),
       daysToExam: dates.daysUntil(settings.examDate, now),
       dueCount: stats.due.length,
