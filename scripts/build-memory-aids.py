@@ -23,6 +23,7 @@ vocabulary = load_js(ROOT / 'data/vocabulary.js')
 guides = json.loads((ROOT / 'data/memory-guides.json').read_text('utf-8'))
 relations = json.loads((ROOT / 'data/word-relations.json').read_text('utf-8'))
 heads = {item['spokenWord'] for item in content.values()}
+heads_by_lower = {word.lower(): word for word in heads}
 needed = heads | {word for group in relations['families'] for word in group}
 dictionary = {}
 known_words = set()
@@ -59,6 +60,43 @@ def senses(entry):
 def gloss(word):
     rows = senses(dictionary.get(word, {}))
     return re.split('[,，;；]', rows[0][1])[0].strip() if rows else ''
+
+
+# Proper names or out-of-list words intentionally used as familiar anchors.
+# These require a reviewed Chinese label rather than a guessed dictionary sense.
+LINK_GLOSS_OVERRIDES = {
+    'libra': '天秤座',
+}
+LINK_SKIP = {
+    'a', 'b', 'the', 'to', 'with', 'from', 'for', 'of', 'on', 'in', 'into',
+    'and', 'or', 'someone', 'somebody', 'something', 'be', 'is', 'are',
+}
+
+
+def annotate_linked_words(value, head):
+    """Label other vocabulary/proper-name anchors as English（标准中文义）.
+
+    Function words and the current headword are left alone. Existing parenthetic
+    labels are preserved, so reviewed wording can override the dictionary gloss.
+    """
+    if not value:
+        return value
+
+    def replace(match):
+        token = match.group(0)
+        lower = token.lower()
+        if lower == head.lower() or lower in LINK_SKIP:
+            return token
+        tail = value[match.end():]
+        if re.match(r'\s*(?:[（(]|是[“"])', tail):
+            return token
+        meaning = LINK_GLOSS_OVERRIDES.get(lower)
+        linked_head = heads_by_lower.get(lower)
+        if not meaning and linked_head:
+            meaning = gloss(linked_head)
+        return f'{token}（{meaning}）' if meaning else token
+
+    return re.sub(r"\b[A-Za-z][A-Za-z'-]*\b", replace, value)
 
 def family_for(head):
     peers = []
@@ -201,6 +239,8 @@ for row in vocabulary:
     item['contrast'] = '\n'.join(contrasts[:2])
     if head in guides:
         item.update(guides[head])
+        for key in ['cue', 'breakdownNote', 'contrast']:
+            item[key] = annotate_linked_words(item.get(key, ''), head)
         item['cueLabel'] = '这样关联'
         item['aidSource'] = '针对性理解提示'
     # Avoid displaying a second definition that merely repeats the institution's.

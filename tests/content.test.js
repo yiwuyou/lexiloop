@@ -4,6 +4,7 @@ const path = require('path');
 const vm = require('vm');
 const { getWords, getWord } = require('../utils/words');
 const source = require('../data/vocabulary');
+const memoryGuides = require('../data/memory-guides.json');
 const sizes = require('../data/audio-sizes');
 const root = path.join(__dirname, '..');
 const words = getWords();
@@ -51,6 +52,8 @@ const dictate = words.find((word) => word.word.toLowerCase() === 'dictate');
 const desperate = getWord('c-3-15');
 const deteriorate = getWord('c-3-17');
 const drawback = getWord('c-3-24');
+const deliberate = getWord('c-3-9');
+const dilemma = getWord('c-3-22');
 assert.strictEqual(device.breakdown, '', 'device must not be mechanically split into dev + ice');
 assert.ok(device.associationHint.includes('devise'));
 assert.strictEqual(dictate.breakdown, 'dict·ate');
@@ -61,6 +64,28 @@ assert.strictEqual(deteriorate.associationLabel, '声音画面');
 assert.ok(deteriorate.associationHint.includes('地铁里又热'));
 assert.strictEqual(drawback.breakdown, 'draw·back');
 assert.ok(drawback.breakdownNote.includes('往后拉'));
+assert.strictEqual(dilemma.breakdown, 'di·lemma');
+assert.ok(dilemma.breakdownNote.includes('双 m'));
+assert.ok(dilemma.associationHint.includes('两个 m'));
+assert.strictEqual(deliberate.breakdown, 'de·liber·ate');
+assert.ok(deliberate.breakdownNote.includes('Libra（天秤座）'));
+assert.ok(deliberate.associationHint.includes('Libra（天秤座）'));
+const wordsByLowerHead = new Map(words.map((word) => [word.word.toLowerCase(), word]));
+for (const [head, guide] of Object.entries(memoryGuides)) {
+  const built = wordsByLowerHead.get(head.toLowerCase());
+  if (!built) continue;
+  for (const [sourceKey, builtKey] of [['cue', 'associationHint'], ['breakdownNote', 'breakdownNote'], ['contrast', 'contrast']]) {
+    const raw = guide[sourceKey] || '';
+    const rendered = built[builtKey] || '';
+    const references = raw.match(/\b[A-Za-z][A-Za-z'-]*\b/g) || [];
+    for (const reference of references) {
+      if (reference.toLowerCase() === head.toLowerCase() || !wordsByLowerHead.has(reference.toLowerCase())) continue;
+      const escaped = reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      assert.ok(new RegExp(`${escaped}(?:（|\\s*是[“"])`, 'i').test(rendered),
+        `${head} references ${reference} without a Chinese gloss in ${builtKey}`);
+    }
+  }
+}
 for (const page of ['study', 'library']) {
   const markup = fs.readFileSync(path.join(root, 'pages', page, 'index.wxml'), 'utf8');
   assert.ok(markup.includes('partOfSpeech'));
