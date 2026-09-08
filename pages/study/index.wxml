@@ -33,7 +33,7 @@
           <text class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>
           <view class="answer" wx:else>
             <block wx:if="{{word.enhanced}}">
-              <view class="meaning-heading"><view><text>机构释义</text><text>{{word.partOfSpeech}}</text></view><button class="weak-link {{isWeakMarked ? 'is-marked' : ''}}" bindtap="toggleWeak">{{isWeakMarked ? '✓ 已在易忘' : '＋ 加入易忘'}}</button></view>
+              <view class="meaning-heading"><text class="meaning-meta">机构释义 · {{word.partOfSpeech}}</text><button class="weak-link {{isWeakMarked ? 'is-marked' : ''}}" bindtap="toggleWeak">{{isWeakMarked ? '✓ 已在易忘' : '＋ 加入易忘'}}</button></view>
               <text class="target-meaning">{{word.meaning}}</text>
               <view class="understanding-panel"><text class="understanding-label">理解</text><text class="understanding-text">{{word.core || word.meaning}}</text></view>
               <view class="memory-panel" wx:if="{{word.hasMemoryContent}}">

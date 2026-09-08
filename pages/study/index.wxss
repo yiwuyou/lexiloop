@@ -11,8 +11,8 @@
 .study-content { flex: 1; height: 0; min-height: 0; width: 100%; }
 .details-toggle { margin: 0; padding: 14rpx 8rpx; font-size: 23rpx; color: var(--main-strong); background: transparent; line-height: 1.4; }
 .help-links { display: flex; justify-content: space-between; gap: 16rpx; margin-top: 6rpx; }
-.meaning-heading { display: flex; align-items: center; justify-content: center; gap: 16rpx; margin-bottom: 8rpx; font-size: 23rpx; color: var(--main-strong); }
-.meaning-heading > view { display: flex; flex-wrap: wrap; justify-content: center; gap: 6rpx 16rpx; }
+.meaning-heading { display: flex; align-items: center; justify-content: space-between; gap: 14rpx; margin: 0 4rpx 10rpx; color: var(--main-strong); text-align: left; }
+.meaning-meta { min-width: 0; flex: 1; font-size: 22rpx; line-height: 1.4; }
 .extra-help { text-align: left; padding-top: 12rpx; }
 .scroll-hint { padding: 14rpx; text-align: center; font-size: 21rpx; color: var(--muted); }
 .reveal-dock { margin-top: 20rpx; }
@@ -166,9 +166,11 @@
 
 .target-meaning {
   margin-bottom: 24rpx;
+  padding: 0 4rpx;
   font-size: 36rpx;
   font-weight: 500;
   line-height: 1.4;
+  text-align: left;
 }
 
 .understanding-panel {

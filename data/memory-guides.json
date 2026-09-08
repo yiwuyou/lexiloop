@@ -76,5 +76,7 @@
   "conscience": {"core":"内心判断行为对错的道德感。","breakdown":"con·sci·ence","breakdownNote":"con- 有“共同”之意，sci 与“知道”有关，-ence 构成名词；可理解为内心知道什么是对错。","cue":"字形中包含 science，可用来记拼写；同时与 conscious（意识到的）区分词性和词尾。"},
   "diagnose": {"core":"根据症状或检查结果判断疾病或问题。","breakdown":"dia·gnose","breakdownNote":"先按发音分成两段记拼写；再与名词 diagnosis 一起记。","cue":"记结构 diagnose a disease＝诊断疾病；diagnose somebody with...＝诊断某人患有……。"},
   "detain": {"core":"把某人暂时扣留，不允许离开。","breakdown":"de·tain","breakdownNote":"-tain 可作为“握住、留住”的记忆线索；detain 强调扣留这一动作。","cue":"detain somebody for questioning＝扣留某人接受询问；先记动词动作。"},
-  "custody": {"core":"由警方、机构或监护人负责看管的状态。","breakdown":"cus·to·dy","breakdownNote":"按发音分段记拼写，不把分段强行解释为词根。","cue":"in custody＝被羁押；child custody＝子女监护权；先记名词状态。"}
+  "custody": {"core":"由警方、机构或监护人负责看管的状态。","breakdown":"cus·to·dy","breakdownNote":"按发音分段记拼写，不把分段强行解释为词根。","cue":"in custody＝被羁押；child custody＝子女监护权；先记名词状态。"},
+  "device": {"core":"为某种用途设计的装置或设备。","breakdown":"","breakdownNote":"","cue":"device 是名词“设备”；devise 是动词“设计、想出”。重点辨别结尾 c / s，不拆成 dev + ice。"},
+  "dictate": {"core":"把话说出来让人记录，也可指强行命令或决定。","breakdown":"dict·ate","breakdownNote":"dict- 与“说、表达”有关，-ate 构成动词；可联系 diction、dictionary。","cue":"dictate a message＝口述信息；dictate terms＝强行规定条件。"}
 }

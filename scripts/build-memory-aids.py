@@ -90,14 +90,6 @@ def spelling_breakdown(head):
         return ''
     if '-' in clean:
         return '·'.join(part for part in clean.split('-') if part)
-    # Real standalone course/dictionary words make the safest compound split.
-    compound_splits = []
-    for index in range(3, len(clean) - 2):
-        if clean[:index] in known_words and clean[index:] in known_words:
-            compound_splits.append((abs(index - len(clean) / 2), index))
-    if compound_splits:
-        index = min(compound_splits)[1]
-        return clean[:index] + '·' + clean[index:]
     for prefix in PREFIXES:
         base = clean[len(prefix):]
         if clean.startswith(prefix) and len(base) >= 3 and base in known_words:
@@ -107,22 +99,6 @@ def spelling_breakdown(head):
         candidates = [stem, stem + 'e', stem[:-1] + 'y' if stem.endswith('i') else '']
         if clean.endswith(suffix) and len(stem) >= 3 and any(candidate in known_words for candidate in candidates if candidate):
             return stem + '·' + suffix
-    # For longer hard-to-hold spellings, a neutral visual chunk is still useful.
-    # It is deliberately described as a spelling segment, never as word origin.
-    if len(clean) >= 6:
-        if len(clean) <= 8:
-            cuts = [len(clean) // 2]
-        elif len(clean) <= 12:
-            cuts = [round(len(clean) / 3), round(len(clean) * 2 / 3)]
-        else:
-            cuts = list(range(4, len(clean), 4))
-        parts = []
-        start = 0
-        for end in cuts + [len(clean)]:
-            if end > start:
-                parts.append(clean[start:end])
-                start = end
-        return '·'.join(parts)
     return ''
 
 def excerpt(example, head, entry):
