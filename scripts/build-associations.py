@@ -1,154 +1,107 @@
-"""Build one useful memory route per word without pretending one rule fits all.
+"""Publish only reviewed, spelling-linked memory routes.
 
-Priority:
-1. reviewed, word-specific cue;
-2. reviewed/transparent construction;
-3. reviewed confusion contrast;
-4. verified word family;
-5. a short lexical chunk taken from the word's real example.
-
-The fallback deliberately keeps the target word inside a short English chunk. It
-does not invent roots, compare unrelated spellings, or repeat a Chinese semantic
-group as though that were a mnemonic.
+This step is intentionally atomic: it audits a deep copy first and does not
+touch the runtime learning-content file unless every vocabulary head passes.
+Phrase chunks, example paraphrases and unrelated scenes are not substitutes
+for a form-to-meaning mnemonic.
 """
+import copy
 import json
 import re
 from pathlib import Path
 
-root = Path(__file__).resolve().parents[1]
-path = root / 'data/learning-content.js'
-data = json.loads(path.read_text('utf-8').split('module.exports')[1].lstrip(' =').rstrip(';\r\n'))
+
+ROOT = Path(__file__).resolve().parents[1]
+CONTENT_PATH = ROOT / 'data/learning-content.js'
+AUDIT_PATH = ROOT / 'scripts/work/association-audit.json'
+BANNED_FALLBACKS = re.compile(r'整块记|把这幕定格|记住例句|例句片段')
 
 
-def gloss(item):
-    return re.split('[;；]', item['meaning'])[0].strip()
+def load_content():
+    source = CONTENT_PATH.read_text('utf-8')
+    return json.loads(source.split('module.exports', 1)[1].lstrip(' =').rstrip(';\r\n'))
 
 
-def words_in(value):
-    return re.findall(r"[A-Za-z]+(?:[-'][A-Za-z]+)*", value or '')
+def normalized_letters(value):
+    return ''.join(re.findall(r'[a-z]', (value or '').lower()))
 
 
-def lexical_chunk(item):
-    """Extract a compact, POS-aware chunk around the actual target form."""
-    tokens = words_in(item.get('example', ''))
-    if not tokens:
-        return item['spokenWord']
+def audit_route(item):
+    head = item.get('spokenWord', '')
+    breakdown = item.get('breakdown', '')
+    note = item.get('breakdownNote', '')
+    cue = item.get('cue', '')
+    reasons = []
 
-    forms = {item['spokenWord'].lower()}
-    forms.update(form['word'].lower() for form in item.get('wordForms', []))
-    index = next((i for i, token in enumerate(tokens) if token.lower() in forms), -1)
-    if index < 0:
-        return item['spokenWord']
+    if not item.get('reviewedGuide'):
+        reasons.append('未通过逐词人工审核')
 
-    pos = item.get('partOfSpeech', '')
-    if '形容词' in pos:
-        if index + 1 < len(tokens):
-            start, end = index, index + 2
-        else:
-            start, end = max(0, index - 1), index + 1
-    elif '名词' in pos and '动词' not in pos:
-        if index + 1 < len(tokens) and tokens[index + 1].lower() == 'of':
-            start, end = index, min(len(tokens), index + 5)
-        elif index >= 2 and tokens[index - 1].lower() in {'a', 'an', 'the', 'this', 'that', 'my', 'your', 'his', 'her', 'our', 'their'}:
-            start, end = max(0, index - 2), index + 1
-        else:
-            start, end = max(0, index - 1), index + 1
-    elif '动词' in pos:
-        boundaries = {'and', 'but', 'while', 'when', 'during', 'after', 'before', 'because', 'who', 'which', 'that'}
-        end = index + 1
-        while end < len(tokens) and end < index + 4:
-            if end > index + 1 and tokens[end].lower() in boundaries:
-                break
-            end += 1
-        start = index
-        if end == index + 1:
-            start = max(0, index - 2)
-    else:
-        start, end = max(0, index - 1), min(len(tokens), index + 3)
+    if not breakdown:
+        reasons.append('缺少拆解')
+    elif normalized_letters(breakdown) != normalized_letters(head):
+        reasons.append('拆解没有逐字覆盖单词拼写')
 
-    chunk = ' '.join(tokens[start:end])
-    return chunk if len(chunk) <= 52 else ' '.join(tokens[index:min(len(tokens), index + 3)])
+    if not note:
+        reasons.append('缺少由字母/读音直达词义的助记')
+    elif BANNED_FALLBACKS.search(note):
+        reasons.append('仍是短语、例句或无关画面兜底')
+
+    if cue and BANNED_FALLBACKS.search(cue):
+        reasons.append('主钩子仍是短语、例句或无关画面兜底')
+
+    return reasons
 
 
-def chunk_label(item):
-    pos = item.get('partOfSpeech', '')
-    if '形容词' in pos:
-        return '状态短语'
-    if '名词' in pos and '动词' not in pos:
-        return '名词短语'
-    if '动词' in pos:
-        return '动作短语'
-    return '用法短语'
+def main():
+    original = load_content()
+    candidate = copy.deepcopy(original)
+    blocked = []
+    publishable = []
+
+    for key, item in candidate.items():
+        reasons = audit_route(item)
+        if reasons:
+            blocked.append({
+                'key': key,
+                'word': item.get('spokenWord', ''),
+                'reasons': reasons,
+                'breakdown': item.get('breakdown', ''),
+                'breakdownNote': item.get('breakdownNote', ''),
+            })
+            continue
+
+        item['associationHint'] = item.get('cue') or item['breakdownNote']
+        item['associationLabel'] = item.get('associationLabel') or '拆解助记'
+        item.pop('associationPeer', None)
+        item.pop('associationKind', None)
+        item.pop('memoryPhrase', None)
+        item.pop('cueLabel', None)
+        publishable.append(item.get('spokenWord', ''))
+
+    report = {
+        'total': len(candidate),
+        'publishable': len(publishable),
+        'blocked': len(blocked),
+        'blockedItems': blocked,
+    }
+    AUDIT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    AUDIT_PATH.write_text(json.dumps(report, ensure_ascii=False, indent=2), 'utf-8')
+
+    print(json.dumps({key: report[key] for key in ('total', 'publishable', 'blocked')},
+                     ensure_ascii=False))
+    if blocked:
+        raise SystemExit(
+            f'Quality gate blocked publishing: {len(blocked)} words still need reviewed mnemonics.'
+        )
+
+    CONTENT_PATH.write_text(
+        '// Generated learning content with reviewed spelling-linked memory routes\n'
+        'module.exports = '
+        + json.dumps(candidate, ensure_ascii=False, separators=(',', ':'))
+        + ';\n',
+        'utf-8',
+    )
 
 
-def informative_chunk(chunk, head):
-    fillers = {'a', 'an', 'the', 'this', 'that', 'my', 'your', 'his', 'her', 'our', 'their'}
-    content = [token.lower() for token in words_in(chunk)
-               if token.lower() not in fillers and token.lower() != head.lower()]
-    return bool(content)
-
-
-def scene_hint(item):
-    scene = re.split(r'[。！？!?]', item.get('translation', ''))[0].strip()
-    if len(scene) > 38:
-        scene = scene[:37].rstrip('，,；; ') + '…'
-    return f'把这幕定格：{scene}；在画面出现时说 {item["spokenWord"]}。'
-
-
-counts = {'curated': 0, 'construction': 0, 'contrast': 0, 'family': 0, 'chunk': 0, 'scene': 0}
-missing = []
-samples = {key: [] for key in counts}
-
-for item in data.values():
-    item.pop('associationHint', None)
-    item.pop('associationPeer', None)
-    item.pop('associationKind', None)
-
-    if item.get('cue'):
-        kind = 'curated'
-        item['associationHint'] = item['cue']
-        item['associationLabel'] = item.get('associationLabel') or '主钩子'
-    elif item.get('breakdown') and item.get('breakdownNote'):
-        kind = 'construction'
-        item.pop('associationLabel', None)
-    elif item.get('contrast'):
-        kind = 'contrast'
-        item.pop('associationLabel', None)
-    elif item.get('family'):
-        kind = 'family'
-        item.pop('associationLabel', None)
-    else:
-        chunk = lexical_chunk(item)
-        if chunk and informative_chunk(chunk, item['spokenWord']):
-            kind = 'chunk'
-            item['associationHint'] = f'“{chunk}”整块记：{gloss(item)}。'
-            item['associationLabel'] = chunk_label(item)
-        elif item.get('translation'):
-            kind = 'scene'
-            item['associationHint'] = scene_hint(item)
-            item['associationLabel'] = '画面钩子'
-        else:
-            kind = 'scene'
-            missing.append((item['spokenWord'], item['meaning']))
-
-    counts[kind] += 1
-    if len(samples[kind]) < 12:
-        samples[kind].append({
-            'word': item['spokenWord'],
-            'breakdown': item.get('breakdown', ''),
-            'hint': item.get('associationHint', ''),
-            'contrast': item.get('contrast', ''),
-            'family': item.get('family', ''),
-        })
-
-    item.pop('memoryPhrase', None)
-    item.pop('cueLabel', None)
-
-path.write_text('// Generated learning content with adaptive memory routes\nmodule.exports = '
-                + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
-report = root / 'scripts/work/association-audit.json'
-report.write_text(json.dumps({'counts': counts, 'missing': missing, 'samples': samples},
-                             ensure_ascii=False, indent=2), 'utf-8')
-print(json.dumps({'counts': counts, 'missing': missing}, ensure_ascii=False))
-if missing:
-    raise SystemExit('Every word must have a memory route.')
+if __name__ == '__main__':
+    main()

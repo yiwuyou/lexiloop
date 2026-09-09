@@ -22,12 +22,24 @@ function inflate(tuple, position) {
     enhanced: true,
   }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {});
   const generated = learningContent[id] || {};
-  // Preserve authored guidance first. The generated fallback is an actual lexical
-  // chunk, never the old mechanical meaning grouping or "repeat the definition" text.
+  // A reviewed guide is newer than the legacy enrichment hints. Re-apply only
+  // its learning fields so older hand-corrected IPA/example data stays intact.
+  if (generated.reviewedGuide) {
+    ['core', 'cue', 'breakdown', 'breakdownNote', 'associationLabel', 'contrast', 'partOfSpeech']
+      .forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(generated, key)) word[key] = generated[key];
+      });
+    word.cueLabel = '这样关联';
+  }
+  // Preserve reviewed guidance first. The generated fallback must never replace
+  // it with a phrase chunk or a repeated definition.
   const generatedHint = generated.associationHint || '';
   const usefulGeneratedHint = /^(语义归组|词义锚点)：/.test(generatedHint) ? '' : generatedHint;
-  word.memoryHint = extra.cue || generated.cue || usefulGeneratedHint;
-  word.associationLabel = extra.cue ? '助记' : (word.associationLabel || '短语钩子');
+  word.memoryHint = (generated.reviewedGuide ? generated.cue : '')
+    || extra.cue || generated.cue || usefulGeneratedHint;
+  word.associationLabel = generated.reviewedGuide
+    ? (generated.associationLabel || '拆解助记')
+    : (extra.cue ? '助记' : (word.associationLabel || '短语钩子'));
   word.shortHint = word.memoryHint.length <= 60 ? word.memoryHint : '';
   word.associationHint = word.memoryHint;
   word.cue = word.associationHint || word.contrast || word.family || word.breakdown || word.meaning;

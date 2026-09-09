@@ -49,6 +49,26 @@ for head in heads:
         forms.setdefault(form, set()).add(head)
 
 candidates = {}
+
+
+def proper_name_only(example, head):
+    """Reject a lowercase headword used only as a mid-sentence proper name.
+
+    Tatoeba contains examples such as ``written by Foster``.  Lowercasing the
+    sentence for matching used to turn that surname into the verb ``foster``.
+    """
+    matches = list(re.finditer(rf'(?<![A-Za-z]){re.escape(head)}(?![A-Za-z])', example, re.I))
+    if not matches:
+        return False
+    suspicious = []
+    for match in matches:
+        token = match.group(0)
+        before = example[:match.start()].rstrip()
+        name_context = bool(re.search(r'\b(?:by|named|called|mr|mrs|ms|dr|professor)\.?\s*$', before, re.I))
+        suspicious.append(token[:1].isupper() and name_context)
+    return all(suspicious)
+
+
 for line in (WORK / 'tatoeba' / 'cmn.txt').read_text('utf-8').splitlines():
     en, zh, credit = line.split('\t')
     zh = to_simplified(zh)
@@ -60,6 +80,8 @@ for line in (WORK / 'tatoeba' / 'cmn.txt').read_text('utf-8').splitlines():
         for i in range(len(tokens) - size + 1):
             matches.update(forms.get(' '.join(tokens[i:i + size]), set()))
     for head in matches:
+        if proper_name_only(en, head):
+            continue
         candidates.setdefault(head, []).append((en, zh, credit))
 
 manual_path = ROOT / 'data' / 'authored-examples.tsv'

@@ -4,7 +4,8 @@ const path = require('path');
 const vm = require('vm');
 const { getWords, getWord } = require('../utils/words');
 const source = require('../data/vocabulary');
-const memoryGuides = require('../data/memory-guides.json');
+const memoryGuides = Object.assign({}, require('../data/memory-guides.json'),
+  require('../data/reviewed-memory-guides.json'));
 const sizes = require('../data/audio-sizes');
 const root = path.join(__dirname, '..');
 const words = getWords();
@@ -33,13 +34,14 @@ assert.strictEqual(words.filter((word) => word.category === 'core' && word.assoc
 const compel = getWord('c-2-17');
 assert.strictEqual(compel.word, 'compel');
 assert.ok(compel.contrast.includes('compare'));
-assert.ok(compel.cue.includes('compel'));
+assert.ok(compel.breakdown === 'com·pel');
+assert.ok(compel.cue.includes('pel'));
 assert.ok(getWord('c-2-29').translation.includes('我们'));
 assert.ok(!getWord('c-2-29').translation.includes('我們'));
 assert.ok(getWord('c-2-29').partOfSpeech.includes('形容词'));
-assert.ok(getWord('c-3-19').associationHint.includes('devote A to B'));
+assert.ok(getWord('c-3-19').associationHint.includes('vote（投票）'));
 assert.ok(getWord('c-3-20').breakdown.includes('dia'));
-assert.ok(getWord('c-3-20').associationHint.includes('diagnose a disease'));
+assert.ok(getWord('c-3-20').associationHint.includes('全面看透'));
 const conscience = words.find((word) => word.word.toLowerCase() === 'conscience');
 assert.ok(conscience.breakdown === 'con·sci·ence');
 assert.ok(conscience.breakdownNote.includes('知道'));
@@ -54,14 +56,14 @@ const deteriorate = getWord('c-3-17');
 const drawback = getWord('c-3-24');
 const deliberate = getWord('c-3-9');
 const dilemma = getWord('c-3-22');
-assert.strictEqual(device.breakdown, '', 'device must not be mechanically split into dev + ice');
+assert.strictEqual(device.breakdown, 'device', 'device must stay whole rather than dev + ice');
 assert.ok(device.associationHint.includes('devise'));
 assert.strictEqual(dictate.breakdown, 'dict·ate');
 assert.ok(desperate.breakdown.includes('sper'));
-assert.ok(desperate.breakdownNote.includes('希望'));
-assert.strictEqual(deteriorate.breakdown, '');
-assert.strictEqual(deteriorate.associationLabel, '声音画面');
-assert.ok(deteriorate.associationHint.includes('地铁里又热'));
+assert.ok(desperate.breakdownNote.includes('得死拼了'));
+assert.strictEqual(deteriorate.breakdown, 'de·teri·or·ate');
+assert.strictEqual(deteriorate.associationLabel, '声音钩子');
+assert.ok(deteriorate.breakdownNote.includes('地铁里又热'));
 assert.strictEqual(drawback.breakdown, 'draw·back');
 assert.ok(drawback.breakdownNote.includes('往后拉'));
 assert.strictEqual(dilemma.breakdown, 'di·lemma');
@@ -70,6 +72,66 @@ assert.ok(dilemma.associationHint.includes('两个 m'));
 assert.strictEqual(deliberate.breakdown, 'de·liber·ate');
 assert.ok(deliberate.breakdownNote.includes('Libra（天秤座）'));
 assert.ok(deliberate.associationHint.includes('Libra（天秤座）'));
+const coreDay4 = words.filter((word) => word.id.startsWith('c-4-'));
+assert.strictEqual(coreDay4.length, 50);
+assert.ok(coreDay4.every((word) => word.breakdown && word.breakdownNote),
+  'every core day 4 word must have a form-linked breakdown');
+assert.ok(coreDay4.every((word) => !/短语|画面钩子/.test(word.associationLabel)
+  && !/^(?:“.*”整块记|把这幕定格)/.test(word.associationHint)),
+  'core day 4 must not fall back to phrase/example/scene memorisation');
+const coreDay1 = words.filter((word) => word.id.startsWith('c-1-'));
+assert.strictEqual(coreDay1.length, 50);
+assert.ok(coreDay1.every((word) => word.reviewedGuide && word.breakdown && word.breakdownNote),
+  'every core day 1 word must use a reviewed form-linked guide');
+assert.ok(coreDay1.every((word) => !/短语|画面钩子/.test(word.associationLabel)
+  && !/整块记|把这幕定格|记住例句|例句片段/.test(word.associationHint)),
+  'core day 1 must not fall back to phrase/example/scene memorisation');
+const coreDay2 = words.filter((word) => word.id.startsWith('c-2-'));
+assert.strictEqual(coreDay2.length, 50);
+assert.ok(coreDay2.every((word) => word.reviewedGuide && word.breakdown && word.breakdownNote),
+  'every core day 2 word must use a reviewed form-linked guide');
+assert.ok(coreDay2.every((word) => !/短语|画面钩子/.test(word.associationLabel)
+  && !/整块记|把这幕定格|记住例句|例句片段/.test(word.associationHint)),
+  'core day 2 must not fall back to phrase/example/scene memorisation');
+const coreDay3 = words.filter((word) => word.id.startsWith('c-3-'));
+assert.strictEqual(coreDay3.length, 50);
+assert.ok(coreDay3.every((word) => word.reviewedGuide && word.breakdown && word.breakdownNote),
+  'every core day 3 word must use a reviewed form-linked guide');
+assert.ok(coreDay3.every((word) => !/短语|画面钩子/.test(word.associationLabel)
+  && !/整块记|把这幕定格|记住例句|例句片段/.test(word.associationHint)),
+  'core day 3 must not fall back to phrase/example/scene memorisation');
+const coreDay5 = words.filter((word) => word.id.startsWith('c-5-'));
+assert.strictEqual(coreDay5.length, 50);
+assert.ok(coreDay5.every((word) => word.reviewedGuide && word.breakdown && word.breakdownNote),
+  'every core day 5 word must use a reviewed form-linked guide');
+assert.ok(coreDay5.every((word) => !/短语|画面钩子/.test(word.associationLabel)
+  && !/整块记|把这幕定格|记住例句|例句片段/.test(word.associationHint)),
+  'core day 5 must not fall back to phrase/example/scene memorisation');
+assert.ok(words.find((word) => word.word.toLowerCase() === 'expel').breakdownNote.includes('向外赶'));
+assert.ok(words.find((word) => word.word.toLowerCase() === 'explicit').breakdownNote.includes('折'));
+assert.ok(words.find((word) => word.word.toLowerCase() === 'expire').breakdownNote.includes('最后一口气'));
+assert.ok(words.find((word) => word.word.toLowerCase() === 'facilitate').breakdownNote.includes('使变容易'));
+assert.ok(words.find((word) => word.word.toLowerCase() === 'fiscal').breakdownNote.includes('国库'));
+assert.ok(words.find((word) => word.word.toLowerCase() === 'estimate').breakdownNote.includes('判断价值'));
+const confidential = words.find((word) => word.word.toLowerCase() === 'confidential');
+const derive = words.find((word) => word.word.toLowerCase() === 'derive');
+const foster = words.find((word) => word.word.toLowerCase() === 'foster');
+const unexpected = words.find((word) => word.word.toLowerCase() === 'unexpected');
+assert.strictEqual(confidential.breakdown, 'confid·ential');
+assert.ok(confidential.breakdownNote.includes('confide（吐露秘密）'));
+assert.strictEqual(derive.breakdown, 'de·riv·e');
+assert.ok(derive.breakdownNote.includes('river（河流）'));
+assert.ok(foster.breakdownNote.includes('扶持它'));
+assert.ok(foster.example.includes('foster curiosity'));
+assert.ok(!foster.example.includes('by Foster'));
+assert.ok(unexpected.associationHint.includes('expect（预期）'),
+  'reviewed guide must override the legacy enrichment cue');
+for (const word of words) {
+  const titleHead = word.word.slice(0, 1).toUpperCase() + word.word.slice(1);
+  const escapedHead = titleHead.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  assert.ok(!new RegExp(`\\b(?:by|named|called|mr|mrs|ms|dr|professor)\\.?\\s+${escapedHead}\\b`).test(word.example),
+    `example uses ${word.word} only as a proper name: ${word.example}`);
+}
 const wordsByLowerHead = new Map(words.map((word) => [word.word.toLowerCase(), word]));
 for (const [head, guide] of Object.entries(memoryGuides)) {
   const built = wordsByLowerHead.get(head.toLowerCase());

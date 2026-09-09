@@ -21,6 +21,9 @@ def load_js(path):
 content = load_js(ROOT / 'data/learning-content.js')
 vocabulary = load_js(ROOT / 'data/vocabulary.js')
 guides = json.loads((ROOT / 'data/memory-guides.json').read_text('utf-8'))
+reviewed_guides_path = ROOT / 'data' / 'reviewed-memory-guides.json'
+if reviewed_guides_path.exists():
+    guides.update(json.loads(reviewed_guides_path.read_text('utf-8')))
 relations = json.loads((ROOT / 'data/word-relations.json').read_text('utf-8'))
 heads = {item['spokenWord'] for item in content.values()}
 heads_by_lower = {word.lower(): word for word in heads}
@@ -241,6 +244,7 @@ for row in vocabulary:
         item.update(guides[head])
         for key in ['cue', 'breakdownNote', 'contrast']:
             item[key] = annotate_linked_words(item.get(key, ''), head)
+        item['reviewedGuide'] = True
         item['cueLabel'] = '这样关联'
         item['aidSource'] = '针对性理解提示'
     # Avoid displaying a second definition that merely repeats the institution's.
