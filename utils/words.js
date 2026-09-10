@@ -35,8 +35,9 @@ function inflate(tuple, position) {
   // it with a phrase chunk or a repeated definition.
   const generatedHint = generated.associationHint || '';
   const usefulGeneratedHint = /^(语义归组|词义锚点)：/.test(generatedHint) ? '' : generatedHint;
-  word.memoryHint = (generated.reviewedGuide ? generated.cue : '')
-    || extra.cue || generated.cue || usefulGeneratedHint;
+  word.memoryHint = generated.reviewedGuide
+    ? (generated.cue || '')
+    : (extra.cue || generated.cue || usefulGeneratedHint);
   word.associationLabel = generated.reviewedGuide
     ? (generated.associationLabel || '拆解助记')
     : (extra.cue ? '助记' : (word.associationLabel || '短语钩子'));

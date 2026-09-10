@@ -70,7 +70,12 @@ def main():
             })
             continue
 
-        item['associationHint'] = item.get('cue') or item['breakdownNote']
+        # The decomposed mnemonic already lives in breakdownNote. Storing the
+        # same text again as associationHint inflated the main package by more
+        # than WeChat's 2 MB limit and rendered duplicate rows. Keep only an
+        # independently reviewed secondary cue when one exists; words without
+        # one still show the complete breakdown mnemonic.
+        item.pop('associationHint', None)
         item['associationLabel'] = item.get('associationLabel') or '拆解助记'
         item.pop('associationPeer', None)
         item.pop('associationKind', None)

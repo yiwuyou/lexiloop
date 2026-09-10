@@ -16,7 +16,7 @@
   "desperate": {"core":"失去希望而不顾一切，也可表示极度渴望。","breakdown":"de·sper·ate","breakdownNote":"用声音钩子“得死拼了”：走到绝望处只好拼命 → desperate（绝望的；拼命渴望的）。","cue":"","associationLabel":"声音钩子"},
   "detain": {"core":"把人暂时扣留，不允许离开。","breakdown":"de·tain","breakdownNote":"tain 表示“握住、留住”：把人留住不让走 → detain（拘留、扣押）。","cue":"","associationLabel":"构词钩子"},
   "deteriorate": {"core":"质量、状况或关系逐渐变差。","breakdown":"de·teri·or·ate","breakdownNote":"用读音画面“地铁里又热”：地铁里越来越闷热，空气质量不断恶化 → deteriorate。","cue":"","associationLabel":"声音钩子"},
-  "device": {"core":"为某种用途设计制造的装置或设备。","breakdown":"device","breakdownNote":"从 devise（设计、想出）记词形：被设计出来的东西是 device（设备）；名词用 c，动词用 s。","cue":"","associationLabel":"词形辨析"},
+  "device": {"core":"为某种用途设计制造的装置或设备。","breakdown":"device","breakdownNote":"从 devise（设计、想出）记词形：被设计出来的东西是 device（设备）；名词用 c，动词用 s。","cue":"devise（设计、想出）得到 device（设备）；动词 s，名词 c。","associationLabel":"词形辨析"},
   "devote": {"core":"把时间、精力或自己投入某件事。","breakdown":"de·vote","breakdownNote":"词中完整含 vote（投票）：把所有票都投给一个目标 → devote（贡献、致力于）。","cue":"vote（投票）全部投给一个目标，记 devote（致力于）。","associationLabel":"字形钩子"},
   "diagnose": {"core":"根据症状或检查结果判断疾病或问题。","breakdown":"dia·gnose","breakdownNote":"dia- 表示“穿过、全面”，gnose 表示“知道”：穿过表面线索知道病因 → diagnose（诊断）。","cue":"dia- 穿过表面，gnose 知道：全面看透病因就是诊断。","associationLabel":"构词钩子"},
   "dictate": {"core":"说出内容让人记录，也可指强行命令。","breakdown":"dict·ate","breakdownNote":"dict 表示“说”，-ate 构成动作：把话说出来 → dictate（口述）；以权力说了算 → 命令。","cue":"","associationLabel":"构词钩子"},
