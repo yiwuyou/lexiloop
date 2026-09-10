@@ -26,8 +26,8 @@
         </view>
         <view class="word-main">
           <text class="word">{{word.word}}</text>
-          <view class="pronunciation" wx:if="{{word.audio}}">
-            <view class="audio-button" bindtap="playPronunciation" role="button" aria-label="播放单词发音">{{audioLoading ? '…' : '▶'}}</view>
+          <view class="pronunciation" wx:if="{{word.audio}}" bindtap="playPronunciation" role="button" aria-label="播放单词发音">
+            <view class="audio-button">{{audioLoading ? '…' : '▶'}}</view>
             <text class="ipa">{{word.ipa || '播放发音'}}</text>
           </view>
           <text class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>

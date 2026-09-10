@@ -82,6 +82,12 @@ const app = require('../app.json');
 app.subPackages.forEach((pack) => pack.pages.forEach((page) => {
   ['.js', '.json', '.wxml'].forEach((extension) => assert.ok(fs.existsSync(path.join(__dirname, '..', pack.root, page + extension))));
 }));
+const studyTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/study/index.wxml'), 'utf8');
+const pronunciationTag = studyTemplate.match(/<view class="pronunciation"[^>]*>/);
+assert.ok(pronunciationTag && /bindtap="playPronunciation"/.test(pronunciationTag[0]),
+  'the whole pronunciation pill must play audio');
+assert.ok(!/<view class="audio-button"[^>]*bindtap="playPronunciation"/.test(studyTemplate),
+  'the audio handler must not be limited to the small play icon');
 const paths = new Set();
 const packageSizes = {};
 words.forEach((word) => {
