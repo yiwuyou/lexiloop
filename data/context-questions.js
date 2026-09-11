@@ -308,11 +308,11 @@ module.exports = [
   {
     id: 'monitor-screen',
     word: 'monitor',
-    sentence: 'The results appeared on the computer monitor.',
-    translation: '结果显示在电脑显示器上。',
+    sentence: 'The monitor displays the latest version of the software.',
+    translation: '这台显示器展示了软件的最新版本。',
     choices: ['监控', '显示器', '班长'],
     answer: 1,
-    explanation: 'computer monitor 指电脑“显示器”。',
+    explanation: '显示软件画面的 monitor 指“显示器”。',
   },
   {
     id: 'object-protest',
@@ -647,4 +647,4 @@ module.exports = [
     answer: 1,
     explanation: 'troops withdraw from an area 表示“部队撤离某地区”。',
   },
-];
+].concat(require('./high-context-questions'));

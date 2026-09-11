@@ -61,7 +61,7 @@ function testDailyPlan() {
 }
 
 function testContextQuestions() {
-  assert.ok(contextQuestions.length >= 72, 'context question pool should not repeat a tiny fixed set');
+  assert.ok(contextQuestions.length >= 156, 'context question pool should cover all learning days');
   assert.strictEqual(new Set(contextQuestions.map((question) => question.id)).size, contextQuestions.length,
     'context question ids must be unique');
   contextQuestions.forEach((question) => {
@@ -76,6 +76,14 @@ function testContextQuestions() {
   });
   assert.ok(Object.values(questionsPerWord).every((count) => count >= 2),
     'every tested word should rotate between at least two sentences');
+  const usesPerSentence = {};
+  contextQuestions.forEach((question) => {
+    usesPerSentence[question.sentence] = (usesPerSentence[question.sentence] || 0) + 1;
+  });
+  assert.ok(Object.values(usesPerSentence).some((count) => count === 2),
+    'a natural sentence containing two target words should be reusable');
+  assert.ok(Object.values(usesPerSentence).every((count) => count <= 2),
+    'do not overload one sentence with too many tested words');
   const coreDayByWord = {};
   vocabulary.filter((row) => row[0] === 'c').forEach((row) => { coreDayByWord[row[3].toLowerCase()] = row[1]; });
   for (let day = 1; day <= 9; day += 1) {
@@ -83,6 +91,14 @@ function testContextQuestions() {
       .filter((question) => coreDayByWord[question.word.toLowerCase()] === day)
       .map((question) => question.word.toLowerCase()));
     assert.ok(covered.size >= 3, `core day ${day} should contribute varied context words`);
+  }
+  const highDayByWord = {};
+  vocabulary.filter((row) => row[0] === 'h').forEach((row) => { highDayByWord[row[3].toLowerCase()] = row[1]; });
+  for (let day = 1; day <= 42; day += 1) {
+    const covered = new Set(contextQuestions
+      .filter((question) => highDayByWord[question.word.toLowerCase()] === day)
+      .map((question) => question.word.toLowerCase()));
+    assert.ok(covered.size >= 1, `high-frequency day ${day} should contribute context questions`);
   }
 }
 

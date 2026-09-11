@@ -9,7 +9,7 @@ sys.path.insert(0, str(root / 'scripts/work/tools'))
 from opencc import OpenCC
 convert = OpenCC('t2s').convert
 errors = []
-for filename in ['learning-content.js', 'enrichment.js', 'context-questions.js']:
+for filename in ['learning-content.js', 'enrichment.js', 'context-questions.js', 'high-context-questions.js']:
     result = subprocess.run(['node', '-e', 'process.stdout.write(JSON.stringify(require(process.argv[1])))',
                              str(root / 'data' / filename)], capture_output=True, check=True, encoding='utf-8')
     data = json.loads(result.stdout)
