@@ -25,6 +25,7 @@ reviewed_guides_path = ROOT / 'data' / 'reviewed-memory-guides.json'
 if reviewed_guides_path.exists():
     guides.update(json.loads(reviewed_guides_path.read_text('utf-8')))
 relations = json.loads((ROOT / 'data/word-relations.json').read_text('utf-8'))
+reviewed_phrases = json.loads((ROOT / 'data/reviewed-phrases.json').read_text('utf-8'))
 heads = {item['spokenWord'] for item in content.values()}
 heads_by_lower = {word.lower(): word for word in heads}
 needed = heads | {word for group in relations['families'] for word in group}
@@ -232,6 +233,7 @@ for row in vocabulary:
     item['core'] = '；'.join(re.split('[,，]', meanings[0][1])[:3]).strip() if meanings else convert(row[4])
     phrase = excerpt(item['example'], head, entry)
     item['memoryPhrase'] = phrase
+    item['phrase'] = reviewed_phrases.get(head, '')
     item['cue'] = ''
     item['cueLabel'] = '语境联想'
     item['aidSource'] = '词典释义、词形及例句搭配'
@@ -250,7 +252,7 @@ for row in vocabulary:
     # Avoid displaying a second definition that merely repeats the institution's.
     if re.sub(r'[；;，,\s]', '', item['core']) == re.sub(r'[；;，,\s]', '', item['meaning']):
         item['core'] = ''
-    for key in ['core', 'cue', 'family', 'contrast', 'meaning', 'translation', 'breakdown', 'breakdownNote']:
+    for key in ['core', 'cue', 'family', 'contrast', 'meaning', 'translation', 'breakdown', 'breakdownNote', 'phrase']:
         item[key] = convert(item[key])
     item.pop('exampleSourceLabel', None)
     item.pop('exampleSourceDetail', None)

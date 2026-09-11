@@ -6,6 +6,7 @@ const { getWords, getWord } = require('../utils/words');
 const source = require('../data/vocabulary');
 const memoryGuides = Object.assign({}, require('../data/memory-guides.json'),
   require('../data/reviewed-memory-guides.json'));
+const reviewedPhrases = require('../data/reviewed-phrases.json');
 const sizes = require('../data/audio-sizes');
 const root = path.join(__dirname, '..');
 const words = getWords();
@@ -117,6 +118,8 @@ const confidential = words.find((word) => word.word.toLowerCase() === 'confident
 const derive = words.find((word) => word.word.toLowerCase() === 'derive');
 const foster = words.find((word) => word.word.toLowerCase() === 'foster');
 const unexpected = words.find((word) => word.word.toLowerCase() === 'unexpected');
+const migrate = words.find((word) => word.word.toLowerCase() === 'migrate');
+const emigrate = words.find((word) => word.word.toLowerCase() === 'emigrate');
 assert.strictEqual(confidential.breakdown, 'confid·ential');
 assert.ok(confidential.breakdownNote.includes('confide（吐露秘密）'));
 assert.strictEqual(derive.breakdown, 'de·riv·e');
@@ -126,6 +129,15 @@ assert.ok(foster.example.includes('foster curiosity'));
 assert.ok(!foster.example.includes('by Foster'));
 assert.ok(unexpected.associationHint.includes('expect（预期）'),
   'reviewed guide must override the legacy enrichment cue');
+assert.ok(migrate.contrast.includes('emigrate（移居国外）'));
+assert.ok(migrate.contrast.includes('immigrate（移入、移民进入）'));
+assert.ok(migrate.contrast.includes('exit（出去）') && migrate.contrast.includes('in（进入）'));
+assert.ok(emigrate.contrast.includes('migrate（迁移、移居）'));
+for (const [head, phrase] of Object.entries(reviewedPhrases)) {
+  const word = words.find((item) => item.word.toLowerCase() === head.toLowerCase());
+  assert.ok(word, `reviewed phrase has no vocabulary head: ${head}`);
+  assert.strictEqual(word.phrase, phrase, `reviewed phrase missing from ${head}`);
+}
 for (const word of words) {
   const titleHead = word.word.slice(0, 1).toUpperCase() + word.word.slice(1);
   const escapedHead = titleHead.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -155,6 +167,7 @@ for (const page of ['study', 'library']) {
   assert.ok(!markup.includes('exampleCredit'), 'raw attribution should be in disclosure, not inline');
 }
 assert.ok(fs.readFileSync(path.join(root, 'pages/study/index.wxml'), 'utf8').includes('wx:if="{{word.family}}"'));
+assert.ok(fs.readFileSync(path.join(root, 'pages/study/index.wxml'), 'utf8').includes('wx:if="{{word.phrase}}"'));
 assert.ok(fs.readFileSync(path.join(root, 'pages/study/index.wxml'), 'utf8').includes('关联记忆'));
 assert.ok(fs.readFileSync(path.join(root, 'pages/today/index.wxml'), 'utf8').includes('{{appVersion}}'));
 const moduleMock = { exports: {} };

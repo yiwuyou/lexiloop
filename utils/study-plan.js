@@ -1,4 +1,4 @@
-const { dayKey, startOfDay } = require('./date');
+const { DAY_MS, dayKey, startOfDay } = require('./date');
 const context = require('./context');
 const { isStable } = require('./scheduler');
 const { getWord, getWords } = require('./words');
@@ -52,12 +52,13 @@ function summarize(state, settings, now) {
   };
 }
 
-function appendContextItems(queue) {
+function appendContextItems(queue, time) {
   const contextItems = [];
   const seenQuestions = {};
+  const rotation = Math.floor(startOfDay(time) / DAY_MS);
   queue.forEach((item) => {
     const word = getWord(item.wordId);
-    const question = word && context.getByWord(word.word);
+    const question = word && context.getByWord(word.word, rotation);
     if (question && !seenQuestions[question.id]) {
       seenQuestions[question.id] = true;
       contextItems.push({ wordId: word.id, phase: 'context', questionId: question.id, reinforced: true });
@@ -102,7 +103,7 @@ function buildSession(state, settings, now) {
   stats.due.forEach((word) => queue.push({ wordId: word.id, phase: 'review', reinforced: false }));
   newWords.forEach((word) => queue.push({ wordId: word.id, phase: 'new', reinforced: false }));
 
-  appendContextItems(queue);
+  appendContextItems(queue, time);
   return makeSession(today, time, queue, daily, {
     dueGoal: (daily.dueDone || 0) + stats.due.length,
     newGoal: (daily.newDone || 0) + newWords.length,
@@ -123,7 +124,7 @@ function buildExtraSession(state, settings, requested, now) {
   const unseen = summarize(state, settings, time).unseen.slice(0, amount);
   if (!unseen.length) return null;
   const queue = unseen.map((word) => ({ wordId: word.id, phase: 'new', reinforced: false }));
-  appendContextItems(queue);
+  appendContextItems(queue, time);
   return makeSession(today, time, queue, daily, {
     dueGoal: daily.dueGoal || 0,
     newGoal: currentGoal + unseen.length,

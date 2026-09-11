@@ -46,6 +46,11 @@ function testDailyPlan() {
   assert.strictEqual(session.dueGoal, 0);
   assert.strictEqual(session.queue.filter((item) => item.phase === 'new').length, 50);
   assert.ok(session.queue.some((item) => item.phase === 'context'), 'first day should include delayed context checks');
+  const nextDaySession = studyPlan.buildSession(state, settings, now + dates.DAY_MS);
+  const todayQuestions = session.queue.filter((item) => item.phase === 'context').map((item) => item.questionId);
+  const nextDayQuestions = nextDaySession.queue.filter((item) => item.phase === 'context').map((item) => item.questionId);
+  assert.ok(todayQuestions.every((id) => !nextDayQuestions.includes(id)),
+    'words with multiple context questions should rotate to a new sentence on the next day');
 
   const firstId = session.queue[0].wordId;
   state.cards[firstId] = scheduler.review(null, 'hard', now - 2 * dates.DAY_MS);
@@ -56,11 +61,29 @@ function testDailyPlan() {
 }
 
 function testContextQuestions() {
+  assert.ok(contextQuestions.length >= 72, 'context question pool should not repeat a tiny fixed set');
+  assert.strictEqual(new Set(contextQuestions.map((question) => question.id)).size, contextQuestions.length,
+    'context question ids must be unique');
   contextQuestions.forEach((question) => {
     assert.ok(question.choices.length >= 2);
     assert.ok(question.answer >= 0 && question.answer < question.choices.length);
     assert.ok(question.translation && question.explanation);
   });
+  const questionsPerWord = {};
+  contextQuestions.forEach((question) => {
+    const key = question.word.toLowerCase();
+    questionsPerWord[key] = (questionsPerWord[key] || 0) + 1;
+  });
+  assert.ok(Object.values(questionsPerWord).every((count) => count >= 2),
+    'every tested word should rotate between at least two sentences');
+  const coreDayByWord = {};
+  vocabulary.filter((row) => row[0] === 'c').forEach((row) => { coreDayByWord[row[3].toLowerCase()] = row[1]; });
+  for (let day = 1; day <= 9; day += 1) {
+    const covered = new Set(contextQuestions
+      .filter((question) => coreDayByWord[question.word.toLowerCase()] === day)
+      .map((question) => question.word.toLowerCase()));
+    assert.ok(covered.size >= 3, `core day ${day} should contribute varied context words`);
+  }
 }
 
 function testEnrichment() {

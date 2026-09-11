@@ -3,12 +3,23 @@ const questions = require('../data/context-questions');
 const byWord = {};
 const byId = {};
 questions.forEach((question) => {
-  byWord[question.word.toLowerCase()] = question;
+  const key = question.word.toLowerCase();
+  if (!byWord[key]) byWord[key] = [];
+  byWord[key].push(question);
   byId[question.id] = question;
 });
 
-function getByWord(word) {
-  return byWord[String(word || '').toLowerCase()] || null;
+function wordOffset(word) {
+  return String(word || '').split('').reduce((total, character) => total + character.charCodeAt(0), 0);
+}
+
+function getByWord(word, rotation) {
+  const key = String(word || '').toLowerCase();
+  const available = byWord[key] || [];
+  if (!available.length) return null;
+  if (rotation == null) return available[0];
+  const index = (Math.abs(Number(rotation) || 0) + wordOffset(key)) % available.length;
+  return available[index];
 }
 
 function getById(id) {

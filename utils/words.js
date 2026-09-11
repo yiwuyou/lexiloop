@@ -44,7 +44,7 @@ function inflate(tuple, position) {
   word.shortHint = word.memoryHint.length <= 60 ? word.memoryHint : '';
   word.associationHint = word.memoryHint;
   word.cue = word.associationHint || word.contrast || word.family || word.breakdown || word.meaning;
-  word.hasMemoryContent = Boolean(word.breakdown || word.associationHint || word.contrast
+  word.hasMemoryContent = Boolean(word.breakdown || word.associationHint || word.contrast || word.phrase
     || word.family || (word.wordForms && word.wordForms.length));
   word.exampleSourceDetail = word.exampleCredit === 'LexiLoop 编写'
     ? '本应用编写的记忆例句，不是机构原文。'

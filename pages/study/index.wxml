@@ -41,6 +41,7 @@
                 <view class="memory-row" wx:if="{{word.breakdown}}"><text>拆记</text><view><text class="breakdown">{{word.breakdown}}</text><text class="memory-note">{{word.breakdownNote}}</text></view></view>
                 <view class="memory-row" wx:if="{{word.associationHint}}"><text>{{word.associationLabel || '助记'}}</text><text>{{word.associationHint}}</text></view>
                 <view class="memory-row" wx:if="{{word.contrast}}"><text>辨析</text><text>{{word.contrast}}</text></view>
+                <view class="memory-row" wx:if="{{word.phrase}}"><text>短语</text><text>{{word.phrase}}</text></view>
                 <view class="memory-row" wx:if="{{word.family}}"><text>词族</text><text>{{word.family}}</text></view>
                 <view class="memory-row" wx:if="{{word.wordForms.length}}"><text>词形</text><text><text class="form-inline" wx:for="{{word.wordForms}}" wx:key="word">{{item.word}}（{{item.label}}） </text></text></view>
               </view>
