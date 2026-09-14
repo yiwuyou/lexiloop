@@ -134,9 +134,24 @@ assert.ok(migrate.contrast.includes('immigrate（移入、移民进入）'));
 assert.ok(migrate.contrast.includes('exit（出去）') && migrate.contrast.includes('in（进入）'));
 assert.ok(emigrate.contrast.includes('migrate（迁移、移居）'));
 for (const [head, phrase] of Object.entries(reviewedPhrases)) {
-  const word = words.find((item) => item.word.toLowerCase() === head.toLowerCase());
+  const word = words.find((item) => (item.spokenWord || item.word).toLowerCase() === head.toLowerCase());
   assert.ok(word, `reviewed phrase has no vocabulary head: ${head}`);
   assert.strictEqual(word.phrase, phrase, `reviewed phrase missing from ${head}`);
+}
+const packedPhrases = require('../phrase-data/ready');
+assert.ok(Object.keys(packedPhrases).length >= 450, 'too few high-confidence common phrases');
+assert.ok(fs.statSync(path.join(root, 'phrase-data', 'ready.js')).size < 2 * 1024 * 1024,
+  'phrase data subpackage exceeds the WeChat package limit');
+for (const [wordId, phrase] of Object.entries(packedPhrases)) {
+  assert.ok(words.some((word) => word.id === wordId), `unknown phrase word id: ${wordId}`);
+  assert.ok(/[\u4e00-\u9fff]/.test(phrase), `phrase lacks Chinese meaning: ${wordId}`);
+  assert.ok(!/过去式|现在式|过去分词|缩写|\b(?:pron|pref|abbr|na|un)\./i.test(phrase),
+    `dictionary metadata leaked into phrase: ${wordId} ${phrase}`);
+}
+for (const [head, phrase] of Object.entries(reviewedPhrases)) {
+  words.filter((word) => (word.spokenWord || word.word).toLowerCase() === head.toLowerCase()).forEach((word) => {
+    assert.strictEqual(packedPhrases[word.id], phrase, `reviewed phrase missing from phrase pack: ${word.id}`);
+  });
 }
 for (const word of words) {
   const titleHead = word.word.slice(0, 1).toUpperCase() + word.word.slice(1);
@@ -187,6 +202,19 @@ async function main() {
   }
   assert.strictEqual(loadedPaths.length, 12);
   assert.strictEqual(new Set(loadedPaths).size, 12);
+  const phraseModule = { exports: {} };
+  const phraseLoads = [];
+  function phraseRequire() { throw new Error('synchronous phrase package loading is not allowed'); }
+  phraseRequire.async = (file) => {
+    phraseLoads.push(file);
+    return Promise.resolve({ 'c-1-1': 'disappear from view 从视野中消失' });
+  };
+  vm.runInNewContext(fs.readFileSync(path.join(root, 'utils/phrases.js'), 'utf8'), {
+    module: phraseModule, require: phraseRequire, Promise,
+  });
+  assert.strictEqual(await phraseModule.exports.phraseFor({ id: 'c-1-1' }), 'disappear from view 从视野中消失');
+  assert.strictEqual(await phraseModule.exports.phraseFor({ id: 'missing', phrase: 'fallback' }), 'fallback');
+  assert.strictEqual(phraseLoads.length, 1, 'phrase package should be loaded once and reused');
   const audio = require('../utils/audio');
   assert.strictEqual(audio.totalBytes, 8867160);
   assert.strictEqual(audio.sizeLabel, '8.9 MB');

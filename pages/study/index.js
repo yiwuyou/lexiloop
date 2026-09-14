@@ -5,6 +5,7 @@ const scheduler = require('../../utils/scheduler');
 const store = require('../../utils/store');
 const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
+const phraseResources = require('../../utils/phrases');
 const { getWord } = require('../../utils/words');
 const weakBook = require('../../utils/weak-book');
 
@@ -191,6 +192,12 @@ Page({
       word,
       isWeakMarked: weakBook.isMarked(state, word.id),
     });
+    if (item.phase !== 'context') {
+      phraseResources.phraseFor(word).then((phrase) => {
+        if (!phrase || !this.data.word || this.data.word.id !== word.id) return;
+        this.setData({ 'word.phrase': phrase, contentHeight: 0 }, () => this.fitAnswerContent());
+      }).catch(() => {});
+    }
   },
 
   revealAnswer() {
