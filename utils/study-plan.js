@@ -4,6 +4,51 @@ const { isStable } = require('./scheduler');
 const { getWord, getWords } = require('./words');
 const weakBook = require('./weak-book');
 
+const REVIEW_PLAN_VERSION = 2;
+const DEFAULT_DAILY_REVIEW_LIMIT = 80;
+const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
+
+function reviewPriority(state, left, right) {
+  const leftCard = state.cards[left.id] || {};
+  const rightCard = state.cards[right.id] || {};
+  const leftUrgent = leftCard.needsRecall || leftCard.needsContext ? 1 : 0;
+  const rightUrgent = rightCard.needsRecall || rightCard.needsContext ? 1 : 0;
+  if (leftUrgent !== rightUrgent) return rightUrgent - leftUrgent;
+  return (leftCard.dueAt || 0) - (rightCard.dueAt || 0)
+    || left.position - right.position;
+}
+
+function selectReviews(state, settings, words, time, progress) {
+  const todayStart = startOfDay(time);
+  const daily = progress || state.daily[dayKey(time)] || {};
+  const totalLimit = settings.dailyReviewLimit || DEFAULT_DAILY_REVIEW_LIMIT;
+  const backlogLimit = settings.dailyBacklogLimit || DEFAULT_DAILY_BACKLOG_LIMIT;
+  const totalCapacity = Math.max(0, totalLimit - (daily.dueDone || 0));
+  const backlogCapacity = Math.max(0, Math.min(
+    totalCapacity,
+    backlogLimit - (daily.backlogDone || 0),
+  ));
+  const overdue = [];
+  const current = [];
+
+  words.forEach((word) => {
+    const card = state.cards[word.id] || {};
+    (card.dueAt < todayStart ? overdue : current).push(word);
+  });
+  overdue.sort((left, right) => reviewPriority(state, left, right));
+  current.sort((left, right) => reviewPriority(state, left, right));
+
+  const selectedOverdue = overdue.slice(0, backlogCapacity);
+  const selectedCurrent = current.slice(0, Math.max(0, totalCapacity - selectedOverdue.length));
+  const selected = selectedOverdue.concat(selectedCurrent);
+  return {
+    words: selected,
+    overdueIds: new Set(selectedOverdue.map((word) => word.id)),
+    backlogCount: selectedOverdue.length,
+    deferredCount: Math.max(0, words.length - selected.length),
+  };
+}
+
 function summarize(state, settings, now) {
   const time = now || Date.now();
   const todayStart = startOfDay(time);
@@ -32,12 +77,13 @@ function summarize(state, settings, now) {
   });
 
   const today = state.daily[dayKey(time)] || {};
+  const reviewPlan = selectReviews(state, settings, due, time, today);
   const newCount = today.newGoal == null
     ? Math.min(settings.dailyNewCount, unseen.length)
     : Math.max(0, today.newGoal - (today.newDone || 0));
   const estimatedMinutes = Math.max(
     5,
-    Math.ceil((due.length * 9 + newCount * 22 + Math.min(overdue.length, 20) * 8) / 60),
+    Math.ceil((reviewPlan.words.length * 12 + newCount * 22) / 60),
   );
 
   return {
@@ -46,6 +92,9 @@ function summarize(state, settings, now) {
     learned,
     newCount,
     overdue,
+    scheduledBacklogCount: reviewPlan.backlogCount,
+    scheduledDue: reviewPlan.words,
+    deferredDueCount: reviewPlan.deferredCount,
     stable,
     unseen,
     weak,
@@ -93,6 +142,48 @@ function shuffleReviews(words, today) {
   return shuffled;
 }
 
+function prepareSession(session, state, settings, now) {
+  const time = now || Date.now();
+  if (!session || !Array.isArray(session.queue) || session.mode === 'practice' || session.day !== dayKey(time)
+    || session.reviewPlanVersion === REVIEW_PLAN_VERSION) return false;
+
+  const completed = session.queue.slice(0, session.index);
+  const remaining = session.queue.slice(session.index);
+  const reviewItems = remaining.filter((item) => item.phase === 'review');
+  const candidates = reviewItems.map((item) => getWord(item.wordId)).filter(Boolean);
+  const reviewPlan = selectReviews(state, settings, candidates, time, {
+    dueDone: session.dueDone || 0,
+    backlogDone: session.backlogDone || 0,
+  });
+  const selectedItems = shuffleReviews(reviewPlan.words, session.day).map((word) => ({
+    wordId: word.id,
+    phase: 'review',
+    reinforced: false,
+    overdue: reviewPlan.overdueIds.has(word.id),
+  }));
+  const selectedIds = new Set(selectedItems.map((item) => item.wordId));
+  const droppedIds = new Set(reviewItems
+    .map((item) => item.wordId)
+    .filter((wordId) => !selectedIds.has(wordId)));
+  let selectedIndex = 0;
+  const nextRemaining = [];
+
+  remaining.forEach((item) => {
+    if (item.phase === 'review') {
+      if (selectedIndex < selectedItems.length) nextRemaining.push(selectedItems[selectedIndex++]);
+      return;
+    }
+    if (item.phase === 'context' && droppedIds.has(item.wordId)) return;
+    nextRemaining.push(item);
+  });
+
+  session.queue = completed.concat(nextRemaining);
+  session.dueGoal = (session.dueDone || 0) + selectedItems.length;
+  session.backlogDone = session.backlogDone || 0;
+  session.reviewPlanVersion = REVIEW_PLAN_VERSION;
+  return true;
+}
+
 function makeSession(today, time, queue, daily, goals) {
   const previous = daily || {};
   return {
@@ -106,12 +197,14 @@ function makeSession(today, time, queue, daily, goals) {
     batchNewGoal: goals.batchNewGoal,
     extraNew: goals.extraNew || 0,
     dueDone: previous.dueDone || 0,
+    backlogDone: previous.backlogDone || 0,
     newDone: previous.newDone || 0,
     reinforcementDone: previous.reinforcementDone || 0,
     contextDone: previous.contextDone || 0,
     contextCorrect: previous.contextCorrect || 0,
     ratings: Object.assign({ again: 0, hard: 0, good: 0, easy: 0 }, previous.ratings || {}),
     elapsedSeconds: Math.max(0, (previous.minutes || 0) * 60),
+    reviewPlanVersion: REVIEW_PLAN_VERSION,
   };
 }
 
@@ -128,13 +221,19 @@ function buildSession(state, settings, now) {
 
   // Review order changes each day so source-list neighbours cannot become a
   // hidden recall cue. New words keep the institution's original order.
-  shuffleReviews(stats.due, today)
-    .forEach((word) => queue.push({ wordId: word.id, phase: 'review', reinforced: false }));
+  const overdueIds = new Set(stats.overdue.map((word) => word.id));
+  shuffleReviews(stats.scheduledDue, today)
+    .forEach((word) => queue.push({
+      wordId: word.id,
+      phase: 'review',
+      reinforced: false,
+      overdue: overdueIds.has(word.id),
+    }));
   newWords.forEach((word) => queue.push({ wordId: word.id, phase: 'new', reinforced: false }));
 
   appendContextItems(queue, time);
   return makeSession(today, time, queue, daily, {
-    dueGoal: (daily.dueDone || 0) + stats.due.length,
+    dueGoal: (daily.dueDone || 0) + stats.scheduledDue.length,
     newGoal: (daily.newDone || 0) + newWords.length,
     batchNewGoal: newWords.length,
     extraNew: daily.extraNew || 0,
@@ -197,4 +296,4 @@ function progressStats(state) {
   };
 }
 
-module.exports = { buildExtraSession, buildSession, progressStats, summarize };
+module.exports = { buildExtraSession, buildSession, prepareSession, progressStats, summarize };

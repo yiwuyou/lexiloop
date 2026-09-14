@@ -88,6 +88,12 @@ assert.ok(pronunciationTag && /bindtap="playPronunciation"/.test(pronunciationTa
   'the whole pronunciation pill must play audio');
 assert.ok(!/<view class="audio-button"[^>]*bindtap="playPronunciation"/.test(studyTemplate),
   'the audio handler must not be limited to the small play icon');
+const todayTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxml'), 'utf8');
+const todayStyles = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxss'), 'utf8');
+assert.ok(todayTemplate.includes('今日复习'));
+assert.ok(!todayTemplate.includes('积压修复'), 'the internal backlog must not be shown as a separate task');
+assert.ok(/\.task-grid[\s\S]*grid-template-columns:\s*repeat\(2,\s*1fr\)/.test(todayStyles),
+  'the home task summary should use two clear columns');
 const paths = new Set();
 const packageSizes = {};
 words.forEach((word) => {

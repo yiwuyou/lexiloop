@@ -24,7 +24,6 @@ Page({
     greetingText: '',
     learned: 0,
     newCount: 0,
-    overdueCount: 0,
     progress: 0,
     sourceTag: '核心 day 1',
     total: 2522,
@@ -50,9 +49,10 @@ Page({
     const now = Date.now();
     const state = store.getState();
     const settings = store.getSettings();
+    const session = store.getSession();
+    if (plan.prepareSession(session, state, settings, now)) store.saveSession(session);
     const stats = plan.summarize(state, settings, now);
     const progress = plan.progressStats(state);
-    const session = store.getSession();
     const summary = store.getTodaySummary(state, now);
     const nextWord = stats.unseen[0];
     const todayNew = summary ? (summary.newGoal || summary.newDone || 0) : 0;
@@ -61,12 +61,11 @@ Page({
       completed: Boolean(summary && summary.completedAt && !(session && session.day === dates.dayKey(now) && session.index < session.queue.length)),
       dateText: dates.formatMonthDay(now),
       daysToExam: dates.daysUntil(settings.examDate, now),
-      dueCount: stats.due.length,
+      dueCount: stats.scheduledDue.length,
       estimatedMinutes: stats.estimatedMinutes,
       greetingText: greeting(new Date(now).getHours()),
       learned: progress.learned,
       newCount: stats.newCount,
-      overdueCount: stats.overdue.length,
       progress: Math.round((progress.learned / progress.total) * 100),
       sourceTag: nextWord ? `${nextWord.category === 'core' ? '核心' : '高频'} day ${nextWord.day}` : '首轮已完成',
       total: progress.total,
@@ -79,10 +78,11 @@ Page({
 
   startStudy() {
     const now = Date.now();
+    const state = store.getState();
+    const settings = store.getSettings();
     let session = store.getSession();
+    if (plan.prepareSession(session, state, settings, now)) store.saveSession(session);
     if (!session || session.day !== dates.dayKey(now) || session.index >= session.queue.length) {
-      const state = store.getState();
-      const settings = store.getSettings();
       session = plan.buildSession(state, settings, now);
       if (!session.queue.length) {
         wx.showToast({ title: '今天没有待学单词', icon: 'none' });

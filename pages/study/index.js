@@ -6,6 +6,7 @@ const store = require('../../utils/store');
 const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
 const phraseResources = require('../../utils/phrases');
+const studyPlan = require('../../utils/study-plan');
 const { getWord } = require('../../utils/words');
 const weakBook = require('../../utils/weak-book');
 
@@ -66,6 +67,12 @@ Page({
       wx.reLaunch({ url: '/pages/today/index' });
       return;
     }
+    if (!this.data.isPractice) {
+      const state = store.getState();
+      if (studyPlan.prepareSession(this.session, state, store.getSettings(), Date.now())) {
+        store.saveSession(this.session);
+      }
+    }
     if (!this.data.isPractice && !this.session.masteryVersion) {
       const state = store.getState();
       this.session.queue.slice(0, this.session.index).forEach(item => {
@@ -120,6 +127,7 @@ Page({
       contextCorrect: this.session.contextCorrect,
       contextDone: this.session.contextDone,
       dueDone: this.session.dueDone,
+      backlogDone: this.session.backlogDone || 0,
       dueGoal: this.session.dueGoal,
       minutes: Math.max(1, Math.round((this.session.elapsedSeconds || 0) / 60)),
       newDone: this.session.newDone,
@@ -273,7 +281,10 @@ Page({
       result: grade,
     });
 
-    if (item.phase === 'review') this.session.dueDone += 1;
+    if (item.phase === 'review') {
+      this.session.dueDone += 1;
+      if (item.overdue) this.session.backlogDone = (this.session.backlogDone || 0) + 1;
+    }
     if (item.phase === 'new') this.session.newDone += 1;
     if (item.phase === 'reinforcement') this.session.reinforcementDone += 1;
     this.session.ratings[grade] = (this.session.ratings[grade] || 0) + 1;

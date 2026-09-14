@@ -87,6 +87,70 @@ function testDailyReviewShuffle() {
   assert.ok(adjacentPairs <= 5, 'too many source-list neighbours survived the review shuffle');
 }
 
+function buildHeavyDueState(now) {
+  const state = { cards: {}, daily: {}, recentReviews: [] };
+  vocabulary.slice(0, 204).forEach((row, index) => {
+    const id = `${row[0]}-${row[1]}-${row[2]}`;
+    state.cards[id] = {
+      seen: true,
+      interval: 1,
+      lastAt: now - dates.DAY_MS,
+      dueAt: index < 173 ? now - 2 * dates.DAY_MS : now - 60 * 60 * 1000,
+    };
+  });
+  return state;
+}
+
+function testBacklogSmoothing() {
+  const now = new Date(2026, 8, 10, 9, 0, 0).getTime();
+  const state = buildHeavyDueState(now);
+  const settings = { dailyNewCount: 50, dailyReviewLimit: 80, dailyBacklogLimit: 30 };
+  const summary = studyPlan.summarize(state, settings, now);
+  assert.strictEqual(summary.due.length, 204, 'all genuinely due words remain visible to the planner');
+  assert.strictEqual(summary.overdue.length, 173);
+  assert.strictEqual(summary.scheduledDue.length, 61,
+    'today gets 30 historical reviews plus all 31 reviews due today');
+  assert.strictEqual(summary.scheduledBacklogCount, 30);
+  assert.strictEqual(summary.deferredDueCount, 143);
+
+  const session = studyPlan.buildSession(state, settings, now);
+  const reviews = session.queue.filter((item) => item.phase === 'review');
+  assert.strictEqual(reviews.length, 61);
+  assert.strictEqual(reviews.filter((item) => item.overdue).length, 30);
+  assert.strictEqual(session.queue.filter((item) => item.phase === 'new').length, 50,
+    'smoothed reviews must leave room for today\'s new words');
+  assert.strictEqual(session.reviewPlanVersion, 2);
+}
+
+function testExistingSessionUpgrade() {
+  const now = new Date(2026, 8, 10, 9, 0, 0).getTime();
+  const state = buildHeavyDueState(now);
+  const settings = { dailyNewCount: 50, dailyReviewLimit: 80, dailyBacklogLimit: 30 };
+  const dueIds = vocabulary.slice(0, 204).map((row) => `${row[0]}-${row[1]}-${row[2]}`);
+  const newIds = vocabulary.slice(204, 254).map((row) => `${row[0]}-${row[1]}-${row[2]}`);
+  const oldSession = {
+    day: dates.dayKey(now),
+    index: 0,
+    queue: dueIds.map((wordId) => ({ wordId, phase: 'review', reinforced: false }))
+      .concat(newIds.map((wordId) => ({ wordId, phase: 'new', reinforced: false })))
+      .concat(dueIds.map((wordId) => ({ wordId, phase: 'context', questionId: `old-${wordId}` }))),
+    dueDone: 0,
+    newDone: 0,
+  };
+  assert.strictEqual(studyPlan.prepareSession(oldSession, state, settings, now), true,
+    'a session created before 0.5.9 should be upgraded today');
+  assert.strictEqual(studyPlan.prepareSession(oldSession, state, settings, now), false,
+    'the same session must not be reshuffled repeatedly');
+  const reviews = oldSession.queue.filter((item) => item.phase === 'review');
+  const reviewIds = new Set(reviews.map((item) => item.wordId));
+  assert.strictEqual(reviews.length, 61);
+  assert.strictEqual(reviews.filter((item) => item.overdue).length, 30);
+  assert.strictEqual(oldSession.queue.filter((item) => item.phase === 'new').length, 50);
+  assert.ok(oldSession.queue.filter((item) => item.phase === 'context')
+    .every((item) => reviewIds.has(item.wordId)), 'deferred reviews must not leave orphan context items');
+  assert.strictEqual(oldSession.dueGoal, 61);
+}
+
 function testContextQuestions() {
   assert.ok(contextQuestions.length >= 156, 'context question pool should cover all learning days');
   assert.strictEqual(new Set(contextQuestions.map((question) => question.id)).size, contextQuestions.length,
@@ -195,6 +259,8 @@ testVocabulary();
 testScheduler();
 testDailyPlan();
 testDailyReviewShuffle();
+testBacklogSmoothing();
+testExistingSessionUpgrade();
 testContextQuestions();
 testEnrichment();
 testMigration();

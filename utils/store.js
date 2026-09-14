@@ -23,6 +23,8 @@ function defaultSettings() {
     schemaVersion: 2,
     dailyNewCount: 50,
     dailyMaxNewCount: 100,
+    dailyReviewLimit: 80,
+    dailyBacklogLimit: 30,
     extraStep: 25,
     examDate: '2026-12-15',
   };
