@@ -60,6 +60,33 @@ function testDailyPlan() {
   assert.strictEqual(summary.overdue.length, 1);
 }
 
+function testDailyReviewShuffle() {
+  const now = new Date(2026, 8, 10, 9, 0, 0).getTime();
+  const state = { cards: {}, daily: {}, recentReviews: [] };
+  const original = [];
+  for (let index = 1; index <= 20; index += 1) {
+    const id = `c-1-${index}`;
+    original.push(id);
+    state.cards[id] = scheduler.review(null, 'good', now - 5 * dates.DAY_MS);
+  }
+  const settings = { dailyNewCount: 0 };
+  const reviewIds = (time) => studyPlan.buildSession(state, settings, time).queue
+    .filter((item) => item.phase === 'review')
+    .map((item) => item.wordId);
+  const today = reviewIds(now);
+  assert.deepStrictEqual(today, reviewIds(now + 60 * 60 * 1000),
+    'review order must stay stable while resuming on the same day');
+  assert.notDeepStrictEqual(today, original, 'daily reviews must not follow source order');
+  assert.notDeepStrictEqual(today, reviewIds(now + dates.DAY_MS),
+    'review order should change on the next day');
+  assert.deepStrictEqual(today.slice().sort(), original.slice().sort(),
+    'shuffling must neither lose nor duplicate due words');
+  const sourcePosition = new Map(original.map((id, index) => [id, index]));
+  const adjacentPairs = today.slice(1).filter((id, index) =>
+    Math.abs(sourcePosition.get(id) - sourcePosition.get(today[index])) === 1).length;
+  assert.ok(adjacentPairs <= 5, 'too many source-list neighbours survived the review shuffle');
+}
+
 function testContextQuestions() {
   assert.ok(contextQuestions.length >= 156, 'context question pool should cover all learning days');
   assert.strictEqual(new Set(contextQuestions.map((question) => question.id)).size, contextQuestions.length,
@@ -167,6 +194,7 @@ function testExtraPlan() {
 testVocabulary();
 testScheduler();
 testDailyPlan();
+testDailyReviewShuffle();
 testContextQuestions();
 testEnrichment();
 testMigration();

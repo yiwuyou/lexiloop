@@ -67,6 +67,32 @@ function appendContextItems(queue, time) {
   queue.push(...contextItems);
 }
 
+function stableHash(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function shuffleReviews(words, today) {
+  const shuffled = words.slice();
+  let seed = stableHash(`${today}:${shuffled.map((word) => word.id).join('|')}`);
+  const random = () => {
+    seed = (seed + 0x6D2B79F5) >>> 0;
+    let value = seed;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]];
+  }
+  return shuffled;
+}
+
 function makeSession(today, time, queue, daily, goals) {
   const previous = daily || {};
   return {
@@ -100,7 +126,10 @@ function buildSession(state, settings, now) {
   const newWords = stats.unseen.slice(0, remainingNew);
   const queue = [];
 
-  stats.due.forEach((word) => queue.push({ wordId: word.id, phase: 'review', reinforced: false }));
+  // Review order changes each day so source-list neighbours cannot become a
+  // hidden recall cue. New words keep the institution's original order.
+  shuffleReviews(stats.due, today)
+    .forEach((word) => queue.push({ wordId: word.id, phase: 'review', reinforced: false }));
   newWords.forEach((word) => queue.push({ wordId: word.id, phase: 'new', reinforced: false }));
 
   appendContextItems(queue, time);
