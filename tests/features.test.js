@@ -35,6 +35,8 @@ assert.deepStrictEqual(plan.buildSession(state, settings, now + 86400000), futur
 assert.strictEqual(practice.buildSession(state, {}, now).queue.length, 50);
 assert.strictEqual(practice.buildSession(state, { category: 'high', day: 1 }, now).queue.length, 0);
 assert.strictEqual(practice.buildSession(state, { scope: 'weak' }, now).queue.length, 2);
+assert.strictEqual(practice.buildSession(state, { scope: 'due' }, now).queue.length, 50,
+  'free practice should offer due words without changing the formal schedule');
 assert.deepStrictEqual(migrations.migrateState(state).practice, state.practice);
 
 const isolated = { schemaVersion: 3, cards: {}, daily: {}, weakBook: {}, recentReviews: [] };
@@ -90,7 +92,9 @@ assert.ok(!/<view class="audio-button"[^>]*bindtap="playPronunciation"/.test(stu
   'the audio handler must not be limited to the small play icon');
 const todayTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxml'), 'utf8');
 const todayStyles = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxss'), 'utf8');
-assert.ok(todayTemplate.includes('今日复习'));
+['剩余需复习', '今日应复习', '今日已复习', '主动复习'].forEach((label) => {
+  assert.ok(todayTemplate.includes(label), `home review summary missing: ${label}`);
+});
 assert.ok(!todayTemplate.includes('积压修复'), 'the internal backlog must not be shown as a separate task');
 assert.ok(/\.task-grid[\s\S]*grid-template-columns:\s*repeat\(2,\s*1fr\)/.test(todayStyles),
   'the home task summary should use two clear columns');

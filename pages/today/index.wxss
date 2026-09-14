@@ -70,6 +70,19 @@
   display: block;
 }
 
+.hero-practice {
+  margin-top: 18rpx;
+}
+
+.review-note {
+  display: block;
+  margin-top: 14rpx;
+  color: var(--muted);
+  font-size: 21rpx;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .task-value {
   margin-bottom: 6rpx;
   font-size: 42rpx;

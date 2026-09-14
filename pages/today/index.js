@@ -19,7 +19,9 @@ Page({
     audioStatus: '',
     dateText: '',
     daysToExam: 0,
-    dueCount: 0,
+    remainingDueCount: 0,
+    todayReviewDone: 0,
+    todayReviewGoal: 0,
     estimatedMinutes: 0,
     greetingText: '',
     learned: 0,
@@ -54,6 +56,13 @@ Page({
     const stats = plan.summarize(state, settings, now);
     const progress = plan.progressStats(state);
     const summary = store.getTodaySummary(state, now);
+    const isTodaySession = Boolean(session && session.day === dates.dayKey(now));
+    const todayReviewDone = isTodaySession
+      ? (session.dueDone || 0)
+      : (summary && summary.dueDone || 0);
+    const todayReviewGoal = isTodaySession
+      ? Math.max(todayReviewDone, session.dueGoal || 0)
+      : Math.max(todayReviewDone, (summary && summary.dueGoal) || todayReviewDone + stats.scheduledDue.length);
     const nextWord = stats.unseen[0];
     const todayNew = summary ? (summary.newGoal || summary.newDone || 0) : 0;
     const remainingCapacity = Math.max(0, (settings.dailyMaxNewCount || 100) - Math.max(settings.dailyNewCount, todayNew));
@@ -61,7 +70,9 @@ Page({
       completed: Boolean(summary && summary.completedAt && !(session && session.day === dates.dayKey(now) && session.index < session.queue.length)),
       dateText: dates.formatMonthDay(now),
       daysToExam: dates.daysUntil(settings.examDate, now),
-      dueCount: stats.scheduledDue.length,
+      remainingDueCount: stats.due.length,
+      todayReviewDone,
+      todayReviewGoal,
       estimatedMinutes: stats.estimatedMinutes,
       greetingText: greeting(new Date(now).getHours()),
       learned: progress.learned,
@@ -95,13 +106,17 @@ Page({
 
   startPractice() {
     const existing = store.getSession('practice');
-    const options = existing && existing.index < existing.queue.length
-      ? ['继续上次主动复习', '最近学过的 50 词', '易忘词（最多 50 词）']
-      : ['最近学过的 50 词', '易忘词（最多 50 词）'];
+    const options = [];
+    if (existing && existing.index < existing.queue.length) options.push('继续上次主动复习');
+    if (this.data.remainingDueCount) options.push('剩余待复习（最多 50 词）');
+    options.push('最近学过的 50 词', '易忘词（最多 50 词）');
     wx.showActionSheet({ itemList: options, success: (result) => {
       const selected = options[result.tapIndex];
       if (selected !== '继续上次主动复习') {
-        const session = practice.buildSession(store.getState(), { scope: selected.indexOf('易忘') === 0 ? 'weak' : 'recent' });
+        let scope = 'recent';
+        if (selected.indexOf('剩余待复习') === 0) scope = 'due';
+        if (selected.indexOf('易忘') === 0) scope = 'weak';
+        const session = practice.buildSession(store.getState(), { scope });
         if (!session.queue.length) {
           wx.showToast({ title: '这个范围还没有已学词', icon: 'none' });
           return;
