@@ -5,8 +5,10 @@ const { getWord, getWords } = require('./words');
 const weakBook = require('./weak-book');
 
 const REVIEW_PLAN_VERSION = 2;
+const CONTEXT_PLAN_VERSION = 2;
 const DEFAULT_DAILY_REVIEW_LIMIT = 80;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
+const DAILY_CONTEXT_LIMIT = 12;
 
 function reviewPriority(state, left, right) {
   const leftCard = state.cards[left.id] || {};
@@ -101,18 +103,31 @@ function summarize(state, settings, now) {
   };
 }
 
-function appendContextItems(queue, time) {
+function makeContextItems(queue, time, excludedWordIds, requestedLimit) {
   const contextItems = [];
-  const seenQuestions = {};
+  const seenWords = {};
+  const excluded = excludedWordIds || new Set();
   const rotation = Math.floor(startOfDay(time) / DAY_MS);
+  const candidates = [];
   queue.forEach((item) => {
+    if (!['review', 'new'].includes(item.phase) || seenWords[item.wordId] || excluded.has(item.wordId)) return;
+    seenWords[item.wordId] = true;
     const word = getWord(item.wordId);
-    const question = word && context.getByWord(word.word, rotation);
-    if (question && !seenQuestions[question.id]) {
-      seenQuestions[question.id] = true;
-      contextItems.push({ wordId: word.id, phase: 'context', questionId: question.id, reinforced: true });
-    }
+    if (word) candidates.push(word);
   });
+  if (!candidates.length) return contextItems;
+  const limit = Math.min(requestedLimit == null ? DAILY_CONTEXT_LIMIT : requestedLimit, candidates.length);
+  const start = (rotation * DAILY_CONTEXT_LIMIT) % candidates.length;
+  const rotated = candidates.slice(start).concat(candidates.slice(0, start));
+  rotated.slice(0, limit).forEach((word) => {
+    const question = context.getForWord(word, rotation);
+    if (question) contextItems.push({ wordId: word.id, phase: 'context', questionId: question.id, reinforced: true });
+  });
+  return contextItems;
+}
+
+function appendContextItems(queue, time) {
+  const contextItems = makeContextItems(queue, time);
   queue.push(...contextItems);
 }
 
@@ -144,44 +159,63 @@ function shuffleReviews(words, today) {
 
 function prepareSession(session, state, settings, now) {
   const time = now || Date.now();
-  if (!session || !Array.isArray(session.queue) || session.mode === 'practice' || session.day !== dayKey(time)
-    || session.reviewPlanVersion === REVIEW_PLAN_VERSION) return false;
+  if (!session || !Array.isArray(session.queue) || session.mode === 'practice'
+    || session.day !== dayKey(time)) return false;
+  let changed = false;
 
-  const completed = session.queue.slice(0, session.index);
-  const remaining = session.queue.slice(session.index);
-  const reviewItems = remaining.filter((item) => item.phase === 'review');
-  const candidates = reviewItems.map((item) => getWord(item.wordId)).filter(Boolean);
-  const reviewPlan = selectReviews(state, settings, candidates, time, {
-    dueDone: session.dueDone || 0,
-    backlogDone: session.backlogDone || 0,
-  });
-  const selectedItems = shuffleReviews(reviewPlan.words, session.day).map((word) => ({
-    wordId: word.id,
-    phase: 'review',
-    reinforced: false,
-    overdue: reviewPlan.overdueIds.has(word.id),
-  }));
-  const selectedIds = new Set(selectedItems.map((item) => item.wordId));
-  const droppedIds = new Set(reviewItems
-    .map((item) => item.wordId)
-    .filter((wordId) => !selectedIds.has(wordId)));
-  let selectedIndex = 0;
-  const nextRemaining = [];
+  if (session.reviewPlanVersion !== REVIEW_PLAN_VERSION) {
+    const completed = session.queue.slice(0, session.index);
+    const remaining = session.queue.slice(session.index);
+    const reviewItems = remaining.filter((item) => item.phase === 'review');
+    const candidates = reviewItems.map((item) => getWord(item.wordId)).filter(Boolean);
+    const reviewPlan = selectReviews(state, settings, candidates, time, {
+      dueDone: session.dueDone || 0,
+      backlogDone: session.backlogDone || 0,
+    });
+    const selectedItems = shuffleReviews(reviewPlan.words, session.day).map((word) => ({
+      wordId: word.id,
+      phase: 'review',
+      reinforced: false,
+      overdue: reviewPlan.overdueIds.has(word.id),
+    }));
+    const selectedIds = new Set(selectedItems.map((item) => item.wordId));
+    const droppedIds = new Set(reviewItems
+      .map((item) => item.wordId)
+      .filter((wordId) => !selectedIds.has(wordId)));
+    let selectedIndex = 0;
+    const nextRemaining = [];
 
-  remaining.forEach((item) => {
-    if (item.phase === 'review') {
-      if (selectedIndex < selectedItems.length) nextRemaining.push(selectedItems[selectedIndex++]);
-      return;
-    }
-    if (item.phase === 'context' && droppedIds.has(item.wordId)) return;
-    nextRemaining.push(item);
-  });
+    remaining.forEach((item) => {
+      if (item.phase === 'review') {
+        if (selectedIndex < selectedItems.length) nextRemaining.push(selectedItems[selectedIndex++]);
+        return;
+      }
+      if (item.phase === 'context' && droppedIds.has(item.wordId)) return;
+      nextRemaining.push(item);
+    });
 
-  session.queue = completed.concat(nextRemaining);
-  session.dueGoal = (session.dueDone || 0) + selectedItems.length;
-  session.backlogDone = session.backlogDone || 0;
-  session.reviewPlanVersion = REVIEW_PLAN_VERSION;
-  return true;
+    session.queue = completed.concat(nextRemaining);
+    session.dueGoal = (session.dueDone || 0) + selectedItems.length;
+    session.backlogDone = session.backlogDone || 0;
+    session.reviewPlanVersion = REVIEW_PLAN_VERSION;
+    changed = true;
+  }
+
+  if (session.contextPlanVersion !== CONTEXT_PLAN_VERSION) {
+    const completed = session.queue.slice(0, session.index);
+    const remainingWithoutContext = session.queue.slice(session.index)
+      .filter((item) => item.phase !== 'context');
+    const completedContextWords = new Set(completed
+      .filter((item) => item.phase === 'context')
+      .map((item) => item.wordId));
+    const remainingLimit = Math.max(0, DAILY_CONTEXT_LIMIT - completedContextWords.size);
+    const baseItems = session.queue.filter((item) => item.phase !== 'context');
+    const contextItems = makeContextItems(baseItems, time, completedContextWords, remainingLimit);
+    session.queue = completed.concat(remainingWithoutContext, contextItems);
+    session.contextPlanVersion = CONTEXT_PLAN_VERSION;
+    changed = true;
+  }
+  return changed;
 }
 
 function makeSession(today, time, queue, daily, goals) {
@@ -205,6 +239,7 @@ function makeSession(today, time, queue, daily, goals) {
     ratings: Object.assign({ again: 0, hard: 0, good: 0, easy: 0 }, previous.ratings || {}),
     elapsedSeconds: Math.max(0, (previous.minutes || 0) * 60),
     reviewPlanVersion: REVIEW_PLAN_VERSION,
+    contextPlanVersion: CONTEXT_PLAN_VERSION,
   };
 }
 

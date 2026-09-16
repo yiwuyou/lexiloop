@@ -1,12 +1,14 @@
 const assert = require('assert');
 
 const contextQuestions = require('../data/context-questions');
+const context = require('../utils/context');
 const vocabulary = require('../data/vocabulary');
 const dates = require('../utils/date');
 const scheduler = require('../utils/scheduler');
 const studyPlan = require('../utils/study-plan');
 const migrations = require('../utils/migrations');
 const enrichment = require('../data/enrichment');
+const { getWords } = require('../utils/words');
 
 function testVocabulary() {
   assert.strictEqual(vocabulary.length, 2522, 'complete source record count');
@@ -49,6 +51,8 @@ function testDailyPlan() {
   const nextDaySession = studyPlan.buildSession(state, settings, now + dates.DAY_MS);
   const todayQuestions = session.queue.filter((item) => item.phase === 'context').map((item) => item.questionId);
   const nextDayQuestions = nextDaySession.queue.filter((item) => item.phase === 'context').map((item) => item.questionId);
+  assert.strictEqual(todayQuestions.length, 12, 'daily context checks should use a varied but bounded set');
+  assert.strictEqual(nextDayQuestions.length, 12);
   assert.ok(todayQuestions.every((id) => !nextDayQuestions.includes(id)),
     'words with multiple context questions should rotate to a new sentence on the next day');
 
@@ -191,6 +195,16 @@ function testContextQuestions() {
       .map((question) => question.word.toLowerCase()));
     assert.ok(covered.size >= 1, `high-frequency day ${day} should contribute context questions`);
   }
+
+  const authoredWords = new Set(contextQuestions.map((question) => question.word.toLowerCase()));
+  const fallbackWord = getWords().find((word) => !authoredWords.has(word.word.toLowerCase()));
+  const fallback = context.getForWord(fallbackWord, 0);
+  assert.ok(fallback.id === `auto-${fallbackWord.id}`);
+  assert.strictEqual(fallback.sentence, fallbackWord.example);
+  assert.strictEqual(fallback.translation, fallbackWord.translation);
+  assert.strictEqual(fallback.choices[fallback.answer], fallbackWord.meaning);
+  assert.deepStrictEqual(context.getById(fallback.id), fallback,
+    'generated context questions must survive session restore');
 }
 
 function testEnrichment() {

@@ -1,4 +1,5 @@
 const questions = require('../data/context-questions');
+const { getWord, getWords } = require('./words');
 
 const byWord = {};
 const byId = {};
@@ -22,8 +23,40 @@ function getByWord(word, rotation) {
   return available[index];
 }
 
-function getById(id) {
-  return byId[id] || null;
+function fallbackQuestion(word) {
+  if (!word || !word.example || !word.translation || !word.meaning) return null;
+  const words = getWords();
+  const choices = [word.meaning];
+  const offsets = [137, 383, 761, 1091];
+  offsets.forEach((offset) => {
+    const candidate = words[(word.position + offset) % words.length];
+    if (candidate && candidate.meaning && !choices.includes(candidate.meaning) && choices.length < 3) {
+      choices.push(candidate.meaning);
+    }
+  });
+  if (choices.length < 3) return null;
+  const answer = wordOffset(word.id) % choices.length;
+  const correct = choices.shift();
+  choices.splice(answer, 0, correct);
+  return {
+    id: `auto-${word.id}`,
+    word: word.word,
+    sentence: word.example,
+    translation: word.translation,
+    choices,
+    answer,
+    explanation: `结合整句判断，${word.word} 在这里表示“${word.meaning}”。`,
+  };
 }
 
-module.exports = { getById, getByWord };
+function getForWord(word, rotation) {
+  return getByWord(word && word.word, rotation) || fallbackQuestion(word);
+}
+
+function getById(id) {
+  if (byId[id]) return byId[id];
+  if (String(id || '').startsWith('auto-')) return fallbackQuestion(getWord(String(id).slice(5)));
+  return null;
+}
+
+module.exports = { getById, getByWord, getForWord };
