@@ -1,6 +1,7 @@
 const tuples = require('../data/vocabulary');
 const enrichment = require('../data/enrichment');
 const learningContent = require('../data/learning-content');
+const exampleCorrections = require('../data/example-corrections');
 
 let cache;
 let mapCache;
@@ -20,7 +21,8 @@ function inflate(tuple, position) {
     sourceLabel: `${category === 'core' ? '核心' : '高频'} day ${tuple[1]} · #${tuple[2]}`,
     searchText: `${tuple[3]} ${tuple[4]}`.toLowerCase(),
     enhanced: true,
-  }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {});
+  }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {},
+  exampleCorrections[id] || {});
   const generated = learningContent[id] || {};
   // A reviewed guide is newer than the legacy enrichment hints. Re-apply only
   // its learning fields so older hand-corrected IPA/example data stays intact.

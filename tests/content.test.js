@@ -10,6 +10,52 @@ const reviewedPhrases = require('../data/reviewed-phrases.json');
 const sizes = require('../data/audio-sizes');
 const root = path.join(__dirname, '..');
 const words = getWords();
+
+function escaped(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function surfaceForms(word) {
+  const base = String(word.spokenWord || word.word).trim();
+  const forms = new Set([base]);
+  const irregular = {
+    child: 'children', person: 'people', man: 'men', woman: 'women',
+    foot: 'feet', tooth: 'teeth', mouse: 'mice', goose: 'geese', ox: 'oxen',
+  };
+  if (irregular[base.toLowerCase()]) forms.add(irregular[base.toLowerCase()]);
+  (word.wordForms || []).forEach((item) => { if (item.word) forms.add(item.word); });
+  if (!base.includes(' ')) {
+    forms.add(base + 's');
+    forms.add(base + 'es');
+    forms.add(base + 'ed');
+    forms.add(base + 'd');
+    forms.add(base + 'ing');
+    if (/[^aeiou]y$/i.test(base)) {
+      forms.add(base.slice(0, -1) + 'ies');
+      forms.add(base.slice(0, -1) + 'ied');
+    }
+    if (/e$/i.test(base)) forms.add(base.slice(0, -1) + 'ing');
+  }
+  return Array.from(forms).filter(Boolean);
+}
+
+function hasRealTarget(word) {
+  const targetIsAcronym = /[A-Z]/.test(word.spokenWord) && word.spokenWord === word.spokenWord.toUpperCase();
+  return surfaceForms(word).some((form) => {
+    const pattern = escaped(form).replace(/\\ /g, '[ -]+');
+    const matcher = new RegExp(`(?<![A-Za-z])${pattern}(?![A-Za-z])`, 'gi');
+    let match;
+    while ((match = matcher.exec(word.example))) {
+      const token = match[0];
+      const acronym = !targetIsAcronym && /[A-Z]/.test(token) && token === token.toUpperCase();
+      const before = word.example.slice(0, match.index).trimEnd();
+      const name = /^[A-Z]/.test(token)
+        && /\b(?:by|named|called|mr|mrs|ms|dr|professor)\.?\s*$/i.test(before);
+      if (!acronym && !name) return true;
+    }
+    return false;
+  });
+}
 assert.strictEqual(words.length, 2522);
 words.forEach((word, index) => {
   const row = source[index];
@@ -26,6 +72,10 @@ words.forEach((word, index) => {
     assert.ok(word.exampleSourceDetail.includes('https://creativecommons.org/licenses/by/2.0/fr/'));
   }
 });
+const falseExampleMatches = words.filter((word) => !hasRealTarget(word))
+  .map((word) => `${word.id}:${word.word} -> ${word.example}`);
+assert.deepStrictEqual(falseExampleMatches, [],
+  'examples must contain the target as a real word/form, not inside an acronym, name or longer word');
 assert.ok(words.every((word) => !word.associationHint.includes('记住例句中的用法')));
 assert.ok(words.every((word) => !word.associationHint.includes('例句片段')));
 assert.ok(words.every((word) => !word.associationHint.startsWith('语义归组：')));

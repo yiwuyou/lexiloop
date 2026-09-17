@@ -38,6 +38,7 @@ with (WORK / 'ecdict.csv').open(encoding='utf-8', newline='') as file:
             dictionary[entry['word']] = entry
 
 forms = {}
+forms_by_head = {}
 for head in heads:
     variants = {head, head + 's', head + 'es', head + 'd', head + 'ed', head + 'ing'}
     for exchange in dictionary.get(head, {}).get('exchange', '').split('/'):
@@ -47,6 +48,7 @@ for head in heads:
                 variants.add(value)
     for form in variants:
         forms.setdefault(form, set()).add(head)
+    forms_by_head[head] = variants
 
 candidates = {}
 
@@ -69,6 +71,13 @@ def proper_name_only(example, head):
     return all(suspicious)
 
 
+def acronym_only(example, head):
+    """Reject a false inflection match such as aid -> the acronym AIDS."""
+    matched = [token for token in re.findall(r"[A-Za-z]+(?:['-][A-Za-z]+)*", example)
+               if token.lower() in forms_by_head.get(head, set())]
+    return bool(matched) and all(len(token) > 1 and token.isupper() for token in matched)
+
+
 for line in (WORK / 'tatoeba' / 'cmn.txt').read_text('utf-8').splitlines():
     en, zh, credit = line.split('\t')
     zh = to_simplified(zh)
@@ -80,7 +89,7 @@ for line in (WORK / 'tatoeba' / 'cmn.txt').read_text('utf-8').splitlines():
         for i in range(len(tokens) - size + 1):
             matches.update(forms.get(' '.join(tokens[i:i + size]), set()))
     for head in matches:
-        if proper_name_only(en, head):
+        if proper_name_only(en, head) or acronym_only(en, head):
             continue
         candidates.setdefault(head, []).append((en, zh, credit))
 
