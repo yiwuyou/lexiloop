@@ -85,6 +85,8 @@ app.subPackages.forEach((pack) => pack.pages.forEach((page) => {
   ['.js', '.json', '.wxml'].forEach((extension) => assert.ok(fs.existsSync(path.join(__dirname, '..', pack.root, page + extension))));
 }));
 const studyTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/study/index.wxml'), 'utf8');
+assert.ok(studyTemplate.includes('{{questionLabel}}') && studyTemplate.includes('例句巩固'),
+  'sentence recall and polysemy disambiguation must use visibly different labels');
 const pronunciationTag = studyTemplate.match(/<view class="pronunciation"[^>]*>/);
 assert.ok(pronunciationTag && /bindtap="playPronunciation"/.test(pronunciationTag[0]),
   'the whole pronunciation pill must play audio');

@@ -74,11 +74,11 @@
       <view class="context-card card">
         <view class="word-meta">
           <text>{{word.sourceLabel}}</text>
-          <text class="kind">语境辨义</text>
+          <text class="kind">{{questionLabel}}</text>
         </view>
         <text class="context-word">{{word.word}}</text>
         <text class="sentence">{{question.sentence}}</text>
-        <text class="context-prompt">这里的词义是：</text>
+        <text class="context-prompt">{{questionPrompt}}</text>
         <view class="choice-list">
           <button
             wx:for="{{question.choices}}"
@@ -115,6 +115,7 @@
         <view><text>{{sessionSummary.dueDone}}</text><text>复习</text></view>
       </view>
       <view class="context-summary" wx:if="{{sessionSummary.contextDone}}">语境辨义 {{sessionSummary.contextCorrect}} / {{sessionSummary.contextDone}}</view>
+      <view class="context-summary" wx:if="{{sessionSummary.sentenceDone}}">例句巩固 {{sessionSummary.sentenceCorrect}} / {{sessionSummary.sentenceDone}}</view>
       <button class="primary-button" bindtap="exitStudy">返回首页</button>
     </view>
   </block>

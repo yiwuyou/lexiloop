@@ -15,6 +15,7 @@ const PHASE_LABELS = {
   new: '新词建联',
   reinforcement: '难词强化',
   context: '延迟抽测',
+  sentence: '例句巩固',
   practice: '主动复习',
 };
 
@@ -24,6 +25,8 @@ Page({
     isPractice: false,
     contextAnswered: false,
     contextCorrect: false,
+    questionLabel: '',
+    questionPrompt: '',
     current: 1,
     currentInPhase: 1,
     isContext: false,
@@ -126,6 +129,8 @@ Page({
       pendingCount: mastery.remaining(this.session, state.cards).length,
       contextCorrect: this.session.contextCorrect,
       contextDone: this.session.contextDone,
+      sentenceCorrect: this.session.sentenceCorrect || 0,
+      sentenceDone: this.session.sentenceDone || 0,
       dueDone: this.session.dueDone,
       backlogDone: this.session.backlogDone || 0,
       dueGoal: this.session.dueGoal,
@@ -172,7 +177,8 @@ Page({
       .slice(0, this.session.index + 1)
       .filter((candidate) => candidate.phase === item.phase).length;
     const phaseTotal = this.session.queue.filter((candidate) => candidate.phase === item.phase).length;
-    let question = item.phase === 'context' ? context.getById(item.questionId) : null;
+    const isQuestion = item.phase === 'context' || item.phase === 'sentence';
+    let question = isQuestion ? context.getById(item.questionId) : null;
     if (question && item.retry) {
       const shift = item.retry % question.choices.length;
       question = Object.assign({}, question, { choices: question.choices.slice(shift).concat(question.choices.slice(0, shift)),
@@ -189,7 +195,9 @@ Page({
       contextCorrect: Boolean(item.correct),
       current: this.session.index + 1,
       currentInPhase: samePhaseBefore,
-      isContext: item.phase === 'context',
+      isContext: isQuestion,
+      questionLabel: item.phase === 'sentence' ? '例句巩固' : '语境辨义',
+      questionPrompt: item.phase === 'sentence' ? '结合句子回忆，这个单词的主要义是：' : '这里的词义是：',
       phaseLabel: PHASE_LABELS[item.phase] || '单词学习',
       phaseTotal,
       progress: Math.round(((this.session.index + 1) / this.session.queue.length) * 100),
@@ -200,7 +208,7 @@ Page({
       word,
       isWeakMarked: weakBook.isMarked(state, word.id),
     });
-    if (item.phase !== 'context') {
+    if (!isQuestion) {
       phraseResources.phraseFor(word).then((phrase) => {
         if (!phrase || !this.data.word || this.data.word.id !== word.id) return;
         this.setData({ 'word.phrase': phrase, contentHeight: 0 }, () => this.fitAnswerContent());
@@ -289,6 +297,10 @@ Page({
     if (item.phase === 'reinforcement') this.session.reinforcementDone += 1;
     this.session.ratings[grade] = (this.session.ratings[grade] || 0) + 1;
 
+    if (item.phase === 'review' || item.phase === 'new') {
+      studyPlan.queueContextCheck(this.session, word, grade, now);
+    }
+
     if (grade === 'again' || grade === 'hard') {
       const alreadyQueued = this.session.queue
         .slice(this.session.index + 1)
@@ -332,17 +344,18 @@ Page({
       card.failedDay = dayKey(now);
       card.lastGrade = 'hard';
       card.interval = Math.min(card.interval || 1, 1);
-      card.needsContext = item.questionId;
+      if (item.phase === 'context') card.needsContext = item.questionId;
+      else card.needsRecall = true;
       state.cards[item.wordId] = card;
-      weakBook.mark(state, item.wordId, 'context', now);
+      weakBook.mark(state, item.wordId, item.phase === 'context' ? 'context' : 'sentence', now);
     }
-    if (correct && card) card.needsContext = '';
+    if (correct && card && item.phase === 'context') card.needsContext = '';
     if (!correct) mastery.retry(this.session, item, now);
     store.appendReview(state, {
       at: now,
       day: this.session.day,
       wordId: item.wordId,
-      phase: 'context',
+      phase: item.phase,
       result: correct ? 'correct' : 'wrong',
     });
     store.saveState(state);
@@ -360,8 +373,14 @@ Page({
 
   nextContext() {
     if (!this.data.contextAnswered) return;
-    this.session.contextDone += 1;
-    if (this.data.contextCorrect) this.session.contextCorrect += 1;
+    const item = this.currentItem();
+    if (item.phase === 'sentence') {
+      this.session.sentenceDone = (this.session.sentenceDone || 0) + 1;
+      if (this.data.contextCorrect) this.session.sentenceCorrect = (this.session.sentenceCorrect || 0) + 1;
+    } else {
+      this.session.contextDone += 1;
+      if (this.data.contextCorrect) this.session.contextCorrect += 1;
+    }
     this.captureElapsed();
     this.session.index += 1;
     const state = store.getState();

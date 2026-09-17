@@ -5,7 +5,7 @@ const { getWord, getWords } = require('./words');
 const weakBook = require('./weak-book');
 
 const REVIEW_PLAN_VERSION = 2;
-const CONTEXT_PLAN_VERSION = 2;
+const CONTEXT_PLAN_VERSION = 3;
 const DEFAULT_DAILY_REVIEW_LIMIT = 80;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
@@ -103,32 +103,26 @@ function summarize(state, settings, now) {
   };
 }
 
-function makeContextItems(queue, time, excludedWordIds, requestedLimit) {
-  const contextItems = [];
-  const seenWords = {};
-  const excluded = excludedWordIds || new Set();
-  const rotation = Math.floor(startOfDay(time) / DAY_MS);
-  const candidates = [];
-  queue.forEach((item) => {
-    if (!['review', 'new'].includes(item.phase) || seenWords[item.wordId] || excluded.has(item.wordId)) return;
-    seenWords[item.wordId] = true;
-    const word = getWord(item.wordId);
-    if (word) candidates.push(word);
+function queueContextCheck(session, word, grade, now) {
+  if (!session || !Array.isArray(session.queue) || !word || grade === 'easy') return false;
+  const queuedWords = new Set(session.queue
+    .filter((item) => item.phase === 'context' || item.phase === 'sentence')
+    .map((item) => item.wordId));
+  if (queuedWords.has(word.id) || queuedWords.size >= DAILY_CONTEXT_LIMIT) return false;
+  const time = now || Date.now();
+  const needsRecall = grade === 'again' || grade === 'hard';
+  const question = needsRecall
+    ? context.getRecallQuestion(word)
+    : context.getByWord(word.word, Math.floor(startOfDay(time) / DAY_MS));
+  if (!question) return false;
+  session.queue.push({
+    wordId: word.id,
+    phase: needsRecall ? 'sentence' : 'context',
+    questionId: question.id,
+    reinforced: true,
+    availableAt: time + 60 * 1000,
   });
-  if (!candidates.length) return contextItems;
-  const limit = Math.min(requestedLimit == null ? DAILY_CONTEXT_LIMIT : requestedLimit, candidates.length);
-  const start = (rotation * DAILY_CONTEXT_LIMIT) % candidates.length;
-  const rotated = candidates.slice(start).concat(candidates.slice(0, start));
-  rotated.slice(0, limit).forEach((word) => {
-    const question = context.getForWord(word, rotation);
-    if (question) contextItems.push({ wordId: word.id, phase: 'context', questionId: question.id, reinforced: true });
-  });
-  return contextItems;
-}
-
-function appendContextItems(queue, time) {
-  const contextItems = makeContextItems(queue, time);
-  queue.push(...contextItems);
+  return true;
 }
 
 function stableHash(value) {
@@ -205,14 +199,16 @@ function prepareSession(session, state, settings, now) {
     const completed = session.queue.slice(0, session.index);
     const remainingWithoutContext = session.queue.slice(session.index)
       .filter((item) => item.phase !== 'context');
-    const completedContextWords = new Set(completed
-      .filter((item) => item.phase === 'context')
-      .map((item) => item.wordId));
-    const remainingLimit = Math.max(0, DAILY_CONTEXT_LIMIT - completedContextWords.size);
-    const baseItems = session.queue.filter((item) => item.phase !== 'context');
-    const contextItems = makeContextItems(baseItems, time, completedContextWords, remainingLimit);
-    session.queue = completed.concat(remainingWithoutContext, contextItems);
+    session.queue = completed.concat(remainingWithoutContext);
     session.contextPlanVersion = CONTEXT_PLAN_VERSION;
+    completed
+      .filter((item) => ['review', 'new'].includes(item.phase))
+      .forEach((item) => {
+        const card = state.cards[item.wordId];
+        if (card && card.lastGrade && card.lastGrade !== 'easy') {
+          queueContextCheck(session, getWord(item.wordId), card.lastGrade, time);
+        }
+      });
     changed = true;
   }
   return changed;
@@ -236,6 +232,8 @@ function makeSession(today, time, queue, daily, goals) {
     reinforcementDone: previous.reinforcementDone || 0,
     contextDone: previous.contextDone || 0,
     contextCorrect: previous.contextCorrect || 0,
+    sentenceDone: previous.sentenceDone || 0,
+    sentenceCorrect: previous.sentenceCorrect || 0,
     ratings: Object.assign({ again: 0, hard: 0, good: 0, easy: 0 }, previous.ratings || {}),
     elapsedSeconds: Math.max(0, (previous.minutes || 0) * 60),
     reviewPlanVersion: REVIEW_PLAN_VERSION,
@@ -266,7 +264,6 @@ function buildSession(state, settings, now) {
     }));
   newWords.forEach((word) => queue.push({ wordId: word.id, phase: 'new', reinforced: false }));
 
-  appendContextItems(queue, time);
   return makeSession(today, time, queue, daily, {
     dueGoal: (daily.dueDone || 0) + stats.scheduledDue.length,
     newGoal: (daily.newDone || 0) + newWords.length,
@@ -287,7 +284,6 @@ function buildExtraSession(state, settings, requested, now) {
   const unseen = summarize(state, settings, time).unseen.slice(0, amount);
   if (!unseen.length) return null;
   const queue = unseen.map((word) => ({ wordId: word.id, phase: 'new', reinforced: false }));
-  appendContextItems(queue, time);
   return makeSession(today, time, queue, daily, {
     dueGoal: daily.dueGoal || 0,
     newGoal: currentGoal + unseen.length,
@@ -331,4 +327,11 @@ function progressStats(state) {
   };
 }
 
-module.exports = { buildExtraSession, buildSession, prepareSession, progressStats, summarize };
+module.exports = {
+  buildExtraSession,
+  buildSession,
+  prepareSession,
+  progressStats,
+  queueContextCheck,
+  summarize,
+};

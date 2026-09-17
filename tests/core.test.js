@@ -8,7 +8,7 @@ const scheduler = require('../utils/scheduler');
 const studyPlan = require('../utils/study-plan');
 const migrations = require('../utils/migrations');
 const enrichment = require('../data/enrichment');
-const { getWords } = require('../utils/words');
+const { getWord } = require('../utils/words');
 
 function testVocabulary() {
   assert.strictEqual(vocabulary.length, 2522, 'complete source record count');
@@ -47,14 +47,8 @@ function testDailyPlan() {
   assert.strictEqual(session.newGoal, 50);
   assert.strictEqual(session.dueGoal, 0);
   assert.strictEqual(session.queue.filter((item) => item.phase === 'new').length, 50);
-  assert.ok(session.queue.some((item) => item.phase === 'context'), 'first day should include delayed context checks');
-  const nextDaySession = studyPlan.buildSession(state, settings, now + dates.DAY_MS);
-  const todayQuestions = session.queue.filter((item) => item.phase === 'context').map((item) => item.questionId);
-  const nextDayQuestions = nextDaySession.queue.filter((item) => item.phase === 'context').map((item) => item.questionId);
-  assert.strictEqual(todayQuestions.length, 12, 'daily context checks should use a varied but bounded set');
-  assert.strictEqual(nextDayQuestions.length, 12);
-  assert.ok(todayQuestions.every((id) => !nextDayQuestions.includes(id)),
-    'words with multiple context questions should rotate to a new sentence on the next day');
+  assert.strictEqual(session.queue.filter((item) => item.phase === 'context').length, 0,
+    'context checks must not be added before the learner answers');
 
   const firstId = session.queue[0].wordId;
   state.cards[firstId] = scheduler.review(null, 'hard', now - 2 * dates.DAY_MS);
@@ -146,12 +140,11 @@ function testExistingSessionUpgrade() {
   assert.strictEqual(studyPlan.prepareSession(oldSession, state, settings, now), false,
     'the same session must not be reshuffled repeatedly');
   const reviews = oldSession.queue.filter((item) => item.phase === 'review');
-  const reviewIds = new Set(reviews.map((item) => item.wordId));
   assert.strictEqual(reviews.length, 61);
   assert.strictEqual(reviews.filter((item) => item.overdue).length, 30);
   assert.strictEqual(oldSession.queue.filter((item) => item.phase === 'new').length, 50);
-  assert.ok(oldSession.queue.filter((item) => item.phase === 'context')
-    .every((item) => reviewIds.has(item.wordId)), 'deferred reviews must not leave orphan context items');
+  assert.strictEqual(oldSession.queue.filter((item) => item.phase === 'context').length, 0,
+    'old pre-generated or fabricated context items must be removed');
   assert.strictEqual(oldSession.dueGoal, 61);
 }
 
@@ -196,15 +189,38 @@ function testContextQuestions() {
     assert.ok(covered.size >= 1, `high-frequency day ${day} should contribute context questions`);
   }
 
-  const authoredWords = new Set(contextQuestions.map((question) => question.word.toLowerCase()));
-  const fallbackWord = getWords().find((word) => !authoredWords.has(word.word.toLowerCase()));
-  const fallback = context.getForWord(fallbackWord, 0);
-  assert.ok(fallback.id === `auto-${fallbackWord.id}`);
-  assert.strictEqual(fallback.sentence, fallbackWord.example);
-  assert.strictEqual(fallback.translation, fallbackWord.translation);
-  assert.strictEqual(fallback.choices[fallback.answer], fallbackWord.meaning);
-  assert.deepStrictEqual(context.getById(fallback.id), fallback,
-    'generated context questions must survive session restore');
+  assert.strictEqual(context.getById('auto-c-1-1'), null,
+    'fabricated single-meaning fallback questions must stay disabled');
+}
+
+function testContextScheduling() {
+  const now = new Date(2026, 8, 17, 9, 0, 0).getTime();
+  const word = getWord('c-1-27'); // absorb has reviewed multi-sense questions.
+  assert.ok(context.getByWord(word.word), 'test word must have authored context questions');
+  const session = { day: dates.dayKey(now), index: 0, queue: [{ wordId: word.id, phase: 'new' }] };
+  assert.strictEqual(studyPlan.queueContextCheck(session, word, 'easy', now), false,
+    'seconds-complete words must not enter delayed disambiguation');
+  assert.strictEqual(session.queue.filter((item) => item.phase === 'context').length, 0);
+  assert.strictEqual(studyPlan.queueContextCheck(session, word, 'good', now), true,
+    'a non-easy answer may queue a reviewed polysemy question');
+  const queued = session.queue.find((item) => item.phase === 'context');
+  assert.ok(queued && !queued.questionId.startsWith('auto-'));
+  assert.strictEqual(queued.availableAt, now + 60 * 1000);
+  assert.strictEqual(studyPlan.queueContextCheck(session, word, 'hard', now), false,
+    'the same word must not be queued twice in one session');
+  const noQuestion = getWord('c-1-1');
+  assert.strictEqual(context.getByWord(noQuestion.word), null);
+  const recallSession = { day: dates.dayKey(now), index: 0, queue: [{ wordId: noQuestion.id, phase: 'new' }] };
+  assert.strictEqual(studyPlan.queueContextCheck(recallSession, noQuestion, 'again', now), true,
+    'a missed ordinary word may receive a separately labelled sentence recall check');
+  const recall = recallSession.queue.find((item) => item.phase === 'sentence');
+  assert.ok(recall && recall.questionId === `recall-${noQuestion.id}`);
+  assert.strictEqual(context.getById(recall.questionId).choices[context.getById(recall.questionId).answer], noQuestion.meaning);
+  assert.strictEqual(studyPlan.queueContextCheck(recallSession, noQuestion, 'hard', now), false,
+    'a word already represented in the same delayed queue must not be duplicated');
+  const goodSession = { day: dates.dayKey(now), index: 0, queue: [{ wordId: noQuestion.id, phase: 'new' }] };
+  assert.strictEqual(studyPlan.queueContextCheck(goodSession, noQuestion, 'good', now), false,
+    'remembered single-meaning words must not be disguised as disambiguation questions');
 }
 
 function testEnrichment() {
@@ -276,6 +292,7 @@ testDailyReviewShuffle();
 testBacklogSmoothing();
 testExistingSessionUpgrade();
 testContextQuestions();
+testContextScheduling();
 testEnrichment();
 testMigration();
 testExtraPlan();

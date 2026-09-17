@@ -23,12 +23,11 @@ function getByWord(word, rotation) {
   return available[index];
 }
 
-function fallbackQuestion(word) {
+function getRecallQuestion(word) {
   if (!word || !word.example || !word.translation || !word.meaning) return null;
   const words = getWords();
   const choices = [word.meaning];
-  const offsets = [137, 383, 761, 1091];
-  offsets.forEach((offset) => {
+  [137, 383, 761, 1091].forEach((offset) => {
     const candidate = words[(word.position + offset) % words.length];
     if (candidate && candidate.meaning && !choices.includes(candidate.meaning) && choices.length < 3) {
       choices.push(candidate.meaning);
@@ -39,24 +38,19 @@ function fallbackQuestion(word) {
   const correct = choices.shift();
   choices.splice(answer, 0, correct);
   return {
-    id: `auto-${word.id}`,
+    id: `recall-${word.id}`,
     word: word.word,
     sentence: word.example,
     translation: word.translation,
     choices,
     answer,
-    explanation: `结合整句判断，${word.word} 在这里表示“${word.meaning}”。`,
+    explanation: `这是例句巩固，不是多义辨析。${word.word} 的机构释义是“${word.meaning}”。`,
   };
 }
 
-function getForWord(word, rotation) {
-  return getByWord(word && word.word, rotation) || fallbackQuestion(word);
-}
-
 function getById(id) {
-  if (byId[id]) return byId[id];
-  if (String(id || '').startsWith('auto-')) return fallbackQuestion(getWord(String(id).slice(5)));
-  return null;
+  if (String(id || '').startsWith('recall-')) return getRecallQuestion(getWord(String(id).slice(7)));
+  return byId[id] || null;
 }
 
-module.exports = { getById, getByWord, getForWord };
+module.exports = { getById, getByWord, getRecallQuestion };

@@ -1,7 +1,7 @@
 // Failed retrievals remain pending until a successful recall, including after restart.
 function retry(session, item, now) {
   const tail = session.queue.slice(session.index + 1);
-  const phase = item.phase === 'context' ? 'context' : 'reinforcement';
+  const phase = ['context', 'sentence'].includes(item.phase) ? item.phase : 'reinforcement';
   if (tail.some(next => next.wordId === item.wordId && next.phase === phase)) return;
   session.queue.splice(Math.min(session.queue.length, session.index + 9), 0,
     Object.assign({}, item, { phase, reinforced: true, retry: (item.retry || 0) + 1,
