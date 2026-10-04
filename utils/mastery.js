@@ -6,7 +6,7 @@ function retry(session, item, now) {
   session.queue.splice(Math.min(session.queue.length, session.index + 9), 0,
     Object.assign({}, item, { phase, reinforced: true, retry: (item.retry || 0) + 1,
       answered: false, correct: false, selectedChoice: -1,
-      availableAt: now + 60000 }));
+      availableAt: 0 }));
 }
 
 function remaining(session, cards) {
@@ -27,7 +27,8 @@ function available(session, now) {
   const item = session.queue[session.index];
   if (!item || !item.availableAt || item.availableAt <= now) return true;
   const next = session.queue.findIndex((entry, index) => index > session.index && (!entry.availableAt || entry.availableAt <= now));
-  if (next < 0) return false;
+  // Resume old timed queues too: prefer other cards, but never force idle time.
+  if (next < 0) { item.availableAt = 0; return true; }
   session.queue.splice(session.index, 0, session.queue.splice(next, 1)[0]);
   return true;
 }

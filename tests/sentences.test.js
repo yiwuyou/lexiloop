@@ -1,0 +1,35 @@
+const assert = require('assert');
+const book = require('../utils/sentence-book');
+const plan = require('../utils/study-plan');
+const mastery = require('../utils/mastery');
+const { getWords } = require('../utils/words');
+const migrations = require('../utils/migrations');
+const state = { schemaVersion: 3, cards: {}, daily: {}, weakBook: {}, recentReviews: [] };
+const word = getWords()[0];
+const entry = { sentence: word.example, translation: word.translation, word: word.word, wordId: word.id };
+assert.strictEqual(book.toggle(state, entry, 123), true);
+assert.strictEqual(book.has(state, entry.sentence), true);
+assert.strictEqual(book.list(state).length, 1);
+assert.deepStrictEqual(book.list(migrations.migrateBackup({ type: 'mem-vocab-backup', formatVersion: 3, state }).state), book.list(state),
+  'sentence snapshots must survive a backup restore');
+assert.strictEqual(book.toggle(state, entry), false);
+assert.strictEqual(book.list(state).length, 0);
+const session = { queue: [], index: 0 };
+getWords().slice(0, 50).forEach(item => plan.queueContextCheck(session, item, 'hard', 123));
+assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 30,
+  'sentence consolidation should cover 30 words independently of disambiguation');
+const legacy = { queue: [{ wordId: word.id, phase: 'reinforcement', availableAt: 9999999 }], index: 0 };
+assert.strictEqual(mastery.available(legacy, 1), true, 'old sessions must proceed immediately at the end');
+let page;
+global.Page = definition => { page = definition; };
+global.wx = { getStorageSync: () => state, setStorageSync() {} };
+require('../pages/sentences/index');
+book.toggle(state, entry, 123);
+page.setData = values => Object.assign(page.data, values);
+page.onShow();
+assert.strictEqual(page.data.count, 1);
+page.toggleEnglish();
+assert.strictEqual(page.data.hideEnglish, true);
+page.reveal({ currentTarget: { dataset: { index: 0 } } });
+assert.strictEqual(page.data.entries[0].revealed, true);
+console.log('Sentence quota, saved snapshots, backup restore, recitation and countdown removal passed.');

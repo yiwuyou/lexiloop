@@ -11,11 +11,6 @@
     <view class="study-progress"><view style="width: {{progress}}%"></view></view>
     <text class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
 
-    <view wx:if="{{waiting}}" class="card" style="padding:40rpx;margin-top:32rpx">
-      <view>还有词需要巩固，暂未完成</view>
-      <view class="muted" style="margin:24rpx 0">稍作休息，约 {{waitSeconds}} 秒后再回忆。也可以退出，稍后继续。</view>
-      <button class="primary-button" bindtap="exitStudy">保存并稍后继续</button>
-    </view>
     <view wx:if="{{!waiting && pendingCount && !isPractice}}" class="practice-note">已作答的词中，还有 {{pendingCount}} 词待巩固</view>
     <block wx:if="{{!waiting && !isContext}}">
       <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}">
@@ -48,7 +43,7 @@
             </block>
             <text class="meaning" wx:else>{{word.meaning}}</text>
             <view class="example-panel" wx:if="{{word.example}}">
-              <text class="memory-label">例句 · 放进场景记</text>
+              <view class="sentence-heading"><text class="memory-label">例句 · 放进场景记</text><button class="sentence-save" bindtap="toggleSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
               <text class="example-en">{{word.example}}</text>
               <text class="example-zh">{{word.translation}}</text>
             </view>
@@ -78,6 +73,7 @@
         </view>
         <text class="context-word">{{word.word}}</text>
         <text class="sentence">{{question.sentence}}</text>
+        <button class="sentence-save" bindtap="toggleSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
         <text class="context-prompt">{{questionPrompt}}</text>
         <view class="choice-list">
           <button

@@ -4,6 +4,7 @@
     title="词库"
     detail="核心 + 高频 · 2522词"
   ></page-header>
+  <button class="secondary-button day-practice" bindtap="openSentences">收藏例句 · 背诵练习</button>
 
   <view class="search-wrap">
     <text class="search-icon">⌕</text>
@@ -56,7 +57,7 @@
         <text class="word-meaning">{{item.meaning}}</text>
         <text class="word-pos">{{item.partOfSpeech}}</text>
         <text class="word-source">{{item.sourceLabel}}</text>
-        <view class="library-example" wx:if="{{item.example}}"><text>{{item.example}}</text><text>{{item.translation}}</text><text class="source-link" data-id="{{item.id}}" bindtap="showExampleSource" role="button">例句来源与说明</text></view>
+        <view class="library-example" wx:if="{{item.example}}"><text>{{item.example}}</text><text>{{item.translation}}</text><button class="weak-manage" data-id="{{item.id}}" bindtap="toggleSentence">{{item.isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button><text class="source-link" data-id="{{item.id}}" bindtap="showExampleSource" role="button">例句来源与说明</text></view>
       </view>
       <view class="state-actions">
         <text class="state state-{{item.state}}">{{item.stateLabel}}</text>

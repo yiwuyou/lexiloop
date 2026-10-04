@@ -9,6 +9,7 @@ const CONTEXT_PLAN_VERSION = 3;
 const DEFAULT_DAILY_REVIEW_LIMIT = 80;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
+const DAILY_SENTENCE_LIMIT = 30;
 
 function reviewPriority(state, left, right) {
   const leftCard = state.cards[left.id] || {};
@@ -108,9 +109,12 @@ function queueContextCheck(session, word, grade, now) {
   const queuedWords = new Set(session.queue
     .filter((item) => item.phase === 'context' || item.phase === 'sentence')
     .map((item) => item.wordId));
-  if (queuedWords.has(word.id) || queuedWords.size >= DAILY_CONTEXT_LIMIT) return false;
+  if (queuedWords.has(word.id)) return false;
   const time = now || Date.now();
   const needsRecall = grade === 'again' || grade === 'hard';
+  const phase = needsRecall ? 'sentence' : 'context';
+  const count = new Set(session.queue.filter((item) => item.phase === phase).map((item) => item.wordId)).size;
+  if (count >= (needsRecall ? DAILY_SENTENCE_LIMIT : DAILY_CONTEXT_LIMIT)) return false;
   const question = needsRecall
     ? context.getRecallQuestion(word)
     : context.getByWord(word.word, Math.floor(startOfDay(time) / DAY_MS));
@@ -120,7 +124,7 @@ function queueContextCheck(session, word, grade, now) {
     phase: needsRecall ? 'sentence' : 'context',
     questionId: question.id,
     reinforced: true,
-    availableAt: time + 60 * 1000,
+    availableAt: 0,
   });
   return true;
 }

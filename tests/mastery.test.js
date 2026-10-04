@@ -39,7 +39,10 @@ try {
   const id = session.queue[0].wordId;
   rate('again');
   assert.strictEqual(page.data.completed, false);
-  assert.strictEqual(page.data.waiting, true, 'last failed word cannot immediately reappear');
+  assert.strictEqual(page.data.waiting, false, 'last failed word must never force a countdown');
+  assert.strictEqual(page.data.questionLabel, '例句巩固');
+  page.chooseContext({ currentTarget: { dataset: { index: page.data.question.answer } } });
+  page.nextContext();
   page.onHide();
   now += 61000;
   page.onLoad({});

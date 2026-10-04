@@ -205,7 +205,7 @@ function testContextScheduling() {
     'a non-easy answer may queue a reviewed polysemy question');
   const queued = session.queue.find((item) => item.phase === 'context');
   assert.ok(queued && !queued.questionId.startsWith('auto-'));
-  assert.strictEqual(queued.availableAt, now + 60 * 1000);
+  assert.strictEqual(queued.availableAt, 0, 'delayed checks must never impose a countdown');
   assert.strictEqual(studyPlan.queueContextCheck(session, word, 'hard', now), false,
     'the same word must not be queued twice in one session');
   const noQuestion = getWord('c-1-1');

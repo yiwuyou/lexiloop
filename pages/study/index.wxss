@@ -553,3 +553,6 @@
 .related-line { margin-top: 8rpx; font-size: 23rpx; color: var(--muted); line-height: 1.4; }
 .memory-panel .form-inline { display: inline; }
 .is-answer .rating-area { border-top: 0; margin-top: 20rpx; padding-top: 0; }
+.sentence-heading { display: flex; align-items: center; justify-content: space-between; }
+.sentence-save { margin: 0; padding: 8rpx 12rpx; background: transparent; color: #246b49; font-size: 24rpx; line-height: 1.5; }
+.sentence-save::after { border: 0; }

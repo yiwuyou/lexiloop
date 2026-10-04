@@ -9,6 +9,7 @@ const phraseResources = require('../../utils/phrases');
 const studyPlan = require('../../utils/study-plan');
 const { getWord } = require('../../utils/words');
 const weakBook = require('../../utils/weak-book');
+const sentenceBook = require('../../utils/sentence-book');
 
 const PHASE_LABELS = {
   review: '到期复习',
@@ -46,6 +47,7 @@ Page({
     contentScrollTop: 0,
     contentHeight: 0,
     isWeakMarked: false,
+    isSentenceSaved: false,
   },
 
   onLoad(options = {}) {
@@ -159,13 +161,7 @@ Page({
       this.finishSession();
       return;
     }
-    if (!mastery.available(this.session, Date.now())) {
-      const waitSeconds = Math.max(1, Math.ceil((this.currentItem().availableAt - Date.now()) / 1000));
-      this.setData({ waiting: true, waitSeconds });
-      store.saveSession(this.session);
-      this.waitTimer = setTimeout(() => this.renderCurrent(), 1000);
-      return;
-    }
+    mastery.available(this.session, Date.now());
     const item = this.currentItem();
     const word = getWord(item.wordId);
     if (!word) {
@@ -207,6 +203,7 @@ Page({
       total: this.session.queue.length,
       word,
       isWeakMarked: weakBook.isMarked(state, word.id),
+      isSentenceSaved: sentenceBook.has(state, question ? question.sentence : word.example),
     });
     if (!isQuestion) {
       phraseResources.phraseFor(word).then((phrase) => {
@@ -328,6 +325,21 @@ Page({
     store.saveState(state);
     this.setData({ isWeakMarked: marked });
     wx.showToast({ title: marked ? '已加入易忘' : '已移出易忘', icon: 'none' });
+  },
+
+  toggleSentence() {
+    const word = this.data.word;
+    if (!word) return;
+    const question = this.data.isContext ? this.data.question : null;
+    const state = store.getState();
+    const saved = sentenceBook.toggle(state, {
+      sentence: question ? question.sentence : word.example,
+      translation: question ? question.translation : word.translation,
+      word: word.word, wordId: word.id,
+    });
+    store.saveState(state);
+    this.setData({ isSentenceSaved: saved });
+    wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none' });
   },
 
   chooseContext(event) {

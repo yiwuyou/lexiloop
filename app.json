@@ -2,6 +2,7 @@
   "pages": [
     "pages/today/index",
     "pages/study/index",
+    "pages/sentences/index",
     "pages/library/index",
     "pages/progress/index"
   ],

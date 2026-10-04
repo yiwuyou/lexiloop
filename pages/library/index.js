@@ -4,6 +4,7 @@ const { getWords, getWord } = require('../../utils/words');
 const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
 const weakBook = require('../../utils/weak-book');
+const sentenceBook = require('../../utils/sentence-book');
 
 const PAGE_SIZE = 60;
 
@@ -95,7 +96,9 @@ Page({
     const query = this.data.query.trim().toLowerCase();
     const filter = this.data.activeFilter;
     const filtered = getWords()
-      .map((word) => decorate(word, state.cards[word.id], weakBook.isMarked(state, word.id)))
+      .map((word) => Object.assign(decorate(word, state.cards[word.id], weakBook.isMarked(state, word.id)), {
+        isSentenceSaved: sentenceBook.has(state, word.example),
+      }))
       .filter((word) => {
         const matchesQuery = !query || word.searchText.includes(query);
         const matchesFilter = filter === 'all'
@@ -145,6 +148,20 @@ Page({
   },
 
   showWords() { this.setData({ viewMode: 'words' }); },
+
+  openSentences() { wx.navigateTo({ url: '/pages/sentences/index' }); },
+
+  toggleSentence(event) {
+    const word = getWord(event.currentTarget.dataset.id);
+    if (!word) return;
+    const state = store.getState();
+    const saved = sentenceBook.toggle(state, {
+      sentence: word.example, translation: word.translation, word: word.word, wordId: word.id,
+    });
+    store.saveState(state);
+    wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none' });
+    this.refresh();
+  },
 
   practiceDay() {
     const selected = this.data.dayOptions[this.data.dayIndex];
