@@ -20,7 +20,7 @@
           <text class="kind">{{phaseLabel}}</text>
         </view>
         <view class="word-main">
-          <text class="word">{{word.word}}</text>
+          <text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text>
           <view class="pronunciation" wx:if="{{word.audio}}" bindtap="playPronunciation" role="button" aria-label="播放单词发音">
             <view class="audio-button">{{audioLoading ? '…' : '▶'}}</view>
             <text class="ipa">{{word.ipa || '播放发音'}}</text>
@@ -71,7 +71,7 @@
           <text>{{word.sourceLabel}}</text>
           <text class="kind">{{questionLabel}}</text>
         </view>
-        <text class="context-word">{{word.word}}</text>
+        <text class="context-word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text>
         <text class="sentence">{{question.sentence}}</text>
         <button class="sentence-save" bindtap="toggleSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
         <text class="context-prompt">{{questionPrompt}}</text>

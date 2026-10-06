@@ -50,7 +50,7 @@
     <view class="word-row" wx:for="{{visibleWords}}" wx:key="id">
       <view class="word-copy">
         <view class="word-title-line">
-          <text class="word-name">{{item.word}}</text>
+          <text class="word-name" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text>
           <button class="mini-audio" wx:if="{{item.audio}}" data-id="{{item.id}}" bindtap="playPronunciation" aria-label="播放{{item.word}}的发音">{{audioLoadingId === item.id ? '…' : '▶'}}</button>
         </view>
         <text class="word-ipa" wx:if="{{item.ipa}}">{{item.ipa}}</text>

@@ -2,6 +2,7 @@ const store = require('../../utils/store');
 const book = require('../../utils/sentence-book');
 
 Page({
+  copyWord: require('../../utils/copy-word'),
   data: { entries: [], count: 0, hideEnglish: false, hideChinese: false, limit: 30 },
   onShow() { this.refresh(); },
   refresh() {

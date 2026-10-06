@@ -26,6 +26,7 @@ function decorate(word, card, marked) {
 }
 
 Page({
+  copyWord: require('../../utils/copy-word'),
   data: {
     activeFilter: 'all',
     hasMore: false,

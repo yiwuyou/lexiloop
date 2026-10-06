@@ -21,6 +21,7 @@ const PHASE_LABELS = {
 };
 
 Page({
+  copyWord: require('../../utils/copy-word'),
   data: {
     completed: false,
     isPractice: false,

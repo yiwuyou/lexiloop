@@ -7,7 +7,7 @@
   </view>
   <view class="card sentence-card" wx:for="{{entries}}" wx:key="sentence">
     <view data-index="{{index}}" bindtap="reveal">
-      <text class="target">{{item.word}}</text>
+      <text class="target" data-word="{{item.word}}" catchlongpress="copyWord">{{item.word}}</text>
       <text class="english">{{!hideEnglish || item.revealed ? item.sentence : '点击显示英文答案'}}</text>
       <text class="chinese">{{!hideChinese || item.revealed ? item.translation : '点击显示中文释义'}}</text>
     </view>
