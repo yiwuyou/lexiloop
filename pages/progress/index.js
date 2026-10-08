@@ -3,6 +3,14 @@ const appVersion = require('../../utils/version');
 const plan = require('../../utils/study-plan');
 const store = require('../../utils/store');
 const migrations = require('../../utils/migrations');
+const recovery = require('../../utils/progress-recovery');
+
+const recoveryGroups = recovery.checkpoints();
+const initialRecoveryIndex = recoveryGroups.findIndex((group) => group.category === 'high' && group.day === 10);
+
+function recoveryCounts(index) {
+  return ['该日尚未开始'].concat(recoveryGroups[index].words.map((word, position, words) => `已学到 #${word.index} ${word.word}${position === words.length - 1 ? '（该日学完）' : ''}`));
+}
 
 function shortDate(key) {
   const parts = key.split('-');
@@ -22,6 +30,13 @@ Page({
     backupStatus: '',
     restoreTextOpen: false,
     restoreText: '',
+    recoveryOpen: false,
+    recoveryLabels: recoveryGroups.map((group) => group.label),
+    recoveryIndex: initialRecoveryIndex,
+    recoveryCounts: recoveryCounts(initialRecoveryIndex),
+    recoveryCount: 0,
+    recoveryPreview: null,
+    recoveryStatus: '',
   },
 
   onShow() {
@@ -68,6 +83,45 @@ Page({
       progress: Math.round((stats.learned / stats.total) * 100),
       stats,
       week,
+      recoveryPreview: recovery.preview(state, this.data.recoveryIndex, this.data.recoveryCount),
+    });
+  },
+
+  toggleRecovery() { this.setData({ recoveryOpen: !this.data.recoveryOpen }); },
+  onRecoveryDay(event) {
+    const index = Number(event.detail.value);
+    this.setData({ recoveryIndex: index, recoveryCount: 0, recoveryCounts: recoveryCounts(index) });
+    this.refresh();
+  },
+  onRecoveryCount(event) {
+    this.setData({ recoveryCount: Number(event.detail.value) });
+    this.refresh();
+  },
+  recoverProgress() {
+    const index = this.data.recoveryIndex;
+    const count = this.data.recoveryCount;
+    const summary = recovery.preview(store.getState(), index, count);
+    if (!summary.added) {
+      wx.showToast({ title: '所选范围已经记录', icon: 'none' });
+      return;
+    }
+    wx.showModal({
+      title: '补回已学范围？',
+      content: `${recoveryGroups[index].label}，${count ? `已学到该日第 ${count} 词` : '该日尚未开始'}。补回 ${summary.added} 条已学记录，约分 ${summary.days} 天重新复习，每天最多新增安排 50 个补回词。现有记录保留，不恢复旧成绩、收藏或易忘清单。`,
+      confirmText: '补回进度',
+      success: (result) => {
+        if (!result.confirm) return;
+        try {
+          store.saveState(recovery.recover(store.getState(), index, count));
+          store.clearSession();
+          store.clearSession('practice');
+          this.setData({ recoveryOpen: false, recoveryStatus: '已补回学习范围，旧答题历史并未恢复。新词会从未学范围继续；复习分批安排。请在下方导出备份并发送到文件传输助手。' });
+          this.refresh();
+          wx.showToast({ title: '已补回进度' });
+        } catch (error) {
+          wx.showToast({ title: '保存失败，请重试', icon: 'none' });
+        }
+      },
     });
   },
 
