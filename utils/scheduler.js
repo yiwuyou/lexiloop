@@ -92,4 +92,8 @@ function isStable(state) {
   return Boolean(state && state.seen && state.interval >= 14 && state.lastGrade !== GRADE.AGAIN);
 }
 
-module.exports = { GRADE, initialState, isStable, isWeak, review };
+function isRecoveryPending(state) {
+  return Boolean(state && state.seen && state.recoveredAt && !Number(state.reps || 0));
+}
+
+module.exports = { GRADE, initialState, isRecoveryPending, isStable, isWeak, review };

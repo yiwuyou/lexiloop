@@ -26,6 +26,7 @@
       <button class="primary-button" bindtap="startStudy">{{resume ? '继续今日学习' : '开始今日学习'}}</button>
       <button class="hero-practice secondary-button" bindtap="startPractice">主动复习</button>
       <text class="review-note">未安排到今天的复习会保留并平缓分摊；主动复习不改变每日计划</text>
+      <text class="review-note" wx:if="{{deferredRecoveryCount}}">当前到期 {{currentDueCount}} 词；另有 {{deferredRecoveryCount}} 个补回词分批安排，已计入剩余需复习，不会全部加入今天。</text>
     </view>
 
     <view class="route card">
@@ -58,6 +59,7 @@
   <view class="progress-card card" wx:if="{{completed}}">
     <button class="secondary-button" bindtap="startPractice">主动复习</button>
     <text class="progress-note">可选择剩余待复习、最近学过或永久易忘词；不改变每日计划</text>
+    <text class="progress-note">剩余需复习 {{remainingDueCount}} 词（含补回待复习）；今日应复习 {{todayReviewGoal}} 词，已复习 {{todayReviewDone}} 词。</text>
   </view>
   <view class="progress-card card">
     <view class="progress-head"><text>总进度 {{learned}} / {{total}}</text><text class="muted">{{progress}}%</text></view>

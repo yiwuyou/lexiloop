@@ -5,17 +5,17 @@
     detail="英语（二）· 目标60分"
   ></page-header>
 
-  <view class="section-card card" wx:if="{{!stats.learned || recoveryOpen || recoveryStatus}}">
+  <view class="section-card card recovery-card" wx:if="{{!stats.learned || recoveryOpen || recoveryStatus}}">
     <view class="section-head"><text>缓存清空后，补回已学进度</text></view>
     <text class="backup-note">无备份时可按机构学习日补回已学范围，不必从头学。无法找回旧答题历史、收藏和易忘清单，也不会把补回词标成已掌握。</text>
-    <button class="secondary-button" wx:if="{{!recoveryOpen}}" bindtap="toggleRecovery">选择已学到哪里</button>
+    <button class="secondary-button" wx:if="{{!recoveryOpen && !recoveryStatus}}" bindtap="toggleRecovery">选择已学到哪里</button>
     <view wx:if="{{recoveryOpen}}">
       <picker range="{{recoveryLabels}}" value="{{recoveryIndex}}" bindchange="onRecoveryDay"><view class="recovery-picker">学习日：{{recoveryLabels[recoveryIndex]}} ▾</view></picker>
       <picker range="{{recoveryCounts}}" value="{{recoveryCount}}" bindchange="onRecoveryCount"><view class="recovery-picker">{{recoveryCounts[recoveryCount]}} ▾</view></picker>
       <text class="backup-note">所选范围 {{recoveryPreview.total}} 词，需补回 {{recoveryPreview.added}} 词；每天约 50 词，约分 {{recoveryPreview.days}} 天重新复习。已有记录不会覆盖，主动复习仍可随时加练。</text>
       <button class="primary-button" bindtap="recoverProgress">补回已学范围</button>
     </view>
-    <text class="backup-result" wx:if="{{recoveryStatus}}">{{recoveryStatus}}</text>
+    <view class="backup-result" wx:if="{{recoveryStatus}}"><text>{{recoveryStatus}}</text></view>
   </view>
 
   <view class="progress-card card">

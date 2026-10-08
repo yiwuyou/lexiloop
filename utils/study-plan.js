@@ -1,6 +1,6 @@
 const { DAY_MS, dayKey, startOfDay } = require('./date');
 const context = require('./context');
-const { isStable } = require('./scheduler');
+const { isStable, isRecoveryPending } = require('./scheduler');
 const { getWord, getWords } = require('./words');
 const weakBook = require('./weak-book');
 
@@ -63,6 +63,7 @@ function summarize(state, settings, now) {
   let learned = 0;
   let stable = 0;
   let weak = 0;
+  let deferredRecoveryCount = 0;
 
   words.forEach((word) => {
     const card = cardStates[word.id];
@@ -76,6 +77,8 @@ function summarize(state, settings, now) {
     if (card.needsRecall || card.needsContext || (card.dueAt <= time && card.lastAt < todayStart)) {
       due.push(word);
       if (card.dueAt < todayStart) overdue.push(word);
+    } else if (isRecoveryPending(card)) {
+      deferredRecoveryCount += 1;
     }
   });
 
@@ -91,6 +94,8 @@ function summarize(state, settings, now) {
 
   return {
     due,
+    deferredRecoveryCount,
+    remainingReviewCount: due.length + deferredRecoveryCount,
     estimatedMinutes,
     learned,
     newCount,

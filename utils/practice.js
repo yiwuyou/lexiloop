@@ -14,6 +14,7 @@ function buildSession(state, options = {}, now = Date.now()) {
     words = words.filter((word) => {
       const card = state.cards[word.id];
       return card.needsRecall || card.needsContext
+        || scheduler.isRecoveryPending(card)
         || (card.dueAt <= now && card.lastAt < todayStart);
     });
     words.sort((left, right) => (state.cards[left.id].dueAt || 0) - (state.cards[right.id].dueAt || 0)
