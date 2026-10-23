@@ -26,7 +26,7 @@ Component({
         if (!result) throw new Error('missing-word');
         this.setData({ result, semantic: result.semantic.slice(0, 6), shapes: result.shapes.slice(0, 6) });
       } catch (error) {
-        if (request === this.request) this.setData({ error: '关联资料未准备好。首次使用需联网下载小数据包，成功后可离线使用；点此重试。' });
+        if (request === this.request) this.setData({ error: '关联资料暂未加载，点击重试' });
       } finally {
         if (request === this.request) this.setData({ loading: false });
       }

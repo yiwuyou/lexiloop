@@ -167,7 +167,11 @@ try {
     const markup = read(file);
     assert.ok(markup.includes('bindtouchend="sentenceTouchEnd"') && markup.includes('catchtap="tapSentence"'));
   }
-  assert.ok(read('pages/study/index.wxss').includes('grid-template-columns: 96rpx minmax(0, 1fr) 96rpx'), 'relation link must not push the word off center');
+  const studyStyles = read('pages/study/index.wxss');
+  assert.ok(/\.word-heading\s*\{[^}]*display:\s*flex[^}]*gap:\s*14rpx/.test(studyStyles), 'relation button must sit next to the word, not at the card edge');
+  assert.ok(/\.word-heading \.relation-trigger\s*\{[^}]*min-width:\s*132rpx[^}]*min-height:\s*88rpx/.test(studyStyles), 'button needs a visible 66 by 44 px tap target at standard scale');
+  assert.ok(!dialog.includes('class="section-note"') && !dialog.includes('class="footnote"'), 'internal sorting/matching/workflow notes must not clutter the learning dialog');
+  assert.ok(dialog.includes('相近义项') && dialog.includes('机构释义'), 'retain word-specific learning content');
   console.log('First-touch collection, gesture deduplication/scroll cancellation, stable async layout, write failure rollback, context/library saves and dialog style guards passed.');
 } finally {
   clearTimeout(page.contentLayoutTimer);
