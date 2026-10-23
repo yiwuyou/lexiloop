@@ -10,6 +10,7 @@ const studyPlan = require('../../utils/study-plan');
 const { getWord } = require('../../utils/words');
 const weakBook = require('../../utils/weak-book');
 const sentenceBook = require('../../utils/sentence-book');
+const sentenceTap = require('../../utils/sentence-tap');
 
 const PHASE_LABELS = {
   review: '到期复习',
@@ -22,6 +23,11 @@ const PHASE_LABELS = {
 
 Page({
   copyWord: require('../../utils/copy-word'),
+  sentenceTouchStart: sentenceTap.start,
+  sentenceTouchMove: sentenceTap.move,
+  sentenceTouchEnd: sentenceTap.end,
+  sentenceTouchCancel: sentenceTap.cancel,
+  tapSentence: sentenceTap.tap,
   data: {
     completed: false,
     isPractice: false,
@@ -102,6 +108,8 @@ Page({
 
   onHide() {
     clearTimeout(this.waitTimer);
+    clearTimeout(this.contentLayoutTimer);
+    this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
     this.setData({ audioLoading: false, relationsOpen: false });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
@@ -112,6 +120,8 @@ Page({
 
   onUnload() {
     clearTimeout(this.waitTimer);
+    clearTimeout(this.contentLayoutTimer);
+    this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
     this.audioRequest = (this.audioRequest || 0) + 1;
     this.captureElapsed();
     if (this.session && !this.data.completed) store.saveSession(this.session);
@@ -161,6 +171,11 @@ Page({
 
   renderCurrent() {
     clearTimeout(this.waitTimer);
+    clearTimeout(this.contentLayoutTimer);
+    const renderVersion = this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
+    this.contentTouchActive = false;
+    this.pendingPhrase = null;
+    this.pendingContentHeight = null;
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
     if (this.session.index >= this.session.queue.length) {
@@ -217,8 +232,7 @@ Page({
     });
     if (!isQuestion) {
       phraseResources.phraseFor(word).then((phrase) => {
-        if (!phrase || !this.data.word || this.data.word.id !== word.id) return;
-        this.setData({ 'word.phrase': phrase, contentHeight: 0 }, () => this.fitAnswerContent());
+        this.applyPhrase(phrase, word.id, renderVersion);
       }).catch(() => {});
     }
   },
@@ -226,16 +240,46 @@ Page({
   revealAnswer() {
     this.setData({ revealed: true, contentHeight: 0 }, () => this.fitAnswerContent());
   },
+  applyPhrase(phrase, wordId, version) {
+    if (!phrase || version !== this.contentRenderVersion || !this.data.word || this.data.word.id !== wordId) return;
+    if (this.contentTouchActive) { this.pendingPhrase = { phrase, wordId, version }; return; }
+    // Keep the already measured scroll viewport stable. Extra content can
+    // scroll inside it; resetting flex/height here moved the first save target.
+    this.setData({ 'word.phrase': phrase });
+  },
+  onContentTouchStart() {
+    this.contentTouchActive = true;
+    clearTimeout(this.contentLayoutTimer);
+  },
+  onContentTouchEnd() {
+    this.contentTouchActive = false;
+    clearTimeout(this.contentLayoutTimer);
+    this.contentLayoutTimer = setTimeout(() => this.flushContentUpdates(), 60);
+  },
+  flushContentUpdates() {
+    if (this.contentTouchActive) return;
+    const phrase = this.pendingPhrase;
+    const height = this.pendingContentHeight;
+    this.pendingPhrase = null;
+    this.pendingContentHeight = null;
+    if (phrase) this.applyPhrase(phrase.phrase, phrase.wordId, phrase.version);
+    if (height && height.version === this.contentRenderVersion && this.data.revealed && !this.data.completed) {
+      this.setData({ contentHeight: height.value });
+    }
+  },
   fitAnswerContent() {
     if (!this.data.revealed || this.data.isContext || this.data.completed || typeof wx.createSelectorQuery !== 'function') return;
     const wordId = this.data.word.id;
+    const version = this.contentRenderVersion;
     const measure = () => {
       const query = wx.createSelectorQuery().in(this);
       query.select('.study-content').boundingClientRect();
       query.select('.word-card').boundingClientRect();
       query.exec(rects => {
-        if (!rects[0] || !rects[1] || !this.data.revealed || this.data.word.id !== wordId) return;
-        this.setData({ contentHeight: Math.max(1, Math.ceil(Math.min(rects[0].height, rects[1].height))) });
+        if (!rects[0] || !rects[1] || !this.data.revealed || this.data.word.id !== wordId || version !== this.contentRenderVersion) return;
+        const value = Math.max(1, Math.ceil(Math.min(rects[0].height, rects[1].height)));
+        if (this.contentTouchActive) this.pendingContentHeight = { value, version };
+        else this.setData({ contentHeight: value });
       });
     };
     if (wx.nextTick) wx.nextTick(measure); else measure();
@@ -339,17 +383,27 @@ Page({
 
   toggleSentence() {
     const word = this.data.word;
-    if (!word) return;
+    if (!word || this.sentenceSaveBusy) return;
     const question = this.data.isContext ? this.data.question : null;
-    const state = store.getState();
-    const saved = sentenceBook.toggle(state, {
+    const entry = {
       sentence: question ? question.sentence : word.example,
       translation: question ? question.translation : word.translation,
       word: word.word, wordId: word.id,
-    });
-    store.saveState(state);
-    this.setData({ isSentenceSaved: saved });
-    wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none' });
+    };
+    if (!entry.sentence || !entry.translation) { wx.showToast({ title: '例句尚未准备好', icon: 'none' }); return; }
+    this.sentenceSaveBusy = true;
+    let before = this.data.isSentenceSaved;
+    try {
+      const state = store.getState();
+      before = sentenceBook.has(state, entry.sentence);
+      const saved = sentenceBook.toggle(state, entry);
+      this.setData({ isSentenceSaved: saved });
+      store.saveState(state);
+      wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none', duration: 900 });
+    } catch (error) {
+      this.setData({ isSentenceSaved: before });
+      wx.showToast({ title: '未能保存，请重试', icon: 'none' });
+    } finally { this.sentenceSaveBusy = false; }
   },
 
   chooseContext(event) {

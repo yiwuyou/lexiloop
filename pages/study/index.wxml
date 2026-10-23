@@ -13,14 +13,14 @@
 
     <view wx:if="{{!waiting && pendingCount && !isPractice}}" class="practice-note">已作答的词中，还有 {{pendingCount}} 词待巩固</view>
     <block wx:if="{{!waiting && !isContext}}">
-      <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}">
+      <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
       <view class="word-card card">
         <view class="word-meta">
           <text>{{word.sourceLabel}}</text>
           <text class="kind">{{phaseLabel}}</text>
         </view>
         <view class="word-main">
-          <view class="word-heading"><text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词">关联词 ›</button></view>
+          <view class="word-heading"><text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
           <view class="pronunciation" wx:if="{{word.audio}}" bindtap="playPronunciation" role="button" aria-label="播放单词发音">
             <view class="audio-button">{{audioLoading ? '…' : '▶'}}</view>
             <text class="ipa">{{word.ipa || '播放发音'}}</text>
@@ -43,7 +43,7 @@
             </block>
             <text class="meaning" wx:else>{{word.meaning}}</text>
             <view class="example-panel" wx:if="{{word.example}}">
-              <view class="sentence-heading"><text class="memory-label">例句 · 放进场景记</text><button class="sentence-save" bindtap="toggleSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
+              <view class="sentence-heading"><text class="memory-label">例句 · 放进场景记</text><button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
               <text class="example-en">{{word.example}}</text>
               <text class="example-zh">{{word.translation}}</text>
             </view>
@@ -71,9 +71,9 @@
           <text>{{word.sourceLabel}}</text>
           <text class="kind">{{questionLabel}}</text>
         </view>
-        <view class="word-heading context-heading"><text class="context-word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations">关联词 ›</button></view>
+        <view class="word-heading context-heading"><text class="context-word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations"><text class="relation-trigger-label">关联词 ›</text></button></view>
         <text class="sentence">{{question.sentence}}</text>
-        <button class="sentence-save" bindtap="toggleSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
+        <button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
         <text class="context-prompt">{{questionPrompt}}</text>
         <view class="choice-list">
           <button

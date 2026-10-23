@@ -554,10 +554,12 @@
 .memory-panel .form-inline { display: inline; }
 .is-answer .rating-area { border-top: 0; margin-top: 20rpx; padding-top: 0; }
 .sentence-heading { display: flex; align-items: center; justify-content: space-between; }
-.sentence-save { margin: 0; padding: 8rpx 12rpx; background: transparent; color: #246b49; font-size: 24rpx; line-height: 1.5; }
+.sentence-save { display: inline-flex; align-items: center; justify-content: center; width: auto; flex: 0 0 auto; min-width: 124rpx; min-height: 80rpx; margin: 0; padding: 10rpx 8rpx; background: transparent; color: #246b49; font-size: 24rpx; line-height: 1.5; }
 .sentence-save::after { border: 0; }
-.word-heading { display: flex; align-items: center; justify-content: center; gap: 16rpx; margin-bottom: 18rpx; }
-.word-heading .word { display: block; min-width: 0; margin: 0; }
-.word-heading .relation-trigger { display: inline-flex; align-items: center; width: auto; min-width: 112rpx; max-width: 150rpx; flex: 0 0 auto; min-height: 82rpx; margin: 0; padding: 16rpx 12rpx; border-radius: 16rpx; background: var(--soft); color: var(--main-strong); font-size: 23rpx; line-height: 1.4; }
+.word-heading { display: grid; grid-template-columns: 96rpx minmax(0, 1fr) 96rpx; align-items: center; column-gap: 6rpx; margin-bottom: 18rpx; }
+.word-heading .word { grid-column: 2; display: block; min-width: 0; margin: 0; text-align: center; }
+.is-recall .word-heading { grid-template-columns: 0 minmax(0, 1fr) 0; column-gap: 0; }
+.word-heading .relation-trigger { grid-column: 3; justify-self: end; display: flex; align-items: center; justify-content: flex-end; width: 96rpx; min-width: 96rpx; max-width: 96rpx; min-height: 88rpx; margin: 0; padding: 0; background: transparent; color: var(--main-strong); font-size: 21rpx; line-height: 1.4; }
+.relation-trigger-label { display: block; padding: 8rpx 6rpx; border: 1rpx solid #dce8df; border-radius: 999rpx; white-space: nowrap; }
 .context-heading { margin-top: 32rpx; }
-.context-heading .context-word { min-width: 0; margin: 0; }
+.context-heading .context-word { grid-column: 2; min-width: 0; margin: 0; overflow-wrap: anywhere; }

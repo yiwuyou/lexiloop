@@ -5,6 +5,7 @@ const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
 const weakBook = require('../../utils/weak-book');
 const sentenceBook = require('../../utils/sentence-book');
+const sentenceTap = require('../../utils/sentence-tap');
 
 const PAGE_SIZE = 60;
 
@@ -27,6 +28,11 @@ function decorate(word, card, marked) {
 
 Page({
   copyWord: require('../../utils/copy-word'),
+  sentenceTouchStart: sentenceTap.start,
+  sentenceTouchMove: sentenceTap.move,
+  sentenceTouchEnd: sentenceTap.end,
+  sentenceTouchCancel: sentenceTap.cancel,
+  tapSentence: sentenceTap.tap,
   data: {
     activeFilter: 'all',
     hasMore: false,
@@ -154,14 +160,30 @@ Page({
 
   toggleSentence(event) {
     const word = getWord(event.currentTarget.dataset.id);
-    if (!word) return;
-    const state = store.getState();
-    const saved = sentenceBook.toggle(state, {
-      sentence: word.example, translation: word.translation, word: word.word, wordId: word.id,
-    });
-    store.saveState(state);
-    wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none' });
-    this.refresh();
+    if (!word || this.sentenceSaveBusy) return;
+    this.sentenceSaveBusy = true;
+    const index = this.data.visibleWords.findIndex((item) => item.id === word.id);
+    const updateVisible = (saved) => {
+      const patch = {};
+      this.data.visibleWords.forEach((item, at) => {
+        if (item.example === word.example) patch[`visibleWords[${at}].isSentenceSaved`] = saved;
+      });
+      if (Object.keys(patch).length) this.setData(patch);
+    };
+    let before = index >= 0 && this.data.visibleWords[index].isSentenceSaved;
+    try {
+      const state = store.getState();
+      before = sentenceBook.has(state, word.example);
+      const saved = sentenceBook.toggle(state, {
+        sentence: word.example, translation: word.translation, word: word.word, wordId: word.id,
+      });
+      updateVisible(saved);
+      store.saveState(state);
+      wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none', duration: 900 });
+    } catch (error) {
+      updateVisible(before);
+      wx.showToast({ title: '未能保存，请重试', icon: 'none' });
+    } finally { this.sentenceSaveBusy = false; }
   },
 
   practiceDay() {
