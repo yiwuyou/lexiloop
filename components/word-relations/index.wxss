@@ -7,7 +7,7 @@
 button { box-sizing: border-box; margin: 0; padding: 0; color: var(--main-strong, #174f32); font-size: 25rpx; line-height: 1.4; border: 0; background: transparent; }
 button::after { border: 0; }
 .close { width: 88rpx; min-height: 88rpx; line-height: 88rpx; font-size: 48rpx; }
-.back { min-height: 88rpx; padding: 20rpx 10rpx; }
+.back { display: inline-flex; align-items: center; width: auto; min-height: 88rpx; padding: 20rpx 10rpx; }
 .sheet-scroll { height: 67vh; width: 100%; }
 .target-card { padding: 22rpx; margin: 8rpx 0 28rpx; background: var(--soft, #edf4ee); border-radius: 22rpx; }
 .target-word { display: block; font: 42rpx/1.2 Georgia, serif; margin-bottom: 18rpx; overflow-wrap: anywhere; }
@@ -18,7 +18,7 @@ button::after { border: 0; }
 .entry-head { display: flex; align-items: center; flex-wrap: wrap; column-gap: 14rpx; row-gap: 8rpx; }
 .entry-word { font: 36rpx/1.3 Georgia, serif; overflow-wrap: anywhere; max-width: 100%; }
 .learned { font-size: 21rpx; color: var(--muted, #657169); }
-.explore { margin-left: auto; min-height: 76rpx; padding: 14rpx 8rpx; }
+.explore { display: inline-flex; align-items: center; width: auto; margin-left: auto; min-height: 76rpx; padding: 14rpx 8rpx; }
 .meaning { display: flex; align-items: flex-start; gap: 14rpx; margin-top: 12rpx; color: var(--muted, #657169); font-size: 25rpx; line-height: 1.6; }
 .meaning > text:last-child { min-width: 0; flex: 1; word-break: break-word; }
 .meaning .label { flex: 0 0 128rpx; font-size: 22rpx; }

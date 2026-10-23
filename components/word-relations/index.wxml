@@ -26,8 +26,8 @@
         <text class="section-note">高亮重复字母，帮助对照拼写；字形相近不等于同义或同源。</text>
         <view class="empty" wx:if="{{!shapes.length}}">词库中暂无足够接近的字形或结构。</view>
         <view class="entry" wx:for="{{shapes}}" wx:key="head">
-          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord"><text wx:for="{{item.parts}}" wx:for-item="part" wx:key="index" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" bindtap="explore">继续关联 ›</button></view>
-          <view class="spelling-compare"><text>{{item.reason}}：<text wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="index" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
+          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord"><text wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" bindtap="explore">继续关联 ›</button></view>
+          <view class="spelling-compare"><text>{{item.reason}}：<text wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
           <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
           <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
           <text class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>

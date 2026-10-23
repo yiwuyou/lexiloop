@@ -1,7 +1,6 @@
 {
   "navigationStyle": "custom",
   "usingComponents": {
-    "page-header": "/components/page-header/index",
-    "word-relations": "/components/word-relations/index"
+    "page-header": "/components/page-header/index"
   }
 }

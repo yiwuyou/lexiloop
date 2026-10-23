@@ -52,7 +52,6 @@
         <view class="word-title-line">
           <text class="word-name" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text>
           <button class="mini-audio" wx:if="{{item.audio}}" data-id="{{item.id}}" bindtap="playPronunciation" aria-label="播放{{item.word}}的发音">{{audioLoadingId === item.id ? '…' : '▶'}}</button>
-          <button class="relation-trigger" data-id="{{item.id}}" bindtap="openRelations" aria-label="查看{{item.word}}的关联词">关联词 ›</button>
         </view>
         <text class="word-ipa" wx:if="{{item.ipa}}">{{item.ipa}}</text>
         <text class="word-meaning">{{item.meaning}}</text>
@@ -69,5 +68,4 @@
   <view class="empty" wx:else>没有找到匹配的单词</view>
   <button class="secondary-button more-button" wx:if="{{hasMore}}" bindtap="loadMore">继续显示</button>
   </block>
-  <word-relations visible="{{relationsOpen}}" word-id="{{relationWordId}}" bindclose="closeRelations" />
 </view>

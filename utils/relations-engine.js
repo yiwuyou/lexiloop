@@ -53,7 +53,8 @@ function distance(left, right) {
 function segments(text, offset, length) {
   if (!length) return [{ text, shared: false }];
   return [{ text: text.slice(0, offset), shared: false }, { text: text.slice(offset, offset + length), shared: true },
-    { text: text.slice(offset + length), shared: false }].filter((part) => part.text);
+    { text: text.slice(offset + length), shared: false }].filter((part) => part.text)
+    .map((part, key) => Object.assign({ key }, part));
 }
 
 function shapeLinks(head, data) {

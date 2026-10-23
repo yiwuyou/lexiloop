@@ -250,7 +250,7 @@ function testLibraryAndTemplates() {
   assert.strictEqual(library.data.dayIndex, 0, 'typing a query must clear a stale day restriction');
   assert.ok(library.data.visibleWords.some(word => engine.headOf(word) === 'liberate'), 'search must find words outside the previously selected day');
   assert.strictEqual(library.data.viewMode, 'words');
-  assert.deepStrictEqual(writes, [], 'searching or opening a dialog must not write learning data');
+  assert.deepStrictEqual(writes, [], 'searching must not write learning data');
 
   const libraryTemplate = source('pages/library/index.wxml');
   assert.ok(libraryTemplate.indexOf('bindtap="showWords"') < libraryTemplate.indexOf('bindtap="showDays"'), 'word list button must precede low-frequency day view');
@@ -261,10 +261,74 @@ function testLibraryAndTemplates() {
   assert.ok(componentTemplate.indexOf('机构释义') < componentTemplate.indexOf('日常常用义'), 'institution meaning must come before everyday senses');
   const app = require('../app.json');
   assert.ok(app.subPackages.some(pack => pack.root === 'relation-data'), 'relation definitions must remain outside main package');
-  ['pages/study/index.json', 'pages/library/index.json'].forEach(file => {
-    const config = JSON.parse(source(file));
-    assert.strictEqual(config.usingComponents['word-relations'], '/components/word-relations/index');
-  });
+  const studyConfig = JSON.parse(source('pages/study/index.json'));
+  assert.strictEqual(studyConfig.usingComponents['word-relations'], '/components/word-relations/index');
+  const libraryConfig = JSON.parse(source('pages/library/index.json'));
+  assert.ok(!libraryConfig.usingComponents || !libraryConfig.usingComponents['word-relations'], 'library changes are limited to list/search behavior');
+  assert.ok(!libraryTemplate.includes('<word-relations'), 'relations are explored in the learning page, not by switching into the library');
+}
+
+function testStudyDialogIsInPlace() {
+  let study;
+  global.Page = value => { study = value; };
+  const writes = [];
+  const navigation = [];
+  const localState = clone(state);
+  localState.daily['2026-10-23'] = { newDone: 23, dueDone: 41, completedAt: 0 };
+  const stored = { mem_vocab_state_v1: localState, mem_vocab_settings_v1: { schemaVersion: 2 } };
+  global.wx = {
+    getStorageSync: key => stored[key] ? clone(stored[key]) : '',
+    setStorageSync: (key, value) => { writes.push(key); stored[key] = clone(value); },
+    navigateTo: value => navigation.push(['navigateTo', value]),
+    navigateBack: value => navigation.push(['navigateBack', value]),
+    redirectTo: value => navigation.push(['redirectTo', value]),
+    reLaunch: value => navigation.push(['reLaunch', value]),
+    switchTab: value => navigation.push(['switchTab', value]),
+  };
+  delete require.cache[require.resolve('../pages/study/index')];
+  require('../pages/study/index');
+  study.data = clone(study.data);
+  study.setData = function (values, callback) { Object.assign(this.data, values); if (callback) callback(); };
+  study.session = {
+    day: '2026-10-23', index: 1,
+    queue: [{ wordId: idFor('liberate'), phase: 'review', answered: true }, { wordId: idFor('deliberate'), phase: 'review', answered: false }, { wordId: idFor('migrate'), phase: 'new', answered: false }],
+    dueDone: 1, newDone: 0, ratings: { hard: 1 },
+  };
+  study.data.word = getWord(idFor('deliberate'));
+  const originalWord = study.data.word;
+  const originalSession = JSON.stringify(study.session);
+  const originalStorage = JSON.stringify(stored);
+
+  study.openRelations();
+  assert.strictEqual(study.data.relationsOpen, false, 'unrevealed recall cannot open a meaning popup');
+  study.data.revealed = true;
+  const beforeOpening = clone(study.data);
+  study.openRelations();
+  assert.strictEqual(study.data.relationsOpen, true);
+  assert.strictEqual(study.data.relationWordId, originalWord.id);
+  study.closeRelations();
+  assert.strictEqual(study.data.relationsOpen, false);
+  assert.strictEqual(study.data.word, originalWord, 'closing returns to the same live word object');
+  const afterClosing = clone(study.data);
+  delete beforeOpening.relationsOpen;
+  delete beforeOpening.relationWordId;
+  delete afterClosing.relationsOpen;
+  delete afterClosing.relationWordId;
+  assert.deepStrictEqual(afterClosing, beforeOpening, 'popup open/close must leave all other learning UI state unchanged');
+
+  study.data.isContext = true;
+  study.data.contextAnswered = false;
+  study.openRelations();
+  assert.strictEqual(study.data.relationsOpen, false, 'unanswered context question cannot open a meaning popup');
+  study.data.contextAnswered = true;
+  study.openRelations();
+  assert.strictEqual(study.data.relationsOpen, true);
+  study.closeRelations();
+  assert.strictEqual(study.data.word, originalWord);
+  assert.strictEqual(JSON.stringify(study.session), originalSession, 'dialog must not advance session.index, modify queue, or record an answer');
+  assert.strictEqual(JSON.stringify(stored), originalStorage, 'daily progress and all persisted learning records are unchanged');
+  assert.deepStrictEqual(writes, [], 'opening and closing require no learning-data writes');
+  assert.deepStrictEqual(navigation, [], 'closing the popup must not navigate, relaunch, redirect or switch tabs');
 }
 
 (async function main() {
@@ -272,5 +336,6 @@ function testLibraryAndTemplates() {
   await testLazyLoader();
   await testComponent();
   testLibraryAndTemplates();
-  console.log('Relation loader caching/retry, dialog request races, read-only behavior, recall gates and cross-day library search passed.');
+  testStudyDialogIsInPlace();
+  console.log('Relation loader caching/retry, dialog request races, in-place study resume, read-only behavior, recall gates and cross-day library search passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

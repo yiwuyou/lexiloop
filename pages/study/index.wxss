@@ -558,6 +558,6 @@
 .sentence-save::after { border: 0; }
 .word-heading { display: flex; align-items: center; justify-content: center; gap: 16rpx; margin-bottom: 18rpx; }
 .word-heading .word { display: block; min-width: 0; margin: 0; }
-.word-heading .relation-trigger { flex: 0 0 auto; min-height: 82rpx; margin: 0; padding: 16rpx 12rpx; border-radius: 16rpx; background: var(--soft); color: var(--main-strong); font-size: 23rpx; line-height: 1.4; }
+.word-heading .relation-trigger { display: inline-flex; align-items: center; width: auto; min-width: 112rpx; max-width: 150rpx; flex: 0 0 auto; min-height: 82rpx; margin: 0; padding: 16rpx 12rpx; border-radius: 16rpx; background: var(--soft); color: var(--main-strong); font-size: 23rpx; line-height: 1.4; }
 .context-heading { margin-top: 32rpx; }
 .context-heading .context-word { min-width: 0; margin: 0; }
