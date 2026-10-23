@@ -10,6 +10,14 @@ Text licensed under CC BY 2.0 France: https://creativecommons.org/licenses/by/2.
 
 ## ECDICT phonetics, parts of speech, glosses and inflections
 
+`relation-data/ready.js` also contains selected ECDICT Chinese glosses for the
+in-app comparison panel. These are supplementary ordinary-use meanings, not
+the institution's examination meanings. The build filters specialist/proper-name
+entries and includes application-authored corrections for common senses.
+Semantic links use reviewed sense-specific groups, plus a small set verified
+against complete matching English definitions, compatible parts of speech and
+matching Chinese senses. Spelling overlap never implies synonymy or etymology.
+
 Source: https://github.com/skywind3000/ECDICT (`ecdict.csv`). The following license accompanies the downloaded source:
 
 MIT License

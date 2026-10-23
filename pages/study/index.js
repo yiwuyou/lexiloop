@@ -49,6 +49,8 @@ Page({
     contentHeight: 0,
     isWeakMarked: false,
     isSentenceSaved: false,
+    relationsOpen: false,
+    relationWordId: '',
   },
 
   onLoad(options = {}) {
@@ -100,7 +102,7 @@ Page({
 
   onHide() {
     clearTimeout(this.waitTimer);
-    this.setData({ audioLoading: false });
+    this.setData({ audioLoading: false, relationsOpen: false });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
     this.captureElapsed();
@@ -151,6 +153,12 @@ Page({
     return this.session.queue[this.session.index] || null;
   },
 
+  openRelations() {
+    if (this.data.isContext ? !this.data.contextAnswered : !this.data.revealed) return;
+    this.setData({ relationWordId: this.data.word.id, relationsOpen: true });
+  },
+  closeRelations() { this.setData({ relationsOpen: false }); },
+
   renderCurrent() {
     clearTimeout(this.waitTimer);
     this.audioRequest = (this.audioRequest || 0) + 1;
@@ -184,6 +192,7 @@ Page({
     const state = store.getState();
     this.setData({
       waiting: false,
+      relationsOpen: false,
       contentScrollTop: this.data.contentScrollTop === 0 ? 1 : 0,
       contentHeight: 0,
       pendingCount: this.data.isPractice ? 0 : mastery.remaining(this.session, state.cards).length,

@@ -1,0 +1,115 @@
+{
+  "sourceRecords": 2522,
+  "heads": 2514,
+  "reviewedCommonCount": 60,
+  "commonAvailable": 2514,
+  "synonymHeads": 338,
+  "directedSynonymEdges": 562,
+  "automaticUndirectedEdges": 16,
+  "families": 67,
+  "contrasts": 27,
+  "bytes": 230796,
+  "missingCommon": [],
+  "spotChecks": {
+    "deliberate": {
+      "common": "形容词：故意的、深思熟虑的、不慌不忙的；动词：仔细考虑、商议",
+      "synonyms": [
+        {
+          "word": "consider",
+          "sense": "仔细考虑（动词义）"
+        },
+        {
+          "word": "ponder",
+          "sense": "仔细考虑（动词义）"
+        },
+        {
+          "word": "thoughtful",
+          "sense": "经过深思熟虑的（形容词义）"
+        }
+      ]
+    },
+    "liberate": {
+      "common": "动词：解放、释放、使摆脱束缚",
+      "synonyms": [
+        {
+          "word": "release",
+          "sense": "释放"
+        }
+      ]
+    },
+    "release": {
+      "common": "动词：释放、发布、发行、排放；名词：释放、发布、发行",
+      "synonyms": [
+        {
+          "word": "liberate",
+          "sense": "释放"
+        }
+      ]
+    },
+    "confidential": {
+      "common": "形容词：机密的、保密的",
+      "synonyms": []
+    },
+    "foster": {
+      "common": "动词：培养、促进、代养、抚养；形容词：代养的、寄养的",
+      "synonyms": [
+        {
+          "word": "cultivate",
+          "sense": "培养"
+        },
+        {
+          "word": "facilitate",
+          "sense": "促进、推动"
+        },
+        {
+          "word": "nurture",
+          "sense": "培养"
+        },
+        {
+          "word": "promote",
+          "sense": "促进、推动"
+        }
+      ]
+    },
+    "aid": {
+      "common": "名词：帮助、援助；动词：帮助、援助",
+      "synonyms": [
+        {
+          "word": "assist",
+          "sense": "帮助、援助（动词义）"
+        }
+      ]
+    },
+    "migrate": {
+      "common": "动词：迁徙、迁居、迁移",
+      "synonyms": [
+        {
+          "word": "emigrate",
+          "sense": "移居（emigrate 专指移居国外）"
+        }
+      ]
+    }
+  },
+  "negativePairs": {
+    "deliberate/liberate": false,
+    "confident/confidential": false,
+    "adapt/adopt": false,
+    "effect/affect": false,
+    "explicit/implicit": false,
+    "converge/diverge": false,
+    "economic/economical": false,
+    "form/from": false,
+    "desert/dessert": false,
+    "civilise/educate": false,
+    "employ/employment": false,
+    "media/medium": false,
+    "parcel/portion": false,
+    "defeat/surpass": false,
+    "overcome/surpass": false,
+    "awful/dread": false,
+    "dread/terrible": false,
+    "terrible/tremendous": false,
+    "automatic/voluntary": false,
+    "appoint/nominate": false
+  }
+}

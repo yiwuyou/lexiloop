@@ -13,6 +13,7 @@
       { "type": "file", "value": "data/engra-roots.json" },
       { "type": "file", "value": "data/gpt-wordbook-source.json" },
       { "type": "file", "value": "data/word-relations.json" },
+      { "type": "file", "value": "relation-data/ready.audit.json" },
       { "type": "folder", "value": "tests" },
       { "type": "folder", "value": "scripts" },
       { "type": "file", "value": "README.md" },

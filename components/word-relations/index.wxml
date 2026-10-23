@@ -1,0 +1,41 @@
+<view class="relation-overlay" wx:if="{{visible}}" catchtouchmove="noop">
+  <view class="relation-backdrop" bindtap="close"></view>
+  <view class="relation-sheet" role="dialog" aria-label="词库关联词" catchtap="noop">
+    <view class="sheet-head"><button class="back" wx:if="{{canGoBack}}" bindtap="goBack">‹ 返回</button><text>词库关联词</text><button class="close" bindtap="close" aria-label="关闭关联词">×</button></view>
+    <scroll-view class="sheet-scroll" scroll-y="{{true}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}">
+      <view class="status" wx:if="{{loading}}">正在准备关联资料…</view>
+      <button class="error" wx:if="{{error}}" bindtap="retry">{{error}}</button>
+      <block wx:if="{{result}}">
+        <view class="target-card">
+          <text class="target-word" data-word="{{result.target.word}}" bindlongpress="copyWord">{{result.target.word}}</text>
+          <view class="meaning exam"><text class="label">机构释义</text><text>{{result.target.meaning}}</text></view>
+          <view class="meaning"><text class="label">日常常用义</text><text>{{result.target.common}}</text></view>
+        </view>
+        <view class="section-title">1. 意思相近 <text>{{result.semantic.length}} 词</text></view>
+        <text class="section-note">只在标出的义项上接近，不表示所有场景都能互换。相关词中优先显示已学词。</text>
+        <view class="empty" wx:if="{{!semantic.length}}">词库中暂无已核验的近义词，不用无关词凑数。</view>
+        <view class="entry" wx:for="{{semantic}}" wx:key="head">
+          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" bindtap="explore">继续关联 ›</button></view>
+          <text class="sense">相近义项：{{item.sense}}</text>
+          <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
+          <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
+          <text class="source">{{item.sourceLabel}}</text>
+        </view>
+        <button class="more" wx:if="{{semantic.length < result.semantic.length}}" bindtap="moreSemantic">再显示 6 个近义词</button>
+        <view class="section-title">2. 字形／结构相近 <text>{{result.shapes.length}} 词</text></view>
+        <text class="section-note">高亮重复字母，帮助对照拼写；字形相近不等于同义或同源。</text>
+        <view class="empty" wx:if="{{!shapes.length}}">词库中暂无足够接近的字形或结构。</view>
+        <view class="entry" wx:for="{{shapes}}" wx:key="head">
+          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord"><text wx:for="{{item.parts}}" wx:for-item="part" wx:key="index" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" bindtap="explore">继续关联 ›</button></view>
+          <view class="spelling-compare"><text>{{item.reason}}：<text wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="index" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
+          <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
+          <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
+          <text class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
+          <text class="source">{{item.sourceLabel}}</text>
+        </view>
+        <button class="more" wx:if="{{shapes.length < result.shapes.length}}" bindtap="moreShapes">再显示 6 个字形关联词</button>
+        <text class="footnote">只检索本词库，不增加学习任务，也不改动作答记录。日常义来自 ECDICT，经过常用义筛选；以机构释义作为考试记忆目标。长按英文可复制。</text>
+      </block>
+    </scroll-view>
+  </view>
+</view>

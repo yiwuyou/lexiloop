@@ -26,17 +26,17 @@
   </view>
 
   <view class="library-controls">
-    <button class="filter {{viewMode === 'days' ? 'is-active' : ''}}" bindtap="showDays">按天查看</button>
     <button class="filter {{viewMode === 'words' ? 'is-active' : ''}}" bindtap="showWords">单词列表</button>
+    <button class="filter {{viewMode === 'days' ? 'is-active' : ''}}" bindtap="showDays">按天查看</button>
     <picker range="{{dayOptions}}" range-key="label" value="{{dayIndex}}" bindchange="changeDay">
       <view class="day-picker">{{selectedDayLabel}} ▾</view>
     </picker>
   </view>
-  <button class="secondary-button day-practice" loading="{{audioDownloading}}" bindtap="downloadAudio">{{audioDownloadLabel}}</button>
-  <view class="audio-info">全部语音约 {{audioSize}}，12 个小包，支持 5G / Wi-Fi。单词旁点播放会按需准备所属小包，无需先下载全部。</view>
+  <button class="secondary-button day-practice" wx:if="{{!query}}" loading="{{audioDownloading}}" bindtap="downloadAudio">{{audioDownloadLabel}}</button>
+  <view class="audio-info" wx:if="{{!query}}">全部语音约 {{audioSize}}，12 个小包，支持 5G / Wi-Fi。单词旁点播放会按需准备所属小包，无需先下载全部。</view>
   <view class="audio-error" wx:if="{{audioDownloadError}}" selectable>{{audioDownloadError}}</view>
 
-  <view class="warning">源文件“高频 day 32”缺少编号19，程序保留缺号，不自动补造单词。</view>
+  <view class="warning" wx:if="{{!query}}">源文件“高频 day 32”缺少编号19，程序保留缺号，不自动补造单词。</view>
 
   <view class="result-head"><text>共 {{resultCount}} 条</text><text class="muted">按机构顺序排列</text></view>
   <view class="day-grid" wx:if="{{viewMode === 'days'}}">
@@ -52,6 +52,7 @@
         <view class="word-title-line">
           <text class="word-name" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text>
           <button class="mini-audio" wx:if="{{item.audio}}" data-id="{{item.id}}" bindtap="playPronunciation" aria-label="播放{{item.word}}的发音">{{audioLoadingId === item.id ? '…' : '▶'}}</button>
+          <button class="relation-trigger" data-id="{{item.id}}" bindtap="openRelations" aria-label="查看{{item.word}}的关联词">关联词 ›</button>
         </view>
         <text class="word-ipa" wx:if="{{item.ipa}}">{{item.ipa}}</text>
         <text class="word-meaning">{{item.meaning}}</text>
@@ -68,4 +69,5 @@
   <view class="empty" wx:else>没有找到匹配的单词</view>
   <button class="secondary-button more-button" wx:if="{{hasMore}}" bindtap="loadMore">继续显示</button>
   </block>
+  <word-relations visible="{{relationsOpen}}" word-id="{{relationWordId}}" bindclose="closeRelations" />
 </view>

@@ -37,7 +37,9 @@ Page({
     dayIndex: 0,
     selectedDayLabel: '全部天数',
     dayGroups: [],
-    viewMode: 'days',
+    viewMode: 'words',
+    relationsOpen: false,
+    relationWordId: '',
     audioDownloadLabel: '下载全部发音，备好地铁离线学习',
     audioDownloading: false,
     audioSize: audioResources.sizeLabel,
@@ -80,7 +82,7 @@ Page({
   },
 
   onHide() {
-    this.setData({ audioLoadingId: '' });
+    this.setData({ audioLoadingId: '', relationsOpen: false });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
   },
@@ -125,7 +127,7 @@ Page({
 
   onSearch(event) {
     this.limit = PAGE_SIZE;
-    this.setData({ query: event.detail.value, viewMode: 'words' }, () => this.refresh());
+    this.setData({ query: event.detail.value, viewMode: 'words', dayIndex: 0, selectedDayLabel: '全部天数' }, () => this.refresh());
   },
 
   selectFilter(event) {
@@ -149,6 +151,9 @@ Page({
   },
 
   showWords() { this.setData({ viewMode: 'words' }); },
+
+  openRelations(event) { this.setData({ relationWordId: event.currentTarget.dataset.id, relationsOpen: true }); },
+  closeRelations() { this.setData({ relationsOpen: false }); },
 
   openSentences() { wx.navigateTo({ url: '/pages/sentences/index' }); },
 

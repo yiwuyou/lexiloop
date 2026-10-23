@@ -1,6 +1,8 @@
 .library-page {
   padding-top: calc(56rpx + env(safe-area-inset-top));
 }
+.word-title-line { flex-wrap: wrap; }
+.library-page .relation-trigger { min-height: 76rpx; flex: 0 0 auto; margin: 0; padding: 14rpx 10rpx; border-radius: 16rpx; background: var(--soft); color: var(--main-strong); font-size: 23rpx; line-height: 1.4; }
 
 .search-wrap {
   display: flex;
