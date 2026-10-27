@@ -222,6 +222,11 @@ async function main() {
   desktop.store.resumeCloudApply();
   assert.ok(desktop.store.getState().weakBook['c-1-4']);
   assert.ok(!desktop.values.mem_vocab_cloud_apply_v1);
+  const oldDeviceBundle = blank(); oldDeviceBundle.state.weakBook = { 'c-1-5': { addedAt: now } };
+  const oldDevice = client(oldDeviceBundle);
+  oldDevice.sync.start(); await tick(); await tick();
+  assert.ok(oldDevice.store.getState().weakBook['c-1-5'], 'joining device preserves manually marked weak words even without answer history');
+  oldDevice.sync.dispose();
   const row = Array.from(rows.entries()).find(([key]) => key.startsWith('lexiloop_sync/'))[1];
   assert.ok(zlib.gunzipSync(Buffer.from(row.payload, 'base64')).length > 0);
   phone.sync.dispose(); desktop.sync.dispose();

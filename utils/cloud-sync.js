@@ -118,6 +118,7 @@ async function flush() {
 }
 function meaningful(bundle) {
   return bundle.state.recentReviews.length > 0 || Object.keys(bundle.state.sentenceBook || {}).length > 0
+    || Object.keys(bundle.state.weakBook || {}).length > 0
     || Object.values(bundle.state.cards).some(card => Number(card.reps || 0) > 0);
 }
 async function connect(create) {
