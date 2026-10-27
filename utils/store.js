@@ -23,7 +23,8 @@ function defaultSettings() {
     schemaVersion: 2,
     dailyNewCount: 50,
     dailyMaxNewCount: 100,
-    dailyReviewLimit: 80,
+    dailyReviewLimit: 100,
+    reviewLimitVersion: 1,
     dailyBacklogLimit: 30,
     extraStep: 25,
     examDate: '2026-12-15',
@@ -61,8 +62,10 @@ function ensureState() {
   const settings = safeGet(SETTINGS_KEY, null);
   if (!settings) {
     safeSet(SETTINGS_KEY, defaultSettings());
-  } else if (settings.schemaVersion !== 2) {
-    safeSet(SETTINGS_KEY, Object.assign(defaultSettings(), settings, { schemaVersion: 2 }));
+  } else if (settings.schemaVersion !== 2 || settings.reviewLimitVersion !== 1) {
+    safeSet(SETTINGS_KEY, Object.assign(defaultSettings(), settings, {
+      schemaVersion: 2, dailyReviewLimit: 100, reviewLimitVersion: 1,
+    }));
   }
   return true;
 }

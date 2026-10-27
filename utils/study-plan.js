@@ -6,7 +6,7 @@ const weakBook = require('./weak-book');
 
 const REVIEW_PLAN_VERSION = 2;
 const CONTEXT_PLAN_VERSION = 3;
-const DEFAULT_DAILY_REVIEW_LIMIT = 80;
+const DEFAULT_DAILY_REVIEW_LIMIT = 100;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
 const DAILY_SENTENCE_LIMIT = 30;
@@ -36,7 +36,10 @@ function selectReviews(state, settings, words, time, progress) {
 
   words.forEach((word) => {
     const card = state.cards[word.id] || {};
-    (card.dueAt < todayStart ? overdue : current).push(word);
+    // Unverified restored words are a gradual first check, not a missed
+    // historical review. Otherwise an unattended restored batch would be
+    // throttled to the separate 30-word overdue allowance forever.
+    (card.dueAt < todayStart && !isRecoveryPending(card) ? overdue : current).push(word);
   });
   overdue.sort((left, right) => reviewPriority(state, left, right));
   current.sort((left, right) => reviewPriority(state, left, right));
@@ -76,7 +79,7 @@ function summarize(state, settings, now) {
     if (weakBook.isMarked(state, word.id)) weak += 1;
     if (card.needsRecall || card.needsContext || (card.dueAt <= time && card.lastAt < todayStart)) {
       due.push(word);
-      if (card.dueAt < todayStart) overdue.push(word);
+      if (card.dueAt < todayStart && !isRecoveryPending(card)) overdue.push(word);
     } else if (isRecoveryPending(card)) {
       deferredRecoveryCount += 1;
     }

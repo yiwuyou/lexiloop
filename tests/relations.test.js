@@ -232,7 +232,7 @@ function testLibraryAndTemplates() {
   let library;
   global.Page = value => { library = value; };
   const writes = [];
-  const stored = { mem_vocab_state_v1: clone(state), mem_vocab_settings_v1: { schemaVersion: 2 } };
+  const stored = { mem_vocab_state_v1: clone(state), mem_vocab_settings_v1: { schemaVersion: 2, reviewLimitVersion: 1 } };
   global.wx = {
     getStorageSync: key => stored[key] ? clone(stored[key]) : '',
     setStorageSync: (key, value) => { writes.push(key); stored[key] = clone(value); },
@@ -275,7 +275,7 @@ function testStudyDialogIsInPlace() {
   const navigation = [];
   const localState = clone(state);
   localState.daily['2026-10-23'] = { newDone: 23, dueDone: 41, completedAt: 0 };
-  const stored = { mem_vocab_state_v1: localState, mem_vocab_settings_v1: { schemaVersion: 2 } };
+  const stored = { mem_vocab_state_v1: localState, mem_vocab_settings_v1: { schemaVersion: 2, reviewLimitVersion: 1 } };
   global.wx = {
     getStorageSync: key => stored[key] ? clone(stored[key]) : '',
     setStorageSync: (key, value) => { writes.push(key); stored[key] = clone(value); },

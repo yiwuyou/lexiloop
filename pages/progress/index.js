@@ -6,7 +6,7 @@ const migrations = require('../../utils/migrations');
 const recovery = require('../../utils/progress-recovery');
 
 const recoveryGroups = recovery.checkpoints();
-const initialRecoveryIndex = recoveryGroups.findIndex((group) => group.category === 'high' && group.day === 10);
+const initialRecoveryIndex = recoveryGroups.findIndex((group) => group.category === 'high' && group.day === 13);
 
 function recoveryCounts(index) {
   return ['该日尚未开始'].concat(recoveryGroups[index].words.map((word, position, words) => `已学到 #${word.index} ${word.word}${position === words.length - 1 ? '（该日学完）' : ''}`));
@@ -37,6 +37,7 @@ Page({
     recoveryCount: 0,
     recoveryPreview: null,
     recoveryStatus: '',
+    recoveryBatch: recovery.REVIEW_BATCH,
   },
 
   onShow() {
@@ -107,7 +108,7 @@ Page({
     }
     wx.showModal({
       title: '补回已学范围？',
-      content: `${recoveryGroups[index].label}，${count ? `已学到该日第 ${count} 词` : '该日尚未开始'}。补回 ${summary.added} 条已学记录，约分 ${summary.days} 天重新复习，每天最多新增安排 50 个补回词。现有记录保留，不恢复旧成绩、收藏或易忘清单。`,
+      content: `${recoveryGroups[index].label}，${count ? `已学到该日第 ${count} 词` : '该日尚未开始'}。补回 ${summary.added} 条已学记录，按每天 ${recovery.REVIEW_BATCH} 词分批到期，并计入每日复习上限；实际完成时间取决于答题和复习情况。现有记录保留，不恢复旧成绩、收藏或易忘清单。`,
       confirmText: '补回进度',
       success: (result) => {
         if (!result.confirm) return;
@@ -115,7 +116,7 @@ Page({
           store.saveState(recovery.recover(store.getState(), index, count));
           store.clearSession();
           store.clearSession('practice');
-          this.setData({ recoveryOpen: false, recoveryStatus: '已补回学习范围，旧答题历史并未恢复。新词会从未学范围继续；复习分批安排。请在下方导出备份并发送到文件传输助手。' });
+          this.setData({ recoveryOpen: false, recoveryStatus: '已补回学习范围，旧答题历史并未恢复。新词会从未学范围继续；旧词全部待重新复习，分批安排，不代表已经掌握。' });
           this.refresh();
           wx.showToast({ title: '已补回进度' });
         } catch (error) {

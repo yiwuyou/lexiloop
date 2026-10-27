@@ -2,7 +2,7 @@ const { getWords } = require('./words');
 const { initialState } = require('./scheduler');
 const { DAY_MS, startOfDay } = require('./date');
 
-const REVIEW_BATCH = 50;
+const REVIEW_BATCH = 100;
 
 function checkpoints() {
   const groups = [];
@@ -33,10 +33,11 @@ function preview(state, groupIndex, count) {
   return { total: words.length, added: missing.length, days: Math.ceil(missing.length / REVIEW_BATCH) };
 }
 
-function recover(state, groupIndex, count, now) {
+function recover(state, groupIndex, count, now, options = {}) {
   const time = now || Date.now();
   const next = JSON.parse(JSON.stringify(state));
-  const missing = selectedWords(groupIndex, count).filter((word) => !(next.cards[word.id] || {}).seen);
+  const missing = selectedWords(groupIndex, count)
+    .filter((word) => options.reviewAll || !(next.cards[word.id] || {}).seen);
   // Spread the recovered range across dates, mixing source neighbours without
   // claiming that any previous answer, review date or mastery level is known.
   let seed = 9157;

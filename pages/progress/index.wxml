@@ -12,7 +12,7 @@
     <view wx:if="{{recoveryOpen}}">
       <picker range="{{recoveryLabels}}" value="{{recoveryIndex}}" bindchange="onRecoveryDay"><view class="recovery-picker">学习日：{{recoveryLabels[recoveryIndex]}} ▾</view></picker>
       <picker range="{{recoveryCounts}}" value="{{recoveryCount}}" bindchange="onRecoveryCount"><view class="recovery-picker">{{recoveryCounts[recoveryCount]}} ▾</view></picker>
-      <text class="backup-note">所选范围 {{recoveryPreview.total}} 词，需补回 {{recoveryPreview.added}} 词；每天约 50 词，约分 {{recoveryPreview.days}} 天重新复习。已有记录不会覆盖，主动复习仍可随时加练。</text>
+      <text class="backup-note">所选范围 {{recoveryPreview.total}} 词，需补回 {{recoveryPreview.added}} 词；按每天 {{recoveryBatch}} 词分批到期，计入每日复习上限，不一次堆到今天。已有记录不会覆盖，主动复习仍可随时加练。</text>
       <button class="primary-button" bindtap="recoverProgress">补回已学范围</button>
     </view>
     <view class="backup-result" wx:if="{{recoveryStatus}}"><text>{{recoveryStatus}}</text></view>
