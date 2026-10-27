@@ -5,6 +5,7 @@
     detail="英语（二）· 目标60分"
   ></page-header>
   <view class="home-status"><text>{{audioStatus}}</text><text>版本 {{appVersion}}</text></view>
+  <view class="sync-status" bindtap="openSync">{{syncText}} ›</view>
 
   <block wx:if="{{!completed}}">
     <view class="hero">

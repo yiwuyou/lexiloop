@@ -58,6 +58,14 @@ button::after {
   background: var(--card);
 }
 
+.sync-status {
+  margin: 0 0 18rpx;
+  min-height: 44rpx;
+  color: var(--muted);
+  font-size: 23rpx;
+  line-height: 44rpx;
+}
+
 .primary-button {
   display: flex;
   min-height: 104rpx;

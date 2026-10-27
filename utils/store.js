@@ -1,11 +1,15 @@
 const { dayKey } = require('./date');
 const migrations = require('./migrations');
+const syncStorage = require('./sync-storage');
 
 const STATE_KEY = 'mem_vocab_state_v1';
 const SESSION_KEY = 'mem_vocab_session_v1';
 const PRACTICE_SESSION_KEY = 'mem_vocab_practice_session_v1';
 const SETTINGS_KEY = 'mem_vocab_settings_v1';
 const MIGRATION_BACKUP_KEY = 'mem_vocab_state_before_v2';
+const APPLY_KEY = 'mem_vocab_cloud_apply_v1';
+let changeListener = null;
+let quiet = false;
 
 function defaultState() {
   return {
@@ -42,6 +46,9 @@ function safeGet(key, fallback) {
 
 function safeSet(key, value) {
   wx.setStorageSync(key, value);
+  if (!quiet && changeListener && [STATE_KEY, SETTINGS_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) {
+    try { changeListener(); } catch (error) { /* Local save is still durable; next sync reconciles it. */ }
+  }
   return value;
 }
 
@@ -103,13 +110,41 @@ function saveSession(session) {
 function clearSession(mode) {
   try {
     wx.removeStorageSync(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY);
+    if (!quiet && changeListener) changeListener();
   } catch (error) {
     // A failed cleanup must not discard completed review records.
   }
 }
 
 function appendReview(state, review) {
-  state.recentReviews = (state.recentReviews || []).concat(review).slice(-3000);
+  const entry = Object.assign({ id: `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}` }, review);
+  state.recentReviews = (state.recentReviews || []).concat(entry).slice(-3000);
+}
+
+function bundle() {
+  return { state: getState(), settings: getSettings(), session: getSession(), practiceSession: getSession('practice') };
+}
+function writeBundle(value) {
+  wx.setStorageSync(STATE_KEY, value.state);
+  wx.setStorageSync(SETTINGS_KEY, value.settings);
+  [[SESSION_KEY, value.session], [PRACTICE_SESSION_KEY, value.practiceSession]].forEach(([key, session]) => {
+    if (session) wx.setStorageSync(key, session); else wx.removeStorageSync(key);
+  });
+}
+function replaceBundle(value) {
+  const next = Object.assign({}, value, { state: migrations.migrateState(value.state) });
+  if (!next.settings || next.settings.schemaVersion !== 2) throw new Error('invalid-cloud-settings');
+  quiet = true;
+  try {
+    // Complete an interrupted multi-key apply on the next launch.
+    syncStorage.write(APPLY_KEY, next);
+    writeBundle(next);
+    syncStorage.remove(APPLY_KEY);
+  } finally { quiet = false; }
+}
+function resumeCloudApply() {
+  const pending = syncStorage.read(APPLY_KEY);
+  if (pending) replaceBundle(pending);
 }
 
 function getTodaySummary(state, now) {
@@ -117,6 +152,10 @@ function getTodaySummary(state, now) {
 }
 
 module.exports = {
+  bundle,
+  replaceBundle,
+  resumeCloudApply,
+  onChange(listener) { changeListener = listener; },
   appendReview,
   clearSession,
   ensureState,

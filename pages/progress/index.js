@@ -4,6 +4,7 @@ const plan = require('../../utils/study-plan');
 const store = require('../../utils/store');
 const migrations = require('../../utils/migrations');
 const recovery = require('../../utils/progress-recovery');
+const cloudSync = require('../../utils/cloud-sync');
 
 const recoveryGroups = recovery.checkpoints();
 const initialRecoveryIndex = recoveryGroups.findIndex((group) => group.category === 'high' && group.day === 13);
@@ -38,12 +39,31 @@ Page({
     recoveryPreview: null,
     recoveryStatus: '',
     recoveryBatch: recovery.REVIEW_BATCH,
+    sync: { text: '尚未开启云同步', enabled: false, busy: false, pending: 0, last: '' },
+    syncBusy: false,
+    syncError: '',
   },
 
   onShow() {
     const tabBar = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tabBar) tabBar.setData({ selected: 2 });
     this.refresh();
+    if (this.stopSync) this.stopSync();
+    this.stopSync = cloudSync.subscribe(sync => { this.setData({ sync }); if (sync.enabled) this.refresh(); });
+  },
+  onHide() { if (this.stopSync) this.stopSync(); },
+  onUnload() { if (this.stopSync) this.stopSync(); },
+
+  async syncNow() {
+    if (this.data.syncBusy) return;
+    this.setData({ syncBusy: true, syncError: '' });
+    try {
+      if (cloudSync.status().enabled) await cloudSync.flush();
+      else await cloudSync.enable();
+      this.refresh();
+    } catch (error) {
+      this.setData({ syncError: '未能连接云端，本机记录已保留。请确认网络后重试；首次请在有完整记录的手机上开启。' });
+    } finally { this.setData({ syncBusy: false }); }
   },
 
   refresh() {

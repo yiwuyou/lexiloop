@@ -186,7 +186,8 @@ Page({
     } finally { this.sentenceSaveBusy = false; }
   },
 
-  practiceDay() {
+  async practiceDay() {
+    if (!(await require('../../utils/cloud-sync').beginStudy())) return;
     const selected = this.data.dayOptions[this.data.dayIndex];
     const scope = this.data.activeFilter === 'weak' ? { scope: 'weak' } : {};
     const session = practice.buildSession(store.getState(), Object.assign(scope, selected.key === 'all' ? {} : selected));

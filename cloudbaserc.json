@@ -1,0 +1,14 @@
+{
+  "envId": "lj-tx-serv-d1gw7ceh2130f8cc4",
+  "region": "ap-shanghai",
+  "functionRoot": "cloudfunctions",
+  "functions": [{
+    "name": "lexiloop-sync",
+    "description": "词序个人学习进度增量同步；微信身份隔离、幂等、任务接续、七日快照",
+    "runtime": "Nodejs20.19",
+    "handler": "index.main",
+    "memorySize": 256,
+    "timeout": 15,
+    "installDependency": true
+  }]
+}

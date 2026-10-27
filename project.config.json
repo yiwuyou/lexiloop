@@ -1,11 +1,14 @@
 {
   "description": "词序 - MEM英语（二）离线词汇学习",
   "miniprogramRoot": "./",
+  "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "miniprogram",
   "projectname": "mem-vocab",
   "appid": "wxee41f64becac8cf2",
   "packOptions": {
     "ignore": [
+      { "type": "folder", "value": "cloudfunctions" },
+      { "type": "file", "value": "cloudbaserc.json" },
       { "type": "folder", "value": "assets/audio" },
       { "type": "file", "value": "data/authored-examples.tsv" },
       { "type": "file", "value": "data/memory-guides.json" },

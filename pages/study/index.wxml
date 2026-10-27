@@ -1,4 +1,5 @@
 <view class="study-page {{completed ? 'is-completed' : ''}} {{!revealed && !isContext ? 'is-recall' : 'is-answer'}}">
+  <view class="sync-status" wx:if="{{syncBlocked}}">已在另一台设备继续。<button class="head-button" bindtap="takeOverStudy">在此接着学</button></view>
   <block wx:if="{{!completed}}">
     <view class="study-head">
       <button class="head-button" bindtap="exitStudy">返回</button>

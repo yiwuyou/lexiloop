@@ -11,6 +11,7 @@ const { getWord } = require('../../utils/words');
 const weakBook = require('../../utils/weak-book');
 const sentenceBook = require('../../utils/sentence-book');
 const sentenceTap = require('../../utils/sentence-tap');
+const cloudSync = require('../../utils/cloud-sync');
 
 const PHASE_LABELS = {
   review: '到期复习',
@@ -57,6 +58,7 @@ Page({
     isSentenceSaved: false,
     relationsOpen: false,
     relationWordId: '',
+    syncBlocked: false,
   },
 
   onLoad(options = {}) {
@@ -104,9 +106,21 @@ Page({
   onShow() {
     this.activeStartedAt = Date.now();
     if (this.session && !this.data.completed) this.renderCurrent();
+    if (this.stopSync) this.stopSync();
+    this.stopSync = cloudSync.subscribe(() => this.setData({ syncBlocked: cloudSync.blocked() }));
+  },
+
+  async takeOverStudy() {
+    if (!(await cloudSync.beginStudy())) return;
+    this.session = store.getSession(this.data.isPractice ? 'practice' : undefined);
+    if (!this.session) { wx.reLaunch({ url: '/pages/today/index' }); return; }
+    this.setData({ syncBlocked: false, completed: false });
+    this.activeStartedAt = Date.now();
+    this.renderCurrent();
   },
 
   onHide() {
+    if (this.stopSync) this.stopSync();
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
     this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
@@ -115,16 +129,17 @@ Page({
     if (this.audioPlaying && this.audio) this.audio.stop();
     this.captureElapsed();
     this.activeStartedAt = 0;
-    if (this.session && !this.data.completed) store.saveSession(this.session);
+    if (this.session && !this.data.completed && !cloudSync.blocked()) store.saveSession(this.session);
   },
 
   onUnload() {
+    if (this.stopSync) this.stopSync();
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
     this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
     this.audioRequest = (this.audioRequest || 0) + 1;
     this.captureElapsed();
-    if (this.session && !this.data.completed) store.saveSession(this.session);
+    if (this.session && !this.data.completed && !cloudSync.blocked()) store.saveSession(this.session);
     if (this.audio) this.audio.destroy();
     this.audio = null;
   },
@@ -311,6 +326,7 @@ Page({
   },
 
   rate(event) {
+    if (cloudSync.blocked()) { wx.showToast({ title: '请先在此接续学习', icon: 'none' }); return; }
     if (!this.data.revealed || this.data.completed || this.ratingBusy) return;
     const grade = event.currentTarget.dataset.grade;
     if (!['again', 'hard', 'good', 'easy'].includes(grade)) return;
@@ -338,6 +354,7 @@ Page({
       wordId: word.id,
       phase: item.phase,
       result: grade,
+      overdue: Boolean(item.overdue),
     });
 
     if (item.phase === 'review') {
@@ -407,6 +424,7 @@ Page({
   },
 
   chooseContext(event) {
+    if (cloudSync.blocked()) return;
     if (this.data.contextAnswered) return;
     const index = Number(event.currentTarget.dataset.index);
     const question = this.data.question;
@@ -448,6 +466,7 @@ Page({
   },
 
   nextContext() {
+    if (cloudSync.blocked()) return;
     if (!this.data.contextAnswered) return;
     const item = this.currentItem();
     if (item.phase === 'sentence') {
@@ -467,6 +486,7 @@ Page({
   },
 
   finishSession() {
+    if (cloudSync.blocked()) return;
     this.captureElapsed();
     const now = Date.now();
     const state = store.getState();
@@ -477,6 +497,7 @@ Page({
         minutes, practiceDone: this.session.answers.length,
         remembered: this.session.ratings.good + this.session.ratings.easy,
       } });
+      cloudSync.flush().catch(() => {});
       return;
     }
     const summary = this.writeDailyProgress(state, now);
@@ -484,16 +505,18 @@ Page({
     store.saveState(state);
     store.clearSession();
     this.setData({ completed: true, sessionSummary: summary });
+    cloudSync.flush().catch(() => {});
   },
 
   exitStudy() {
     this.captureElapsed();
-    if (this.session && !this.data.completed) {
+    if (this.session && !this.data.completed && !cloudSync.blocked()) {
       const state = store.getState();
       this.writeDailyProgress(state);
       store.saveState(state);
       store.saveSession(this.session);
     }
+    cloudSync.flush().catch(() => {});
     wx.reLaunch({ url: '/pages/today/index' });
   },
 });

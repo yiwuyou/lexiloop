@@ -4,6 +4,7 @@ const store = require('../../utils/store');
 const practice = require('../../utils/practice');
 const audio = require('../../utils/audio');
 const appVersion = require('../../utils/version');
+const cloudSync = require('../../utils/cloud-sync');
 
 function greeting(hour) {
   if (hour < 6) return '夜深了';
@@ -36,18 +37,25 @@ Page({
     canAdd25: false,
     canAdd50: false,
     appVersion,
+    syncText: '尚未开启云同步',
   },
 
   onShow() {
     const tabBar = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tabBar) tabBar.setData({ selected: 0 });
     this.refresh();
+    if (this.stopSync) this.stopSync();
+    this.stopSync = cloudSync.subscribe(status => {
+      this.setData({ syncText: status.text });
+      if (status.enabled) this.refresh();
+    });
     clearInterval(this.audioTimer);
     this.setData({ audioStatus: audio.getStatus() });
     this.audioTimer = setInterval(() => this.setData({ audioStatus: audio.getStatus() }), 1000);
   },
-  onHide() { clearInterval(this.audioTimer); },
-  onUnload() { clearInterval(this.audioTimer); },
+  onHide() { clearInterval(this.audioTimer); if (this.stopSync) this.stopSync(); },
+  onUnload() { clearInterval(this.audioTimer); if (this.stopSync) this.stopSync(); },
+  openSync() { wx.switchTab({ url: '/pages/progress/index' }); },
 
   refresh() {
     const now = Date.now();
@@ -91,7 +99,8 @@ Page({
     });
   },
 
-  startStudy() {
+  async startStudy() {
+    if (!(await cloudSync.beginStudy())) return;
     const now = Date.now();
     const state = store.getState();
     const settings = store.getSettings();
@@ -108,7 +117,8 @@ Page({
     wx.navigateTo({ url: '/pages/study/index' });
   },
 
-  startPractice() {
+  async startPractice() {
+    if (!(await cloudSync.beginStudy())) return;
     const existing = store.getSession('practice');
     const options = [];
     if (existing && existing.index < existing.queue.length) options.push('继续上次主动复习');
@@ -131,7 +141,8 @@ Page({
     } });
   },
 
-  addExtraStudy(event) {
+  async addExtraStudy(event) {
+    if (!(await cloudSync.beginStudy())) return;
     const amount = Number(event.currentTarget.dataset.amount) || 25;
     const now = Date.now();
     const state = store.getState();

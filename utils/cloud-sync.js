@@ -1,0 +1,184 @@
+const store = require('./store');
+const model = require('./sync-model');
+const storage = require('./sync-storage');
+const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
+const FUNCTION = 'lexiloop-sync';
+const KEY = 'lexiloop_cloud_sync_v1';
+const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
+let meta, flight, timer, poll, capturing = false, ready = false, active = true;
+let connecting = null;
+let message = '尚未开启云同步';
+const listeners = new Set();
+function load() {
+  if (!meta) meta = storage.read(KEY) || {
+    device: `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`,
+    enabled: false, seq: 0, rev: 0, outbox: [], lastSyncedAt: 0, owner: null,
+  };
+  return meta;
+}
+function save() { storage.write(KEY, meta); }
+function status() {
+  if (!meta) return { text: message, enabled: false, pending: 0, last: '', busy: false };
+  const date = new Date(meta.lastSyncedAt || 0);
+  return {
+    text: message, enabled: meta.enabled, pending: meta.outbox.length, busy: !!flight,
+    last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
+  };
+}
+function emit(text) { if (text) message = text; listeners.forEach(fn => fn(status())); }
+function subscribe(fn) { listeners.add(fn); fn(status()); return () => listeners.delete(fn); }
+function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.device !== meta.device); }
+function capture() {
+  if (!meta || !meta.enabled || capturing) return;
+  capturing = true;
+  try {
+    const current = store.bundle();
+    const changes = model.diff(meta.observed || current, current);
+    if (!changes.length) return;
+    meta.seq++;
+    // Keep just the latest unsent task image per ownership epoch. Earlier
+    // events still carry their sequence IDs and answer/card changes. Replace
+    // objects rather than mutate a batch already being sent over the network.
+    changes.filter(change => change.path.length === 1).forEach(change => {
+      const key = change.path[0], epoch = meta.owner && meta.owner.epoch || 0;
+      meta.outbox = meta.outbox.map(event => event.epoch !== epoch ? event : Object.assign({}, event, {
+        changes: event.changes.filter(old => old.path.length !== 1 || old.path[0] !== key),
+      }));
+      change.before = null;
+    });
+    meta.outbox.push({ device: meta.device, seq: meta.seq, baseRev: meta.rev, epoch: meta.owner && meta.owner.epoch || 0, changes });
+    meta.observed = model.clone(current);
+    save();
+    emit('有记录待同步');
+    const answers = meta.outbox.reduce((n, event) => n + event.changes.filter(change => change.path[1] === 'recentReviews').length, 0);
+    if (answers >= 5) schedule(1);
+    else if (changes.some(change => ['sentenceBook', 'weakBook'].includes(change.path[1]))) schedule(1000);
+    else if (!timer) schedule(15000);
+  } finally { capturing = false; }
+}
+function schedule(delay) { clearTimeout(timer); timer = setTimeout(() => { timer = null; flush().catch(() => {}); }, delay); }
+async function request(action, data = {}) {
+  if (!ready) throw new Error('当前微信不支持云同步');
+  let timeout;
+  try {
+    const result = await Promise.race([
+      wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, action, device: meta.device }, data) }),
+      new Promise((resolve, reject) => { timeout = setTimeout(() => reject(new Error('网络超时')), 15000); }),
+    ]);
+    if (!result.result || !result.result.ok) throw new Error(result.result && result.result.message || '云端暂时不可用');
+    return result.result;
+  } finally { clearTimeout(timeout); }
+}
+function accept(result) {
+  if (result.unchanged) {
+    meta.owner = result.owner;
+    meta.lastSyncedAt = Date.now();
+    save();
+    emit(meta.outbox.length ? '有记录待同步' : '已同步');
+    return;
+  }
+  if (!model.valid(result.bundle)) throw new Error('云端记录版本不兼容，未覆盖本机');
+  const previous = store.bundle();
+  // Keep local records and queues while any later edits are still in flight.
+  const remaining = meta.outbox.filter(event => event.seq > (result.ack || 0));
+  const combined = model.clone(result.bundle);
+  remaining.forEach(event => model.apply(combined, event, { owner: result.owner }));
+  storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
+  store.replaceBundle(combined);
+  meta.outbox = remaining;
+  meta.observed = model.clone(combined);
+  meta.rev = result.rev;
+  meta.owner = result.owner;
+  meta.enabled = true;
+  meta.lastSyncedAt = Date.now();
+  save();
+  emit(remaining.length ? '有记录待同步' : '已同步');
+}
+async function flush() {
+  if (flight) return flight;
+  if (!meta || !meta.enabled) return false;
+  capture();
+  clearTimeout(timer); timer = null;
+  flight = (async () => {
+    try {
+      emit('正在同步');
+      const batch = meta.outbox.slice(0, 20);
+      const result = await request('sync', { events: batch, knownRev: meta.rev });
+      if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
+      accept(result);
+      if (meta.outbox.length) schedule(1000);
+      return true;
+    } catch (error) {
+      emit('同步未成功，本地记录已保存');
+      if (active) schedule(30000);
+      throw error;
+    } finally { flight = null; }
+  })();
+  return flight;
+}
+function meaningful(bundle) {
+  return bundle.state.recentReviews.length > 0 || Object.keys(bundle.state.sentenceBook || {}).length > 0
+    || Object.values(bundle.state.cards).some(card => Number(card.reps || 0) > 0);
+}
+async function connect(create) {
+  if (connecting) { await connecting; if (!create || meta.enabled) return meta.enabled; }
+  if (flight) await flight;
+  const local = store.bundle();
+  const remote = await request('status');
+  if (!remote.exists && !create) { emit('尚未开启云同步'); return false; }
+  let result = remote;
+  if (!remote.exists) {
+    if (!model.learned(local)) throw new Error('本机没有学习记录，请先在手机开启');
+    result = await request('bootstrap', { bundle: local });
+  } else if (meaningful(local) && !meta.enabled) {
+    result = await request('attach', { bundle: local });
+  }
+  accept(result);
+  startPoll();
+  return true;
+}
+async function enable() {
+  try { const result = await connect(true); startPoll(); return result; }
+  catch (error) { emit('未能连接云端，本地记录已保留'); throw error; }
+}
+async function beginStudy() {
+  if (connecting) await connecting;
+  if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
+  try {
+    do { await flush(); } while (meta.outbox.length);
+    const result = await request('claim');
+    accept(result);
+    return true;
+  } catch (error) {
+    if (blocked()) {
+      wx.showToast({ title: '需联网接续另一台设备的任务', icon: 'none' });
+      return false;
+    }
+    return true; // Known local owner can continue offline, then upload its answers.
+  }
+}
+function startPoll() {
+  clearInterval(poll);
+  if (active && meta && meta.enabled) poll = setInterval(() => flush().catch(() => {}), 30000);
+}
+function start() {
+  if (ready) return;
+  load();
+  if (!wx.cloud || !wx.cloud.init) { emit('当前微信暂不支持云同步'); return; }
+  try {
+    wx.cloud.init({ env: ENV, traceUser: false });
+    ready = true;
+    if (!meta.observed) meta.observed = model.clone(store.bundle());
+    save();
+    store.onChange(capture);
+    if (meta.enabled) flush().catch(() => {});
+    else {
+      connecting = connect(false).catch(() => emit('尚未连接云端，点击重试')).finally(() => { connecting = null; });
+    }
+    startPoll();
+  } catch (error) { emit('云同步暂不可用，本地记录已保留'); }
+}
+function foreground() { active = true; if (!ready) start(); else if (meta.enabled) flush().catch(() => {}); startPoll(); }
+function background() { active = false; clearInterval(poll); if (meta && meta.enabled) flush().catch(() => {}); clearTimeout(timer); timer = null; }
+function dispose() { clearTimeout(timer); clearInterval(poll); store.onChange(null); listeners.clear(); }
+module.exports = { start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };
