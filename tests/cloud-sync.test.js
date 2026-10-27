@@ -126,6 +126,11 @@ function client(seed) {
 }
 async function main() {
   assert.strictEqual((await call('health')).storageReady, true);
+  assert.strictEqual((await call('health')).transactionReady, true);
+  assert.strictEqual(rows.size, 0, 'health diagnostics never create learning records');
+  failRead = true;
+  assert.strictEqual((await call('health')).ok, false, 'health reports storage failure without exposing learning data');
+  failRead = false;
   assert.strictEqual((await call('status')).exists, false);
   identity = { OPENID: '', APPID: 'wxee41f64becac8cf2' };
   assert.strictEqual((await call('status')).ok, false, 'identity cannot be supplied by client input');

@@ -32,10 +32,18 @@ function reply(record, device, knownRev) {
 exports.main = async event => {
   // Safe deployment diagnostic: no user records, identifiers or writes.
   if (event.action === 'health') {
+    let step = 'collections';
     try {
       await Promise.all([RECORDS, SNAPSHOTS].map(name => db.collection(name).limit(1).field({ _id: true }).get()));
-      return { ok: true, protocol: model.VERSION, appid: APPID, name: 'lexiloop-sync', storageReady: true };
-    } catch (error) { return { ok: false, storageReady: false }; }
+      step = 'transaction-read';
+      await db.runTransaction(async transaction => {
+        await read(transaction.collection(RECORDS).doc('deployment-health-readonly'));
+        return true;
+      });
+      return { ok: true, protocol: model.VERSION, appid: APPID, name: 'lexiloop-sync', storageReady: true, transactionReady: true };
+    } catch (error) {
+      return { ok: false, storageReady: step !== 'collections', step, code: String(error.code || error.errCode || error.name || 'UNKNOWN'), detail: String(error.errMsg || error.message || '').replace(/[a-f0-9]{32,}/gi, '[id]').slice(0, 300) };
+    }
   }
   const identity = cloud.getWXContext();
   if (!identity.OPENID || identity.APPID !== APPID) return { ok: false, message: '请从词序小程序调用同步' };
