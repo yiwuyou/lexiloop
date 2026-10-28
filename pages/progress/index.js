@@ -49,7 +49,10 @@ Page({
     if (tabBar) tabBar.setData({ selected: 2 });
     this.refresh();
     if (this.stopSync) this.stopSync();
-    this.stopSync = cloudSync.subscribe(sync => { this.setData({ sync }); if (sync.enabled) this.refresh(); });
+    this.stopSync = cloudSync.subscribe(sync => {
+      this.setData(sync.text === '已同步' ? { sync, syncError: '' } : { sync });
+      if (sync.enabled) this.refresh();
+    });
   },
   onHide() { if (this.stopSync) this.stopSync(); },
   onUnload() { if (this.stopSync) this.stopSync(); },
@@ -62,8 +65,13 @@ Page({
       else await cloudSync.enable();
       this.refresh();
     } catch (error) {
-      this.setData({ syncError: '未能连接云端，本机记录已保留。请确认网络后重试；首次请在有完整记录的手机上开启。' });
+      this.setData({ syncError: cloudSync.status().errorText || '同步未完成，本机记录已保留。请勿清缓存。' });
     } finally { this.setData({ syncBusy: false }); }
+  },
+
+  copySyncError() {
+    const text = cloudSync.status().errorText || this.data.syncError;
+    if (text) wx.setClipboardData({ data: text });
   },
 
   refresh() {

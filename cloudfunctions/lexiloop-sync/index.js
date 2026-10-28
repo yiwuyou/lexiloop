@@ -46,11 +46,12 @@ exports.main = async event => {
     }
   }
   const identity = cloud.getWXContext();
-  if (!identity.OPENID || identity.APPID !== APPID) return { ok: false, message: '请从词序小程序调用同步' };
-  if (event.protocol !== model.VERSION || !/^[a-zA-Z0-9-]{8,100}$/.test(event.device || '')) return { ok: false, message: '请更新小程序后重试' };
+  if (!identity.OPENID || identity.APPID !== APPID) return { ok: false, code: 'IDENTITY_REQUIRED', message: '云函数未取得词序小程序的微信身份' };
+  if (event.protocol !== model.VERSION || !/^[a-zA-Z0-9-]{8,100}$/.test(event.device || '')) return { ok: false, code: 'PROTOCOL_MISMATCH', message: '请更新小程序后重试' };
   const id = crypto.createHash('sha256').update(`${APPID}:${identity.OPENID}`).digest('hex');
   const ref = db.collection(RECORDS).doc(id);
   const now = Date.now();
+  let step = event.action;
   try {
     if (event.action === 'status' || event.action === 'sync' && (!event.events || !event.events.length)) {
       const row = await read(ref);
@@ -59,6 +60,7 @@ exports.main = async event => {
     if (!['bootstrap', 'attach', 'sync', 'claim'].includes(event.action)) throw new Error('invalid-action');
     if (['bootstrap', 'attach'].includes(event.action)) checkBundle(event.bundle);
     const transactionResult = await db.runTransaction(async transaction => {
+      step = 'transaction-read';
       const target = transaction.collection(RECORDS).doc(id);
       const row = await read(target);
       let record = row && unpack(row.payload);
@@ -98,10 +100,13 @@ exports.main = async event => {
       // Independent compressed documents avoid exceeding a single-document
       // size limit. No managed/paid database rollback feature is required.
       if (record.snapshotDay !== today) {
+        step = 'snapshot-write';
         await transaction.collection(SNAPSHOTS).doc(`${id}-${today}`).set({ data: { owner: id, day: today, payload: pack(record.bundle), at: now } });
         record.snapshotDay = today;
       }
+      step = 'record-write';
       await target.set({ data: { payload: pack(record), updatedAt: now, protocol: model.VERSION } });
+      step = 'transaction-commit';
       return reply(record, event.device);
     });
     // wx-server-sdk versions may wrap the transaction callback result.
@@ -112,7 +117,9 @@ exports.main = async event => {
     }
     return result;
   } catch (error) {
-    console.error('sync failed', error.code || error.errCode || 'SYNC_ERROR');
-    return { ok: false, message: '同步未完成，本机记录未清除，请稍后重试' };
+    const candidate = String(error.code || error.errCode || error.message || error.name || 'SYNC_ERROR');
+    const code = /^[a-zA-Z0-9_.-]{1,100}$/.test(candidate) ? candidate : 'SYNC_ERROR';
+    console.error('sync failed', step, code);
+    return { ok: false, code, step, message: '云端操作未完成，本机记录未清除' };
   }
 };

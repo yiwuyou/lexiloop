@@ -1,6 +1,7 @@
 const store = require('./store');
 const model = require('./sync-model');
 const storage = require('./sync-storage');
+const errors = require('./sync-error');
 const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
@@ -8,6 +9,7 @@ const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
 let meta, flight, timer, poll, capturing = false, ready = false, active = true;
 let connecting = null;
 let message = '尚未开启云同步';
+let lastError = null;
 const listeners = new Set();
 function load() {
   if (!meta) meta = storage.read(KEY) || {
@@ -18,14 +20,19 @@ function load() {
 }
 function save() { storage.write(KEY, meta); }
 function status() {
-  if (!meta) return { text: message, enabled: false, pending: 0, last: '', busy: false };
+  if (!meta) return { text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
   const date = new Date(meta.lastSyncedAt || 0);
   return {
     text: message, enabled: meta.enabled, pending: meta.outbox.length, busy: !!flight,
+    errorText: errors.format(lastError),
     last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
   };
 }
-function emit(text) { if (text) message = text; listeners.forEach(fn => fn(status())); }
+function emit(text) {
+  if (text) message = text;
+  listeners.forEach(fn => { try { fn(status()); } catch (error) { /* A UI listener cannot turn a successful upload into a failure. */ } });
+}
+function failed(error, stage, text) { lastError = errors.describe(error, stage); emit(text); }
 function subscribe(fn) { listeners.add(fn); fn(status()); return () => listeners.delete(fn); }
 function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.device !== meta.device); }
 function capture() {
@@ -63,10 +70,20 @@ async function request(action, data = {}) {
   try {
     const result = await Promise.race([
       wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, action, device: meta.device }, data) }),
-      new Promise((resolve, reject) => { timeout = setTimeout(() => reject(new Error('网络超时')), 15000); }),
+      new Promise((resolve, reject) => { timeout = setTimeout(() => reject(Object.assign(new Error('网络超时'), { code: 'SYNC_TIMEOUT' })), 15000); }),
     ]);
-    if (!result.result || !result.result.ok) throw new Error(result.result && result.result.message || '云端暂时不可用');
-    return result.result;
+    let body = result && result.result;
+    if (typeof body === 'string') { try { body = JSON.parse(body); } catch (error) { body = null; } }
+    if (!body || !body.ok) throw Object.assign(new Error(body && body.message || '云函数未返回有效的同步结果'), {
+      code: body && body.code || 'SYNC_BAD_RESPONSE',
+      syncRequestId: result && (result.requestID || result.requestId),
+      syncStage: body && body.step || action,
+    });
+    return body;
+  } catch (error) {
+    if (!error || typeof error !== 'object') error = new Error(String(error));
+    if (!error.syncStage) error.syncStage = action;
+    throw error;
   } finally { clearTimeout(timeout); }
 }
 function accept(result) {
@@ -74,6 +91,7 @@ function accept(result) {
     meta.owner = result.owner;
     meta.lastSyncedAt = Date.now();
     save();
+    lastError = null;
     emit(meta.outbox.length ? '有记录待同步' : '已同步');
     return;
   }
@@ -84,7 +102,8 @@ function accept(result) {
   const combined = model.clone(result.bundle);
   remaining.forEach(event => model.apply(combined, event, { owner: result.owner }));
   storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
-  store.replaceBundle(combined);
+  try { store.replaceBundle(combined); }
+  catch (error) { error.syncStage = 'apply'; throw error; }
   meta.outbox = remaining;
   meta.observed = model.clone(combined);
   meta.rev = result.rev;
@@ -92,12 +111,13 @@ function accept(result) {
   meta.enabled = true;
   meta.lastSyncedAt = Date.now();
   save();
+  lastError = null;
   emit(remaining.length ? '有记录待同步' : '已同步');
 }
 async function flush() {
   if (flight) return flight;
   if (!meta || !meta.enabled) return false;
-  capture();
+  try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); throw error; }
   clearTimeout(timer); timer = null;
   flight = (async () => {
     try {
@@ -109,7 +129,7 @@ async function flush() {
       if (meta.outbox.length) schedule(1000);
       return true;
     } catch (error) {
-      emit('同步未成功，本地记录已保存');
+      failed(error, 'apply', '同步未成功，本地记录已保存');
       if (active) schedule(30000);
       throw error;
     } finally { flight = null; }
@@ -139,8 +159,12 @@ async function connect(create) {
   return true;
 }
 async function enable() {
-  try { const result = await connect(true); startPoll(); return result; }
-  catch (error) { emit('未能连接云端，本地记录已保留'); throw error; }
+  if (!ready) start();
+  try {
+    if (!ready) throw Object.assign(new Error(lastError && lastError.detail || '当前微信不支持云同步'), { code: lastError && lastError.code || 'SYNC_UNSUPPORTED', syncStage: 'init' });
+    const result = await connect(true); startPoll(); return result;
+  }
+  catch (error) { failed(error, 'apply', '未能完成同步，本地记录已保留'); throw error; }
 }
 async function beginStudy() {
   if (connecting) await connecting;
@@ -164,9 +188,9 @@ function startPoll() {
 }
 function start() {
   if (ready) return;
-  load();
-  if (!wx.cloud || !wx.cloud.init) { emit('当前微信暂不支持云同步'); return; }
   try {
+    load();
+    if (!wx.cloud || !wx.cloud.init || !wx.cloud.callFunction) throw Object.assign(new Error('当前微信暂不支持云同步'), { code: 'SYNC_UNSUPPORTED' });
     wx.cloud.init({ env: ENV, traceUser: false });
     ready = true;
     if (!meta.observed) meta.observed = model.clone(store.bundle());
@@ -174,10 +198,10 @@ function start() {
     store.onChange(capture);
     if (meta.enabled) flush().catch(() => {});
     else {
-      connecting = connect(false).catch(() => emit('尚未连接云端，点击重试')).finally(() => { connecting = null; });
+      connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
     }
     startPoll();
-  } catch (error) { emit('云同步暂不可用，本地记录已保留'); }
+  } catch (error) { ready = false; failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
 }
 function foreground() { active = true; if (!ready) start(); else if (meta.enabled) flush().catch(() => {}); startPoll(); }
 function background() { active = false; clearInterval(poll); if (meta && meta.enabled) flush().catch(() => {}); clearTimeout(timer); timer = null; }

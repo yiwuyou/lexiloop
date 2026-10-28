@@ -169,3 +169,9 @@
 .backup-card button.text-restore-button { width: 100%; margin-top: 18rpx; padding: 18rpx; background: transparent; color: var(--main-strong); font-size: 25rpx; line-height: 1.5; }
 .restore-text { width: 100%; height: 260rpx; margin: 16rpx 0; padding: 18rpx; border: 2rpx solid var(--line); border-radius: 18rpx; font-size: 24rpx; }
 .recovery-picker { margin: 20rpx 0; padding: 22rpx; border: 2rpx solid var(--line); border-radius: 16rpx; font-size: 27rpx; }
+.sync-head { display: block; }
+.sync-state { display: block; margin-top: 12rpx; color: var(--muted); font-size: 24rpx; line-height: 1.5; font-weight: 400; }
+.sync-card > button { width: 100%; min-width: 0; margin-top: 24rpx; padding: 20rpx 14rpx; white-space: nowrap; }
+.sync-error { margin-top: 22rpx; padding: 20rpx; border-radius: 16rpx; background: #fff5e8; color: #79552b; font-size: 23rpx; line-height: 1.6; overflow-wrap: break-word; }
+.sync-error > text { display: block; white-space: pre-wrap; }
+.copy-sync-error { width: 100%; margin-top: 14rpx; padding: 14rpx 10rpx; color: #79552b; background: transparent; font-size: 24rpx; line-height: 1.5; }

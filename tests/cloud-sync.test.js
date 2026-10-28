@@ -53,11 +53,17 @@ assert.strictEqual(fs.readFileSync(path.join(root, 'utils/sync-model.js'), 'utf8
 const rows = new Map();
 let identity = { OPENID: 'user-1', APPID: 'wxee41f64becac8cf2' };
 let failRead = false;
+let throwMissing = false;
+let directTransactionResult = false;
 function collection(name, table = rows) {
   return {
     limit() { return { field() { return { async get() { if (failRead) throw new Error('offline'); return { data: [] }; } }; } }; },
     doc(id) { return {
-      async get() { if (failRead) throw new Error('network unavailable'); return { data: table.has(`${name}/${id}`) ? clone(table.get(`${name}/${id}`)) : null }; },
+      async get() {
+        if (failRead) throw new Error('network unavailable');
+        if (throwMissing && !table.has(`${name}/${id}`)) throw { errCode: -1, errMsg: `document.get:fail document with _id ${id} does not exist` };
+        return { data: table.has(`${name}/${id}`) ? clone(table.get(`${name}/${id}`)) : null };
+      },
       async set({ data }) { table.set(`${name}/${id}`, clone(data)); return {}; },
     }; },
     where(query) { return { async remove() {
@@ -72,7 +78,7 @@ const db = {
     const copy = new Map(Array.from(rows, ([key, value]) => [key, clone(value)]));
     const result = await fn({ collection: name => collection(name, copy) });
     rows.clear(); copy.forEach((value, key) => rows.set(key, value));
-    return { result };
+    return directTransactionResult ? result : { result };
   },
 };
 const realLoad = Module._load;
@@ -93,7 +99,7 @@ function client(seed) {
     values.mem_vocab_settings_v1 = clone(seed.settings);
     if (seed.session) values.mem_vocab_session_v1 = clone(seed.session);
   }
-  const net = { online: true, hold: false, release: null, failWrite: null };
+  const net = { online: true, hold: false, release: null, failWrite: null, failAction: null, failure: null, initFailure: null, jsonResult: false, calls: [] };
   const wx = {
     getStorageSync: key => values[key] ? clone(values[key]) : '',
     setStorageSync: (key, value) => {
@@ -104,10 +110,12 @@ function client(seed) {
     removeStorageSync: key => { delete values[key]; },
     showToast() {},
     cloud: {
-      init() {},
+      init() { if (net.initFailure) throw net.initFailure; },
       callFunction({ data }) {
+        net.calls.push(data.action);
+        if (net.failAction === data.action) return Promise.reject(net.failure || { errCode: -501000, errMsg: 'cloud.callFunction:fail errCode: -501000 env not exists' });
         if (!net.online) return Promise.reject(new Error('offline'));
-        const result = server(clone(data)).then(result => ({ result }));
+        const result = server(clone(data)).then(result => ({ result: net.jsonResult ? JSON.stringify(result) : result, requestID: 'request-test-1234' }));
         if (net.hold && data.action === 'sync') { net.hold = false; return new Promise(resolve => { net.release = () => result.then(resolve); }); }
         return result;
       },
@@ -132,8 +140,12 @@ async function main() {
   assert.strictEqual((await call('health')).ok, false, 'health reports storage failure without exposing learning data');
   failRead = false;
   assert.strictEqual((await call('status')).exists, false);
+  throwMissing = true;
+  assert.strictEqual((await call('status')).exists, false, 'real wx-server-sdk missing-document exception means no archive, not a transport error');
+  throwMissing = false;
   identity = { OPENID: '', APPID: 'wxee41f64becac8cf2' };
   assert.strictEqual((await call('status')).ok, false, 'identity cannot be supplied by client input');
+  assert.strictEqual((await call('status')).code, 'IDENTITY_REQUIRED');
   identity = { OPENID: 'user-1', APPID: 'wrong-app' };
   assert.strictEqual((await call('status')).ok, false);
   identity = { OPENID: 'user-1', APPID: 'wxee41f64becac8cf2' };
@@ -155,6 +167,7 @@ async function main() {
   assert.strictEqual((await call('status')).ok, false, 'read failure is never treated as an empty cloud');
   failRead = false;
   identity.OPENID = 'user-2';
+  directTransactionResult = true; // The deployed database SDK returns the callback value directly.
   assert.strictEqual((await call('status')).exists, false, 'users cannot read one another');
 
   const phone = client(base);
@@ -232,6 +245,44 @@ async function main() {
   oldDevice.sync.start(); await tick(); await tick();
   assert.ok(oldDevice.store.getState().weakBook['c-1-5'], 'joining device preserves manually marked weak words even without answer history');
   oldDevice.sync.dispose();
+  identity.OPENID = 'diagnostic-empty-user';
+  const broken = client(base);
+  broken.net.failAction = 'status';
+  broken.sync.start(); await tick(); await tick();
+  await assert.rejects(broken.sync.enable());
+  assert.ok(broken.sync.status().errorText.includes('-501000'));
+  assert.ok(broken.sync.status().errorText.includes('读取云端存档'));
+  assert.ok(!broken.net.calls.includes('bootstrap'), 'failed status cannot create or replace an archive');
+  assert.ok(broken.store.getState().cards['c-1-1']);
+  broken.net.failAction = 'bootstrap';
+  broken.net.failure = { errCode: -1, errMsg: 'cloud.callFunction:fail failed to upload' };
+  await assert.rejects(broken.sync.enable());
+  assert.ok(broken.sync.status().errorText.includes('首次上传'));
+  assert.strictEqual(broken.sync.status().enabled, false);
+  broken.net.failAction = null; broken.net.jsonResult = true;
+  await broken.sync.enable();
+  assert.strictEqual(broken.sync.status().errorText, '', 'successful ack clears diagnostic failure');
+  const stopThrowing = broken.sync.subscribe(() => {});
+  let throwNow = false;
+  const stopUi = broken.sync.subscribe(() => { if (throwNow) throw new Error('UI update failed'); });
+  throwNow = true;
+  assert.ok(await broken.sync.flush(), 'UI listener exception cannot fail acknowledged sync');
+  stopThrowing(); stopUi(); broken.sync.dispose();
+  identity.OPENID = 'init-retry-user';
+  const retryInit = client(base);
+  retryInit.net.initFailure = { errCode: -404, errMsg: 'cloud.init failed' };
+  retryInit.sync.start();
+  assert.ok(retryInit.sync.status().errorText.includes('初始化云连接'));
+  retryInit.net.initFailure = null;
+  await retryInit.sync.enable();
+  assert.strictEqual(retryInit.sync.status().text, '已同步', 'manual retry can recover an initial SDK initialization failure');
+  retryInit.sync.dispose();
+  const css = fs.readFileSync(path.join(root, 'pages/progress/index.wxss'), 'utf8');
+  assert.ok(/\.sync-card > button[^}]+width: 100%[^}]+white-space: nowrap/.test(css));
+  assert.ok(fs.readFileSync(path.join(root, 'pages/progress/index.wxml'), 'utf8').includes('复制失败原因'));
+  const errors = require('../utils/sync-error');
+  const hidden = errors.format(errors.describe({ message: 'denied openid=private-user access_token=private-token bundle={secret}' }, 'bootstrap'));
+  assert.ok(!hidden.includes('private-user') && !hidden.includes('private-token') && !hidden.includes('{secret}'));
   const row = Array.from(rows.entries()).find(([key]) => key.startsWith('lexiloop_sync/'))[1];
   assert.ok(zlib.gunzipSync(Buffer.from(row.payload, 'base64')).length > 0);
   phone.sync.dispose(); desktop.sync.dispose();

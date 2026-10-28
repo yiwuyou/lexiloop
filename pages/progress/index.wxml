@@ -5,13 +5,13 @@
     detail="英语（二）· 目标60分"
   ></page-header>
 
-  <view class="section-card card">
-    <view class="section-head"><text>云端同步</text><text>{{sync.text}}</text></view>
+  <view class="section-card card sync-card">
+    <view class="section-head sync-head"><text>云端同步</text><text class="sync-state">{{sync.text}}</text></view>
     <text class="backup-note" wx:if="{{!sync.enabled}}">首次请在手机上开启，以本机现有进度建立云端存档；电脑微信随后自动读取。同一微信账号共用进度。</text>
     <text class="backup-note" wx:else>最后成功同步：{{sync.last || '尚无'}}。本地先保存，联网后自动同步；显示“已同步”才代表当前记录已上传。</text>
     <text class="backup-note" wx:if="{{sync.pending}}">还有 {{sync.pending}} 项变化待上传，请勿删除小程序或清缓存。</text>
-    <text class="backup-note" wx:if="{{syncError}}">{{syncError}}</text>
-    <button class="secondary-button" loading="{{syncBusy}}" disabled="{{syncBusy}}" bindtap="syncNow">{{sync.enabled ? '立即同步' : '用本机进度开启同步'}}</button>
+    <view class="sync-error" wx:if="{{sync.errorText || syncError}}"><text selectable>{{sync.errorText || syncError}}</text><button class="copy-sync-error" bindtap="copySyncError">复制失败原因</button></view>
+    <button class="secondary-button" loading="{{syncBusy}}" disabled="{{syncBusy}}" bindtap="syncNow">{{sync.enabled ? '立即同步' : '开启云同步'}}</button>
   </view>
 
   <view class="section-card card recovery-card" wx:if="{{!stats.learned || recoveryOpen || recoveryStatus}}">
