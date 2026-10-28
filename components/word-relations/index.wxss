@@ -2,6 +2,15 @@
 .relation-overlay { position: fixed; inset: 0; z-index: 1200; }
 .relation-backdrop { position: absolute; inset: 0; background: rgba(15, 30, 20, .4); }
 .relation-sheet { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 32rpx 32rpx 0 0; background: var(--surface, #f8faf7); padding: 12rpx 26rpx calc(18rpx + env(safe-area-inset-bottom)); box-sizing: border-box; }
+.relation-sheet { transition: transform .18s ease-out; }
+.relation-backdrop { transition: opacity .18s ease-out; }
+.is-closing .relation-sheet { transform: translateY(110%) !important; }
+.is-closing .relation-backdrop { opacity: 0; }
+.relation-sheet.is-dragging { transition: none; }
+.sheet-grip { width: 64rpx; height: 7rpx; margin: 6rpx auto 0; border-radius: 7rpx; background: #cbd6ce; }
+.word-structure { margin: 0 0 16rpx; color: #42664f; font-size: 26rpx; line-height: 1.6; }
+.word-structure text { display: block; }
+.word-structure text + text { margin-top: 6rpx; font-size: 23rpx; color: var(--muted, #657169); }
 .sheet-head { display: grid; grid-template-columns: 104rpx minmax(0, 1fr) 88rpx; align-items: center; height: 96rpx; column-gap: 12rpx; font-size: 30rpx; font-weight: 600; }
 .sheet-title { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
 .back-slot { width: 104rpx; min-width: 0; }

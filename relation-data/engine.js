@@ -1,4 +1,4 @@
-const { getWord, getWords } = require('./words');
+const { getWord, getWords } = require('../utils/words');
 
 let entries;
 const shapeCache = {};
@@ -11,7 +11,7 @@ function indexWords() {
   entries = {};
   getWords().forEach((word) => {
     const head = headOf(word);
-    if (!entries[head]) entries[head] = { head, id: word.id, word: word.word, sources: [], meanings: [], ids: [] };
+    if (!entries[head]) entries[head] = { head, id: word.id, word: word.word, sources: [], meanings: [], ids: [], over: word.reviewedGuide && word.breakdown && word.breakdown.startsWith('over·') && word.breakdown.replace(/·/g, '') === head };
     const entry = entries[head];
     entry.sources.push(word.sourceLabel);
     entry.ids.push(word.id);
@@ -78,20 +78,22 @@ function shapeLinks(head, data) {
   Object.keys(map).forEach((other) => {
     if (other === head) return;
     const fixed = explicit[other];
-    const shared = longestShared(head, other);
+    const prefix = map[head].over && map[other].over;
+    const shared = prefix ? { text: 'over', left: 0, right: 0 } : longestShared(head, other);
     const maximum = Math.max(head.length, other.length);
     const minimum = Math.min(head.length, other.length);
     const edit = Math.abs(head.length - other.length) <= 2 ? distance(head, other) : 99;
     // Common endings alone are not a useful memory bridge, even when adding
     // two letters makes the edit-distance test look deceptively close.
-    if (!fixed && AFFIXES.has(shared.text) && edit > 1) return;
+    if (!fixed && !prefix && AFFIXES.has(shared.text) && edit > 1) return;
     const closeSpelling = minimum >= 3 && (edit <= 1 || (minimum >= 6 && edit <= 2 && edit / maximum <= 0.28));
     const meaningfulBlock = shared.text.length >= 4 && shared.text.length / minimum >= 0.6
       && shared.text.length / maximum >= 0.45 && !AFFIXES.has(shared.text);
-    if (!fixed && !closeSpelling && !meaningfulBlock) return;
+    if (!fixed && !prefix && !closeSpelling && !meaningfulBlock) return;
     links.push(Object.assign({ head: other, shared }, fixed || {
-      score: (closeSpelling ? 65 : 45) + 20 * shared.text.length / maximum - (edit === 99 ? 0 : edit),
-      reason: closeSpelling ? '拼写相近' : '重复字母块', note: '',
+      score: (prefix ? 70 : closeSpelling ? 65 : 45) + 20 * shared.text.length / maximum - (edit === 99 ? 0 : edit),
+      reason: prefix ? '共同前缀 over-' : closeSpelling ? '拼写相近' : '重复字母块',
+      note: prefix ? `over + ${head.slice(4)} ↔ over + ${other.slice(4)}` : '',
     }));
   });
   shapeCache[head] = links;
@@ -116,6 +118,8 @@ function build(wordId, data, state) {
   const target = decorate(map[head], data, state);
   // Preserve the exact institution sense on the currently displayed source card.
   target.meaning = word.meaning;
+  if (map[head].over) target.breakdown = 'over + ' + head.slice(4);
+  if (head === 'overhaul') target.breakdownNote = 'haul：拖、拉。原指拉开索具检查，后来引申为彻底检修、大修。';
   const semantic = (data.synonyms[head] || []).filter((link) => map[link.word] && link.word !== head)
     .map((link) => Object.assign(decorate(map[link.word], data, state), { sense: link.sense || '部分义项接近，请对照两种释义', parts: [{ text: link.word, shared: false }] }))
     .sort((left, right) => Number(right.learned) - Number(left.learned) || left.head.localeCompare(right.head));

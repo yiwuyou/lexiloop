@@ -1,13 +1,17 @@
-<view class="relation-overlay" wx:if="{{visible}}" catchtouchmove="noop">
-  <view class="relation-backdrop" bindtap="close"></view>
-  <view class="relation-sheet" role="dialog" aria-label="词库关联词" catchtap="noop">
+<view class="relation-overlay {{closing ? 'is-closing' : ''}}" wx:if="{{visible}}" catchtouchmove="noop">
+  <view class="relation-backdrop" catchtap="close" catchtouchstart="maskStart" catchtouchend="maskEnd" catchtouchcancel="maskCancel"></view>
+  <view class="relation-sheet {{dragging ? 'is-dragging' : ''}}" style="transform: translateY({{dragY}}px)" role="dialog" aria-label="词库关联词" catchtap="noop">
+    <view class="sheet-handle" catchtouchstart="dragStart" catchtouchmove="dragMove" catchtouchend="dragEnd" catchtouchcancel="dragCancel">
+    <view class="sheet-grip"></view>
     <view class="sheet-head"><view class="back-slot"><button class="back" wx:if="{{canGoBack}}" bindtap="goBack">‹ 返回</button></view><text class="sheet-title">词库关联词</text><button class="close" bindtap="close" aria-label="关闭关联词">×</button></view>
+    </view>
     <scroll-view class="sheet-scroll" scroll-y="{{true}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}">
       <view class="status" wx:if="{{loading}}">加载中…</view>
       <button class="error" wx:if="{{error}}" bindtap="retry">{{error}}</button>
       <block wx:if="{{result}}">
         <view class="target-card">
           <text class="target-word" data-word="{{result.target.word}}" bindlongpress="copyWord">{{result.target.word}}</text>
+          <view class="word-structure" wx:if="{{result.target.breakdown}}"><text>{{result.target.breakdown}}</text><text wx:if="{{result.target.breakdownNote}}">{{result.target.breakdownNote}}</text></view>
           <view class="meaning exam"><text class="label">机构释义</text><text>{{result.target.meaning}}</text></view>
           <view class="meaning"><text class="label">日常常用义</text><text>{{result.target.common}}</text></view>
         </view>

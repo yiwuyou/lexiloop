@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const { getWords, getWord } = require('../utils/words');
-const engine = require('../utils/relations-engine');
+const engine = require('../relation-data/engine');
 const relationData = require('../relation-data/ready');
 
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -105,6 +105,15 @@ function testCorpus() {
   assert.ok(!results.get('action').shapes.some(item => item.head === 'vacation'), 'editing two letters must not bypass the bare suffix filter');
   assert.ok(results.get('nation').shapes.some(item => item.head === 'notion'), 'a one-letter spelling contrast remains useful despite its suffix');
   assert.ok(results.get('migrate').shapes.some(item => item.head === 'emigrate'), 'known migration pair should be discoverable');
+  assert.strictEqual(results.get('overhaul').target.breakdown, 'over + haul');
+  assert.ok(results.get('overhaul').target.breakdownNote.includes('haul：拖、拉'));
+  for (const [left, right] of [['overhaul', 'overhead'], ['overhaul', 'overhear'], ['overhead', 'overhear']]) {
+    const link = results.get(left).shapes.find(item => item.head === right);
+    assert.ok(link, left + ' should retain useful over- comparisons');
+    assert.strictEqual(link.shared, 'over', 'shared highlight must stop at the reviewed prefix boundary');
+    assert.ok(!link.shared.includes('h') && link.note.includes('over + '));
+  }
+  assert.ok(!results.get('overhaul').shapes.some(item => item.head === 'haul'), 'do not invent an out-of-bank word');
   const learnedState = clone(state);
   learnedState.cards[idFor('ponder')] = { seen: true };
   const learnedResult = engine.build(idFor('deliberate'), relationData, learnedState);
@@ -115,11 +124,10 @@ function testCorpus() {
 async function testLazyLoader() {
   const attempts = [];
   const builds = [];
-  const requireMock = name => {
-    assert.strictEqual(name, './relations-engine');
-    return { build(...args) { builds.push(args); return { wordId: args[0] }; } };
-  };
+  const requireMock = () => { assert.fail('relation engine must remain in its lazy subpackage'); };
+  const engineMock = { build(...args) { builds.push(args); return { wordId: args[0] }; } };
   requireMock.async = name => {
+    if (name === '../relation-data/engine.js') return Promise.resolve(engineMock);
     assert.strictEqual(name, '../relation-data/ready.js');
     const request = deferred(); attempts.push(request); return request.promise;
   };
@@ -143,6 +151,8 @@ async function testLazyLoader() {
   assert.strictEqual(result.wordId, 'c-3-9');
   assert.strictEqual(builds[0][1], relationData);
   assert.strictEqual(builds[0][2], state);
+  const cold = evaluate('utils/relations.js', Object.assign(() => {}, { async: name => Promise.resolve(name.endsWith('engine.js') ? engineMock : relationData) }));
+  assert.strictEqual((await cold.forWord('cold-first-open', state)).wordId, 'cold-first-open', 'first popup must await both data and engine');
 }
 
 async function testComponent() {
@@ -160,7 +170,11 @@ async function testComponent() {
     if (name === '../../utils/copy-word') return () => {};
     assert.fail('unexpected component dependency: ' + name);
   };
-  evaluate('components/word-relations/index.js', requireMock, { Component(value) { definition = value; } });
+  const closeTasks = new Map(); let taskId = 0;
+  evaluate('components/word-relations/index.js', requireMock, {
+    Component(value) { definition = value; },
+    setTimeout(fn) { closeTasks.set(++taskId, fn); return taskId; }, clearTimeout(id) { closeTasks.delete(id); },
+  });
   const instance = Object.assign({ data: clone(definition.data), setData(values) { Object.assign(this.data, values); }, triggerEvent(name) { events.push(name); } }, definition.methods);
   const observe = (visible, id) => definition.observers['visible, wordId'].call(instance, visible, id);
   const makeResult = id => ({ target: { id }, semantic: Array.from({ length: 15 }, (_, n) => ({ head: 'semantic-' + n })), shapes: Array.from({ length: 13 }, (_, n) => ({ head: 'shape-' + n })) });
@@ -192,6 +206,10 @@ async function testComponent() {
 
   observe(true, 'closing');
   instance.close();
+  assert.strictEqual(instance.data.closing, true);
+  instance.close();
+  assert.strictEqual(closeTasks.size, 1, 'duplicate touch/tap must trigger only one close animation');
+  closeTasks.get(taskId)(); closeTasks.delete(taskId);
   const closedSnapshot = JSON.stringify(instance.data);
   requests[3].resolve(makeResult('closing'));
   await flush();
@@ -226,6 +244,39 @@ async function testComponent() {
   assert.strictEqual(JSON.stringify(instance.data), detachedSnapshot);
   assert.strictEqual(reads, requests.length);
   assert.strictEqual(JSON.stringify(state), stateBefore, 'dialog exploration must not touch study data');
+}
+
+function testDismissGestures() {
+  let definition;
+  const tasks = new Map(); let next = 0;
+  evaluate('components/word-relations/index.js', () => ({}), {
+    Component(value) { definition = value; },
+    setTimeout(fn) { tasks.set(++next, fn); return next; }, clearTimeout(id) { tasks.delete(id); },
+  });
+  const make = () => Object.assign({ data: clone(definition.data), events: [], setData(value) { Object.assign(this.data, value); }, triggerEvent(name) { this.events.push(name); } }, definition.methods);
+  const touch = (x, y) => ({ touches: [{ clientX: x, clientY: y }], changedTouches: [{ clientX: x, clientY: y }] });
+  const mask = make(); mask.maskStart(touch(30, 60)); mask.maskEnd(touch(34, 65)); mask.close();
+  assert.strictEqual(mask.data.closing, true);
+  tasks.get(mask.closeTimer)(); tasks.delete(mask.closeTimer);
+  assert.deepStrictEqual(mask.events, ['close'], 'backdrop tap closes once, without activating the parent');
+  const moved = make(); moved.maskStart(touch(30, 60)); moved.maskEnd(touch(30, 95));
+  assert.strictEqual(moved.data.closing, false, 'moving across backdrop is not a tap');
+  const drag = make(); drag.dragStart(touch(100, 10)); drag.dragMove(touch(104, 85));
+  assert.strictEqual(drag.data.dragY, 75);
+  drag.dragEnd(touch(104, 85)); assert.strictEqual(drag.data.closing, true);
+  const short = make(); short.dragStart(touch(100, 10)); short.dragMove(touch(101, 45)); short.dragEnd(touch(101, 45));
+  assert.strictEqual(short.data.closing, false); assert.strictEqual(short.data.dragY, 0);
+  const horizontal = make(); horizontal.dragStart(touch(100, 10)); horizontal.dragMove(touch(200, 30)); horizontal.dragEnd(touch(200, 100));
+  assert.strictEqual(horizontal.data.closing, false, 'horizontal swipes cannot dismiss');
+  const cancelled = make(); cancelled.dragStart(touch(100, 10)); cancelled.dragMove(touch(102, 100)); cancelled.dragCancel(); cancelled.dragEnd(touch(102, 100));
+  assert.strictEqual(cancelled.data.closing, false);
+  const detached = make(); detached.close(); definition.lifetimes.detached.call(detached);
+  assert.ok(!tasks.has(detached.closeTimer), 'detaching cancels delayed parent close');
+  assert.deepStrictEqual(cancelled.events, []);
+  const template = source('components/word-relations/index.wxml');
+  assert.ok(/relation-backdrop[^>]*catchtap="close"/.test(template));
+  assert.ok(/sheet-handle[^>]*catchtouchstart="dragStart"/.test(template));
+  assert.ok(!/sheet-scroll[^>]*drag(?:Start|Move|End)/.test(template), 'scrolling the word list must not dismiss the popup');
 }
 
 function testLibraryAndTemplates() {
@@ -335,6 +386,7 @@ function testStudyDialogIsInPlace() {
   testCorpus();
   await testLazyLoader();
   await testComponent();
+  testDismissGestures();
   testLibraryAndTemplates();
   testStudyDialogIsInPlace();
   console.log('Relation loader caching/retry, dialog request races, in-place study resume, read-only behavior, recall gates and cross-day library search passed.');
