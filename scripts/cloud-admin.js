@@ -28,5 +28,4 @@ if (action === 'inspect') {
   for (const name of ['lexiloop_sync', 'lexiloop_snapshots']) api('ModifyResourcePermission', { ResourceType: 'collection', Resource: name, Permission: 'ADMINONLY' });
 } else if (action === 'health') {
   run(['fn', 'invoke', 'lexiloop-sync', '--data', JSON.stringify({ action: 'health' }), '--json']);
-  run(['fn', 'invoke', 'lexiloop-sync', '--data', JSON.stringify({ protocol: 1, action: 'status', device: 'deploy-check' }), '--json']);
 } else throw new Error('Supported operations: inspect, create, permissions, lock, health');
