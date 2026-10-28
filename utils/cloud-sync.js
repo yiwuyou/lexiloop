@@ -87,7 +87,7 @@ async function frame(data) {
   } finally { clearTimeout(timeout); }
 }
 async function request(action, data = {}) {
-  try { return await wire.send(frame, Object.assign({ action }, data)); }
+  try { return await wire.send(frame, Object.assign({ action, deltaVersion: 1 }, data)); }
   catch (error) { if (!error.syncStage) error.syncStage = action; throw error; }
 }
 function accept(result) {
@@ -99,11 +99,12 @@ function accept(result) {
     emit(meta.outbox.length ? '有记录待同步' : '已同步');
     return;
   }
-  if (!model.valid(result.bundle)) throw new Error('云端记录版本不兼容，未覆盖本机');
+  if (result.delta && result.delta.baseRev !== meta.rev) throw new Error('sync-delta-base-mismatch');
+  if (!result.delta && !model.valid(result.bundle)) throw new Error('云端记录版本不兼容，未覆盖本机');
   const previous = store.bundle();
   // Keep local records and queues while any later edits are still in flight.
   const remaining = meta.outbox.filter(event => event.seq > (result.ack || 0));
-  const combined = model.clone(result.bundle);
+  const combined = result.delta ? model.overlay(model.clone(previous), result.delta.changes) : model.clone(result.bundle);
   remaining.forEach(event => model.apply(combined, event, { owner: result.owner }));
   storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
   try { store.replaceBundle(combined); }
@@ -125,8 +126,8 @@ async function flush() {
   clearTimeout(timer); timer = null;
   flight = (async () => {
     try {
-      emit('正在同步');
       const batch = meta.outbox.slice(0, 20);
+      if (batch.length) emit('正在同步');
       const result = await request('sync', { events: batch, knownRev: meta.rev });
       if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
       accept(result);
@@ -181,11 +182,17 @@ async function enable() {
   catch (error) { failed(error, 'apply', '未能完成同步，本地记录已保留'); throw error; }
 }
 async function beginStudy() {
+  // A known local owner can resume immediately, including offline. Background
+  // verification still blocks answers if a different device has taken over.
+  if (meta && meta.enabled && meta.owner && meta.owner.device === meta.device) {
+    flush().catch(() => {});
+    return true;
+  }
   if (connecting) await connecting;
   if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
   try {
     do { await flush(); } while (meta.outbox.length);
-    const result = await request('claim');
+    const result = await request('claim', { knownRev: meta.rev });
     accept(result);
     return true;
   } catch (error) {

@@ -47,6 +47,7 @@ assert.strictEqual(model.attach(base, placeholder).state.cards['c-1-1'].reps, 1,
 const task = clone(base); task.session = { index: 4, queue: [{ wordId: 'c-1-1' }] };
 model.apply(task, { ...event(base, { ...base, session: { index: 0, queue: [] } }), epoch: 1 }, { owner: { device: 'device-b', epoch: 2 } });
 assert.strictEqual(task.session.index, 4, 'old owner cannot overwrite the current task');
+assert.throws(() => model.overlay(clone(base), [{ path: ['state', 'cards', '__proto__'], after: {} }]), /invalid-path/);
 assert.strictEqual(fs.readFileSync(path.join(root, 'utils/sync-model.js'), 'utf8'), fs.readFileSync(path.join(root, 'cloudfunctions/lexiloop-sync/model.generated.js'), 'utf8'));
 
 // Run the actual deployed handler against a transaction-capable fake database.
@@ -178,6 +179,25 @@ async function main() {
   failRead = true;
   assert.strictEqual((await call('status')).ok, false, 'read failure is never treated as an empty cloud');
   failRead = false;
+  identity.OPENID = 'delta-protocol-user';
+  await call('bootstrap', { bundle: base });
+  const sameOwner = await call('claim', { knownRev: 1, deltaVersion: 1 });
+  assert.strictEqual(sameOwner.rev, 1, 'repeated same-device claim does not create a new revision or ownership epoch');
+  assert.ok(sameOwner.unchanged && !sameOwner.bundle);
+  const deltaReply = await call('sync', { knownRev: 1, deltaVersion: 1, events: [patch] });
+  assert.ok(deltaReply.delta && !deltaReply.bundle, 'ordinary answer update returns only changed fields');
+  assert.deepStrictEqual(model.overlay(clone(base), deltaReply.delta.changes), first.bundle);
+  const retryDelta = await call('sync', { knownRev: 1, deltaVersion: 1, events: [patch] });
+  assert.strictEqual(retryDelta.rev, deltaReply.rev, 'retry neither reapplies answers nor increments revision');
+  const withBook = clone(passed); withBook.state.weakBook['c-2'] = { addedAt: now };
+  await call('sync', { knownRev: 2, deltaVersion: 1, events: [event(passed, withBook, 2, 'device-a', 2)] });
+  const catchup = await call('status', { knownRev: 1, deltaVersion: 1 });
+  assert.deepStrictEqual(model.overlay(clone(base), catchup.delta.changes), (await call('status')).bundle, 'several unseen revisions collapse into one authoritative delta');
+  await call('claim', { device: 'device-b', knownRev: 3, deltaVersion: 1 });
+  const staleTask = clone(withBook); staleTask.session = { index: 0, queue: [] };
+  const rejectedTask = await call('sync', { knownRev: 4, deltaVersion: 1, events: [event(withBook, staleTask, 3, 'device-a', 3, 1)] });
+  assert.ok(!model.overlay(staleTask, rejectedTask.delta.changes).session, 'authoritative delta removes rejected stale-owner task image');
+  assert.strictEqual(require('../cloudfunctions/lexiloop-sync/delta').since({ rev: 6, deltas: [{ from: 5, rev: 6, changes: [] }] }, 1), null, 'journal gap safely falls back to complete archive');
   identity.OPENID = 'user-2';
   directTransactionResult = true; // The deployed database SDK returns the callback value directly.
   assert.strictEqual((await call('status')).exists, false, 'users cannot read one another');
@@ -198,6 +218,17 @@ async function main() {
   phone.net.online = true;
   await phone.sync.flush();
   assert.strictEqual(phone.sync.status().pending, 0);
+  // Hold the network indefinitely: local-owner resume must not wait for it.
+  phone.net.hold = true;
+  const held = phone.sync.flush(); await tick();
+  const beforeResume = phone.net.calls.length;
+  assert.strictEqual(await Promise.race([phone.sync.beginStudy(), new Promise((_, reject) => setTimeout(() => reject(new Error('resume waited for network')), 100))]), true);
+  assert.ok(!phone.net.calls.slice(beforeResume).includes('claim'), 'same-device resume does not claim again');
+  phone.net.release(); await held;
+  const states = [];
+  const stopIdle = phone.sync.subscribe(value => states.push(value.text));
+  await phone.sync.flush(); stopIdle();
+  assert.ok(!states.includes('正在同步'), 'an empty background revision check does not show a pending upload');
   const desktop = client(blank());
   desktop.sync.start(); await tick(); await tick();
   assert.strictEqual(desktop.sync.status().enabled, true);
@@ -331,6 +362,10 @@ async function main() {
   assert.strictEqual(Object.keys(largeDesktop.store.getState().cards).length, 1036);
   assert.strictEqual(largeDesktop.store.getState().recentReviews.length, 1000);
   assert.strictEqual(largeDesktop.store.getSession().index, 40);
+  const beforeClaim = largeDesktop.net.calls.length;
+  await largeDesktop.sync.beginStudy();
+  assert.ok(!largeDesktop.net.calls.slice(beforeClaim).includes('wire-get'), 'cross-device handoff does not redownload 1036 cards');
+  assert.ok(largeDesktop.net.calls.length - beforeClaim <= 2, 'up-to-date handoff takes only revision check and small claim request');
   const newer = largePhone.store.getState();
   newer.sentenceBook = {};
   for (let i = 0; i < 180; i++) newer.sentenceBook[`Example ${i}.`] = { sentence: `Example ${i}.`, translation: '保留所有收藏例句和释义。'.repeat(15) };
@@ -342,6 +377,15 @@ async function main() {
   for (let i = 1036; i < 2522; i++) full.cards[`c-${i}`] = { seen: true, reps: 1, dueAt: now, interval: 0 };
   largePhone.store.saveState(full); await largePhone.sync.flush(); await largeDesktop.sync.flush();
   assert.strictEqual(Object.keys(largeDesktop.store.getState().cards).length, 2522, 'full vocabulary archive remains syncable');
+  const one = largePhone.store.getState(); one.weakBook['c-2521'] = { addedAt: now + 200 };
+  largePhone.store.saveState(one);
+  const beforeSmall = largePhone.net.calls.length;
+  await largePhone.sync.flush();
+  assert.deepStrictEqual(largePhone.net.calls.slice(beforeSmall), ['sync'], 'one small edit in a full 2522-card archive uses one request, not archive chunks');
+  const beforeSmallPull = largeDesktop.net.calls.length;
+  await largeDesktop.sync.flush();
+  assert.deepStrictEqual(largeDesktop.net.calls.slice(beforeSmallPull), ['sync'], 'other device receives small changes in one response');
+  assert.ok(largeDesktop.store.getState().weakBook['c-2521']);
   assert.ok(largePhone.net.maxFrame < 32768 && largeDesktop.net.maxFrame < 32768);
   largePhone.sync.dispose(); largeDesktop.sync.dispose();
   const wire = require('../utils/sync-wire');

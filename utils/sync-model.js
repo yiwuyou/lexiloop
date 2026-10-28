@@ -138,4 +138,18 @@ function attach(remote, local) {
   deriveDaily(result);
   return result;
 }
-module.exports = { VERSION, clone, equal, valid, learned, diff, apply, attach };
+// Authoritative server delta, followed by replay of still-unacknowledged local
+// events. Do not run conflict resolution twice on already-resolved values.
+function overlay(bundle, changes) {
+  changes.forEach(change => {
+    if (!allowed(change.path)) throw new Error('invalid-path');
+    let parent = bundle;
+    change.path.slice(0, -1).forEach(key => { parent = parent[key] || (parent[key] = {}); });
+    const key = change.path[change.path.length - 1];
+    if (change.append) parent[key] = unionReviews(parent[key] || [], change.append);
+    else if (change.after == null) delete parent[key];
+    else parent[key] = clone(change.after);
+  });
+  return bundle;
+}
+module.exports = { VERSION, clone, equal, valid, learned, diff, apply, attach, overlay };

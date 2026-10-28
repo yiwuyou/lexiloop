@@ -2,6 +2,7 @@ const cloud = require('wx-server-sdk');
 const crypto = require('crypto');
 const zlib = require('zlib');
 const model = require('./model.generated');
+const delta = require('./delta');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
 const APPID = 'wxee41f64becac8cf2';
@@ -22,11 +23,15 @@ async function read(ref) {
     throw error; // Never interpret a network/permission error as an empty cloud.
   }
 }
-function reply(record, device, knownRev) {
+function reply(record, device, knownRev, deltaVersion) {
   if (!record) return { ok: true, exists: false, protocol: model.VERSION };
   const result = { ok: true, exists: true, protocol: model.VERSION, rev: record.rev, owner: record.owner, ack: record.acks[device] || 0 };
   if (knownRev === record.rev) result.unchanged = true;
-  else result.bundle = record.bundle;
+  else {
+    const patch = deltaVersion === 1 && delta.since(record, knownRev);
+    if (patch) result.delta = patch;
+    else result.bundle = record.bundle;
+  }
   return result;
 }
 async function handle(event) {
@@ -55,7 +60,7 @@ async function handle(event) {
   try {
     if (event.action === 'status' || event.action === 'sync' && (!event.events || !event.events.length)) {
       const row = await read(ref);
-      return reply(row && unpack(row.payload), event.device, event.knownRev);
+      return reply(row && unpack(row.payload), event.device, event.knownRev, event.deltaVersion);
     }
     if (!['bootstrap', 'attach', 'sync', 'claim'].includes(event.action)) throw new Error('invalid-action');
     if (['bootstrap', 'attach'].includes(event.action)) checkBundle(event.bundle);
@@ -64,12 +69,16 @@ async function handle(event) {
       const target = transaction.collection(RECORDS).doc(id);
       const row = await read(target);
       let record = row && unpack(row.payload);
+      const from = record && record.rev;
+      const before = record && model.clone(record.bundle);
+      const accepted = [];
       if (event.action === 'bootstrap') {
-        if (record) return reply(record, event.device); // First-writer-wins; never overwrite an existing archive.
+        if (record) return reply(record, event.device, event.knownRev, event.deltaVersion); // First-writer-wins; never overwrite an existing archive.
         if (!model.learned(event.bundle)) throw new Error('empty-bootstrap');
         record = { bundle: event.bundle, acks: {}, versions: {}, rev: 1, owner: { device: event.device, epoch: 1 } };
       } else {
         if (!record) return reply(null, event.device);
+        if (event.action === 'claim' && record.owner && record.owner.device === event.device) return reply(record, event.device, event.knownRev, event.deltaVersion);
         if (record.rev >= 1000000000) throw new Error('invalid-revision');
         if (event.action === 'attach') {
           const merged = model.attach(record.bundle, event.bundle);
@@ -90,10 +99,13 @@ async function handle(event) {
             if (item.seq <= ack) continue;
             if (item.seq !== ack + 1) throw new Error('out-of-order-event');
             model.apply(record.bundle, item, { versions: record.versions, nextRev: record.rev + 1, owner: record.owner });
+            accepted.push(item);
             record.acks[event.device] = item.seq;
           }
         }
+        if (event.action === 'sync' && !accepted.length) return reply(record, event.device, event.knownRev, event.deltaVersion);
         record.rev++;
+        delta.recordDelta(record, before, from, accepted);
       }
       checkBundle(record.bundle);
       const today = dateKey(now);
@@ -107,7 +119,7 @@ async function handle(event) {
       step = 'record-write';
       await target.set({ data: { payload: pack(record), updatedAt: now, protocol: model.VERSION } });
       step = 'transaction-commit';
-      return reply(record, event.device);
+      return reply(record, event.device, event.knownRev, event.deltaVersion);
     });
     // wx-server-sdk versions may wrap the transaction callback result.
     const result = transactionResult && transactionResult.result || transactionResult;
