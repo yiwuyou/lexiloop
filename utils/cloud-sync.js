@@ -2,6 +2,7 @@ const store = require('./store');
 const model = require('./sync-model');
 const storage = require('./sync-storage');
 const errors = require('./sync-error');
+const wire = require('./sync-wire');
 const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
@@ -64,12 +65,12 @@ function capture() {
   } finally { capturing = false; }
 }
 function schedule(delay) { clearTimeout(timer); timer = setTimeout(() => { timer = null; flush().catch(() => {}); }, delay); }
-async function request(action, data = {}) {
+async function frame(data) {
   if (!ready) throw new Error('当前微信不支持云同步');
   let timeout;
   try {
     const result = await Promise.race([
-      wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, action, device: meta.device }, data) }),
+      wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, wireVersion: 1, device: meta.device }, data) }),
       new Promise((resolve, reject) => { timeout = setTimeout(() => reject(Object.assign(new Error('网络超时'), { code: 'SYNC_TIMEOUT' })), 15000); }),
     ]);
     let body = result && result.result;
@@ -77,14 +78,17 @@ async function request(action, data = {}) {
     if (!body || !body.ok) throw Object.assign(new Error(body && body.message || '云函数未返回有效的同步结果'), {
       code: body && body.code || 'SYNC_BAD_RESPONSE',
       syncRequestId: result && (result.requestID || result.requestId),
-      syncStage: body && body.step || action,
+      syncStage: body && body.step,
     });
     return body;
   } catch (error) {
     if (!error || typeof error !== 'object') error = new Error(String(error));
-    if (!error.syncStage) error.syncStage = action;
     throw error;
   } finally { clearTimeout(timeout); }
+}
+async function request(action, data = {}) {
+  try { return await wire.send(frame, Object.assign({ action }, data)); }
+  catch (error) { if (!error.syncStage) error.syncStage = action; throw error; }
 }
 function accept(result) {
   if (result.unchanged) {
@@ -154,7 +158,17 @@ async function connect(create) {
   } else if (meaningful(local) && !meta.enabled) {
     result = await request('attach', { bundle: local });
   }
+  // Initial transfers can take a while. Preserve any learning/bookmark edits
+  // made after taking the seed image instead of applying an older image over them.
+  if (!meta.enabled) {
+    const changes = model.diff(local, store.bundle());
+    if (changes.length) {
+      meta.outbox.push({ device: meta.device, seq: ++meta.seq, baseRev: result.rev, epoch: result.owner && result.owner.epoch || 0, changes });
+      save();
+    }
+  }
   accept(result);
+  if (meta.outbox.length) schedule(1000);
   startPoll();
   return true;
 }

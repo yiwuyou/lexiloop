@@ -20,8 +20,10 @@ if (action === 'inspect') {
     api('CreateTable', { TableName: name, PermissionInfo: { EnvId: envId, AclTag: 'ADMINONLY' } });
     api('DescribeTable', { TableName: name });
   }
+} else if (action === 'create-transfers') {
+  api('CreateTable', { TableName: 'lexiloop_transfers', PermissionInfo: { EnvId: envId, AclTag: 'ADMINONLY' } });
 } else if (action === 'permissions') {
-  api('DescribeResourcePermission', { ResourceType: 'collection', Resources: ['lexiloop_sync', 'lexiloop_snapshots'] });
+  api('DescribeResourcePermission', { ResourceType: 'collection', Resources: ['lexiloop_sync', 'lexiloop_snapshots', 'lexiloop_transfers'] });
 } else if (action === 'lock') {
   for (const name of ['lexiloop_sync', 'lexiloop_snapshots']) api('ModifyResourcePermission', { ResourceType: 'collection', Resource: name, Permission: 'ADMINONLY' });
 } else if (action === 'health') {

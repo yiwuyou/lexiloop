@@ -29,12 +29,12 @@ function reply(record, device, knownRev) {
   else result.bundle = record.bundle;
   return result;
 }
-exports.main = async event => {
+async function handle(event) {
   // Safe deployment diagnostic: no user records, identifiers or writes.
   if (event.action === 'health') {
     let step = 'collections';
     try {
-      await Promise.all([RECORDS, SNAPSHOTS].map(name => db.collection(name).limit(1).field({ _id: true }).get()));
+      await Promise.all([RECORDS, SNAPSHOTS, 'lexiloop_transfers'].map(name => db.collection(name).limit(1).field({ _id: true }).get()));
       step = 'transaction-read';
       await db.runTransaction(async transaction => {
         await read(transaction.collection(RECORDS).doc('deployment-health-readonly'));
@@ -122,4 +122,5 @@ exports.main = async event => {
     console.error('sync failed', step, code);
     return { ok: false, code, step, message: '云端操作未完成，本机记录未清除' };
   }
-};
+}
+exports.main = require('./transport')({ db, read, appid: APPID, identity: () => cloud.getWXContext(), handle });

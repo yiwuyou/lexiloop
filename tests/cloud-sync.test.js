@@ -55,6 +55,7 @@ let identity = { OPENID: 'user-1', APPID: 'wxee41f64becac8cf2' };
 let failRead = false;
 let throwMissing = false;
 let directTransactionResult = false;
+let transactionChain = Promise.resolve();
 function collection(name, table = rows) {
   return {
     limit() { return { field() { return { async get() { if (failRead) throw new Error('offline'); return { data: [] }; } }; } }; },
@@ -67,18 +68,22 @@ function collection(name, table = rows) {
       async set({ data }) { table.set(`${name}/${id}`, clone(data)); return {}; },
     }; },
     where(query) { return { async remove() {
-      for (const [id, data] of table) if (id.startsWith(`${name}/`) && data.owner === query.owner && data.day < query.day.lt) table.delete(id);
+      for (const [id, data] of table) if (id.startsWith(`${name}/`) && (query.expires ? data.expires < query.expires.lt : data.owner === query.owner && data.day < query.day.lt)) table.delete(id);
     } }; },
   };
 }
 const db = {
   command: { lt: value => ({ lt: value }) },
   collection,
-  async runTransaction(fn) {
+  runTransaction(fn) {
+    const flight = transactionChain.then(async () => {
     const copy = new Map(Array.from(rows, ([key, value]) => [key, clone(value)]));
     const result = await fn({ collection: name => collection(name, copy) });
     rows.clear(); copy.forEach((value, key) => rows.set(key, value));
     return directTransactionResult ? result : { result };
+    });
+    transactionChain = flight.catch(() => {});
+    return flight;
   },
 };
 const realLoad = Module._load;
@@ -99,7 +104,7 @@ function client(seed) {
     values.mem_vocab_settings_v1 = clone(seed.settings);
     if (seed.session) values.mem_vocab_session_v1 = clone(seed.session);
   }
-  const net = { online: true, hold: false, release: null, failWrite: null, failAction: null, failure: null, initFailure: null, jsonResult: false, calls: [] };
+  const net = { online: true, hold: false, release: null, failWrite: null, failAction: null, failure: null, initFailure: null, jsonResult: false, calls: [], frames: [], maxFrame: 0 };
   const wx = {
     getStorageSync: key => values[key] ? clone(values[key]) : '',
     setStorageSync: (key, value) => {
@@ -112,11 +117,18 @@ function client(seed) {
     cloud: {
       init() { if (net.initFailure) throw net.initFailure; },
       callFunction({ data }) {
+        const size = Buffer.byteLength(JSON.stringify(data));
+        assert.ok(size < 32768, 'request exceeds conservative 32 KiB gateway budget');
+        net.maxFrame = Math.max(net.maxFrame, size);
+        net.frames.push(clone(data));
         net.calls.push(data.action);
-        if (net.failAction === data.action) return Promise.reject(net.failure || { errCode: -501000, errMsg: 'cloud.callFunction:fail errCode: -501000 env not exists' });
+        if (net.failAction === data.action && (net.failIndex == null || data.index === net.failIndex)) return Promise.reject(net.failure || { errCode: -501000, errMsg: 'cloud.callFunction:fail errCode: -501000 env not exists' });
         if (!net.online) return Promise.reject(new Error('offline'));
-        const result = server(clone(data)).then(result => ({ result: net.jsonResult ? JSON.stringify(result) : result, requestID: 'request-test-1234' }));
-        if (net.hold && data.action === 'sync') { net.hold = false; return new Promise(resolve => { net.release = () => result.then(resolve); }); }
+        const result = server(clone(data)).then(result => {
+          assert.ok(Buffer.byteLength(JSON.stringify(result)) < 32768, 'response exceeds conservative 32 KiB gateway budget');
+          return { result: net.jsonResult ? JSON.stringify(result) : result, requestID: 'request-test-1234' };
+        });
+        if (net.hold && data.action === (net.holdAction || 'sync')) { net.hold = false; return new Promise(resolve => { net.release = () => result.then(resolve); }); }
         return result;
       },
     },
@@ -277,6 +289,63 @@ async function main() {
   await retryInit.sync.enable();
   assert.strictEqual(retryInit.sync.status().text, '已同步', 'manual retry can recover an initial SDK initialization failure');
   retryInit.sync.dispose();
+  // A realistic large archive must cross the same size-limited gateway in
+  // both directions. Earlier tests with a one-card seed missed the phone bug.
+  identity.OPENID = 'large-archive-user';
+  const rich = blank();
+  for (let i = 0; i < 1036; i++) rich.state.cards[`c-${i}`] = { seen: true, reps: 2, interval: 3, lastAt: now, dueAt: now + 1000, note: '学习记录，保留中文含义和复习结果。' };
+  for (let i = 0; i < 1000; i++) rich.state.recentReviews.push({ id: `rich-${i}`, wordId: `c-${i}`, at: now + i, day: '2026-10-27', phase: 'review', result: 'good' });
+  rich.session = { index: 40, queue: Array.from({ length: 150 }, (_, i) => ({ wordId: `c-${i}`, phase: 'review' })) };
+  const largePhone = client(rich);
+  largePhone.sync.start(); await tick(); await tick();
+  largePhone.net.failAction = 'wire-put';
+  largePhone.net.failIndex = 4;
+  await assert.rejects(largePhone.sync.enable());
+  assert.strictEqual(largePhone.sync.status().enabled, false);
+  assert.strictEqual((await call('status')).exists, false, 'partial upload never creates an archive');
+  const incomplete = largePhone.net.frames.find(frame => frame.action === 'wire-put');
+  assert.strictEqual((await server({ ...incomplete, action: 'wire-commit' })).ok, false, 'missing frames cannot be committed');
+  assert.strictEqual(Object.keys(largePhone.store.getState().cards).length, 1036);
+  largePhone.net.failAction = null;
+  largePhone.net.hold = true; largePhone.net.holdAction = 'wire-commit';
+  const seeding = largePhone.sync.enable();
+  while (!largePhone.net.release) await tick();
+  const duringSeed = largePhone.store.getState(); duringSeed.weakBook['c-20'] = { addedAt: now };
+  largePhone.store.saveState(duringSeed);
+  largePhone.net.release(); await seeding;
+  assert.ok(largePhone.store.getState().weakBook['c-20'], 'edits made while first upload is in flight survive');
+  await largePhone.sync.flush();
+  assert.strictEqual(largePhone.sync.status().text, '已同步');
+  assert.ok(largePhone.net.calls.includes('wire-commit') && largePhone.net.calls.includes('wire-get'));
+  const staged = largePhone.net.frames.filter(frame => frame.action === 'wire-put').pop();
+  identity.OPENID = 'other-transfer-user';
+  assert.strictEqual((await server({ ...staged, action: 'wire-commit' })).ok, false, 'staging tokens cannot cross users');
+  identity.OPENID = 'large-archive-user';
+  assert.strictEqual((await server({ ...staged, text: 'X'.repeat(staged.text.length) })).ok, false, 'received chunks cannot be mutated');
+  const largeDesktop = client(blank());
+  largeDesktop.net.failAction = 'wire-get';
+  largeDesktop.sync.start(); await tick(); await tick();
+  assert.strictEqual(Object.keys(largeDesktop.store.getState().cards).length, 0, 'failed download never applies partial archive');
+  largeDesktop.net.failAction = null;
+  await largeDesktop.sync.enable();
+  assert.strictEqual(Object.keys(largeDesktop.store.getState().cards).length, 1036);
+  assert.strictEqual(largeDesktop.store.getState().recentReviews.length, 1000);
+  assert.strictEqual(largeDesktop.store.getSession().index, 40);
+  const newer = largePhone.store.getState();
+  newer.sentenceBook = {};
+  for (let i = 0; i < 180; i++) newer.sentenceBook[`Example ${i}.`] = { sentence: `Example ${i}.`, translation: '保留所有收藏例句和释义。'.repeat(15) };
+  largePhone.store.saveState(newer);
+  await largePhone.sync.flush();
+  await largeDesktop.sync.flush();
+  assert.strictEqual(Object.keys(largeDesktop.store.getState().sentenceBook).length, 180, 'large incremental updates use bounded upload too');
+  const full = largePhone.store.getState();
+  for (let i = 1036; i < 2522; i++) full.cards[`c-${i}`] = { seen: true, reps: 1, dueAt: now, interval: 0 };
+  largePhone.store.saveState(full); await largePhone.sync.flush(); await largeDesktop.sync.flush();
+  assert.strictEqual(Object.keys(largeDesktop.store.getState().cards).length, 2522, 'full vocabulary archive remains syncable');
+  assert.ok(largePhone.net.maxFrame < 32768 && largeDesktop.net.maxFrame < 32768);
+  largePhone.sync.dispose(); largeDesktop.sync.dispose();
+  const wire = require('../utils/sync-wire');
+  await assert.rejects(wire.send(async frame => frame.action === 'wire-get' ? { ok: true, text: '{"ok":true}' } : { ok: true, transfer: { token: 'test', count: 1, length: 11, checksum: '0' } }, { action: 'status' }), /checksum-mismatch/, 'download checksum is checked before local apply');
   const css = fs.readFileSync(path.join(root, 'pages/progress/index.wxss'), 'utf8');
   assert.ok(/\.sync-card > button[^}]+width: 100%[^}]+white-space: nowrap/.test(css));
   assert.ok(fs.readFileSync(path.join(root, 'pages/progress/index.wxml'), 'utf8').includes('复制失败原因'));
