@@ -98,7 +98,7 @@ const call = (action, data = {}) => server({ protocol: 1, action, device: 'devic
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 // Independent module graphs simulate the phone and desktop local storage.
-function client(seed) {
+function client(seed, clock) {
   const values = {}, cache = new Map();
   if (seed) {
     values.mem_vocab_state_v1 = clone(seed.state);
@@ -129,7 +129,7 @@ function client(seed) {
           assert.ok(Buffer.byteLength(JSON.stringify(result)) < 32768, 'response exceeds conservative 32 KiB gateway budget');
           return { result: net.jsonResult ? JSON.stringify(result) : result, requestID: 'request-test-1234' };
         });
-        if (net.hold && data.action === (net.holdAction || 'sync')) { net.hold = false; return new Promise(resolve => { net.release = () => result.then(resolve); }); }
+        if (net.hold && data.action === (net.holdAction || 'sync')) { net.hold = false; return new Promise((resolve, reject) => { net.release = () => net.holdFailure ? reject(net.holdFailure) : result.then(resolve, reject); }); }
         return result;
       },
     },
@@ -140,10 +140,32 @@ function client(seed) {
     if (cache.has(filename)) return cache.get(filename).exports;
     const module = { exports: {} }; cache.set(filename, module);
     const local = name => requireLocal(path.relative(root, path.resolve(path.dirname(filename), name.endsWith('.js') ? name : `${name}.js`)).replace(/^/, './'));
-    const fn = vm.runInNewContext(`(function(require,module,exports){${fs.readFileSync(filename, 'utf8')}\n})`, { wx, Date, Math, console, setTimeout, clearTimeout, setInterval, clearInterval });
+    const fn = vm.runInNewContext(`(function(require,module,exports){${fs.readFileSync(filename, 'utf8')}\n})`, { wx, Date, Math, console, setTimeout, clearTimeout, setInterval, clearInterval, ...clock && clock.api });
     fn(local, module, module.exports); return module.exports;
   }
   return { sync: requireLocal('./utils/cloud-sync.js'), store: requireLocal('./utils/store.js'), storage: requireLocal('./utils/sync-storage.js'), values, net };
+}
+function virtualClock() {
+  let time = Date.now(), next = 1;
+  const tasks = new Map();
+  class ClockDate extends Date { constructor(...args) { super(...(args.length ? args : [time])); } static now() { return time; } }
+  return {
+    api: {
+      Date: ClockDate,
+      setTimeout(fn, delay) { const id = next++; tasks.set(id, { fn, at: time + delay }); return id; },
+      clearTimeout(id) { tasks.delete(id); },
+      setInterval() { throw new Error('fixed cloud polling must not be reintroduced'); }, clearInterval() {},
+    },
+    async advance(ms) {
+      const end = time + ms;
+      for (;;) {
+        const due = Array.from(tasks).filter(([, task]) => task.at <= end).sort((a, b) => a[1].at - b[1].at)[0];
+        if (!due) break;
+        tasks.delete(due[0]); time = due[1].at; due[1].fn(); await tick(); await tick();
+      }
+      time = end; await tick(); await tick();
+    },
+  };
 }
 async function main() {
   assert.strictEqual((await call('health')).storageReady, true);
@@ -388,6 +410,62 @@ async function main() {
   assert.ok(largeDesktop.store.getState().weakBook['c-2521']);
   assert.ok(largePhone.net.maxFrame < 32768 && largeDesktop.net.maxFrame < 32768);
   largePhone.sync.dispose(); largeDesktop.sync.dispose();
+  identity.OPENID = 'cost-policy-user';
+  const clock = virtualClock(), economical = client(base, clock);
+  economical.sync.start(); await tick(); await tick(); await economical.sync.enable();
+  const idleCalls = economical.net.calls.length;
+  await clock.advance(3600000);
+  assert.strictEqual(economical.net.calls.length, idleCalls, 'one hour idle makes zero cloud calls');
+  economical.sync.foreground(); await tick(); await tick();
+  const foregroundCalls = economical.net.calls.length;
+  economical.sync.foreground(); economical.sync.foreground(); await tick(); await tick();
+  assert.strictEqual(economical.net.calls.length, foregroundCalls, 'duplicate foreground notifications coalesce');
+  for (let i = 0; i < 5; i++) {
+    const item = economical.store.getState(); item.weakBook[`cost-${i}`] = { addedAt: now };
+    economical.store.saveState(item); await clock.advance(10000);
+  }
+  assert.strictEqual(economical.net.calls.length, foregroundCalls, 'several bookmarks stay local until combined checkpoint');
+  await clock.advance(10000);
+  assert.strictEqual(economical.net.calls.length, foregroundCalls + 1, 'one minute of small changes produces one request');
+  assert.strictEqual(economical.sync.status().pending, 0);
+  const beforeEmptyExit = economical.net.calls.length;
+  economical.sync.background(); await tick();
+  assert.strictEqual(economical.net.calls.length, beforeEmptyExit, 'empty background exit does not query cloud');
+  economical.sync.foreground(); economical.net.online = false;
+  const offlineState = economical.store.getState(); offlineState.weakBook.offline = { addedAt: now };
+  economical.store.saveState(offlineState);
+  await clock.advance(60000);
+  const firstFailure = economical.net.calls.length;
+  for (let i = 0; i < 12; i++) {
+    const item = economical.store.getState();
+    economical.store.appendReview(item, { id: `offline-cost-${i}`, at: now + i, day: '2026-10-28', wordId: `c-${i}`, phase: 'review', result: 'good' });
+    economical.store.saveState(item);
+  }
+  await clock.advance(59000);
+  assert.strictEqual(economical.net.calls.length, firstFailure, 'new offline answers cannot bypass retry backoff');
+  await clock.advance(1000);
+  assert.strictEqual(economical.net.calls.length, firstFailure + 1);
+  await clock.advance(119000);
+  assert.strictEqual(economical.net.calls.length, firstFailure + 1, 'second failure waits two minutes');
+  economical.net.online = true; economical.sync.foreground(true); await tick(); await tick();
+  assert.strictEqual(economical.sync.status().pending, 0, 'network restoration drains retained edits');
+  economical.net.hold = true; economical.net.holdFailure = new Error('connection dropped');
+  const failingFlight = economical.sync.flush(); await tick();
+  for (let i = 0; i < 10; i++) {
+    const item = economical.store.getState();
+    economical.store.appendReview(item, { at: now + 1000 + i, day: '2026-10-28', wordId: `race-${i}`, phase: 'review', result: 'good' });
+    economical.store.saveState(item);
+  }
+  economical.net.release(); await assert.rejects(failingFlight);
+  const racedFailureCalls = economical.net.calls.length;
+  await clock.advance(59000);
+  assert.strictEqual(economical.net.calls.length, racedFailureCalls, 'a timer scheduled during an in-flight failure cannot bypass backoff');
+  economical.net.holdFailure = null;
+  economical.sync.dispose();
+  const medium = { action: 'status', note: 'a'.repeat(9000) };
+  let mediumCalls = 0;
+  await require('../utils/sync-wire').send(async () => { mediumCalls++; return { ok: true }; }, medium);
+  assert.strictEqual(mediumCalls, 1, 'ordinary requests below 24KB do not create temporary transfer documents');
   const wire = require('../utils/sync-wire');
   await assert.rejects(wire.send(async frame => frame.action === 'wire-get' ? { ok: true, text: '{"ok":true}' } : { ok: true, transfer: { token: 'test', count: 1, length: 11, checksum: '0' } }, { action: 'status' }), /checksum-mismatch/, 'download checksum is checked before local apply');
   const css = fs.readFileSync(path.join(root, 'pages/progress/index.wxss'), 'utf8');

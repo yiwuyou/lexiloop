@@ -7,7 +7,8 @@ const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
 const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
-let meta, flight, timer, poll, capturing = false, ready = false, active = true;
+let meta, flight, timer, capturing = false, ready = false, active = true;
+let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
 let message = '尚未开启云同步';
 let lastError = null;
@@ -59,12 +60,21 @@ function capture() {
     save();
     emit('有记录待同步');
     const answers = meta.outbox.reduce((n, event) => n + event.changes.filter(change => change.path[1] === 'recentReviews').length, 0);
-    if (answers >= 5) schedule(1);
-    else if (changes.some(change => ['sentenceBook', 'weakBook'].includes(change.path[1]))) schedule(1000);
-    else if (!timer) schedule(15000);
+    if (answers >= 10) schedule(1);
+    else schedule(60000);
   } finally { capturing = false; }
 }
-function schedule(delay) { clearTimeout(timer); timer = setTimeout(() => { timer = null; flush().catch(() => {}); }, delay); }
+function schedule(delay) {
+  const at = Math.max(Date.now() + delay, retryAt);
+  if (timer && timerAt <= at) return;
+  clearTimeout(timer); timerAt = at;
+  timer = setTimeout(() => { timer = null; automatic(false); }, Math.max(0, at - Date.now()));
+}
+function automatic(check) {
+  if (!meta || !meta.enabled) return;
+  if (Date.now() < retryAt) { if (meta.outbox.length) schedule(60000); return; }
+  if (meta.outbox.length || check && Date.now() - checkedAt >= 60000) flush().catch(() => {});
+}
 async function frame(data) {
   if (!ready) throw new Error('当前微信不支持云同步');
   let timeout;
@@ -126,16 +136,19 @@ async function flush() {
   clearTimeout(timer); timer = null;
   flight = (async () => {
     try {
-      const batch = meta.outbox.slice(0, 20);
+      checkedAt = Date.now();
+      const batch = meta.outbox.slice(0, 60);
       if (batch.length) emit('正在同步');
       const result = await request('sync', { events: batch, knownRev: meta.rev });
       if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
       accept(result);
+      failures = 0; retryAt = 0;
       if (meta.outbox.length) schedule(1000);
       return true;
     } catch (error) {
       failed(error, 'apply', '同步未成功，本地记录已保存');
-      if (active) schedule(30000);
+      retryAt = Date.now() + Math.min(900000, 60000 * Math.pow(2, Math.min(failures++, 4)));
+      if (active && meta.outbox.length) schedule(60000);
       throw error;
     } finally { flight = null; }
   })();
@@ -170,14 +183,13 @@ async function connect(create) {
   }
   accept(result);
   if (meta.outbox.length) schedule(1000);
-  startPoll();
   return true;
 }
 async function enable() {
   if (!ready) start();
   try {
     if (!ready) throw Object.assign(new Error(lastError && lastError.detail || '当前微信不支持云同步'), { code: lastError && lastError.code || 'SYNC_UNSUPPORTED', syncStage: 'init' });
-    const result = await connect(true); startPoll(); return result;
+    return await connect(true);
   }
   catch (error) { failed(error, 'apply', '未能完成同步，本地记录已保留'); throw error; }
 }
@@ -185,13 +197,13 @@ async function beginStudy() {
   // A known local owner can resume immediately, including offline. Background
   // verification still blocks answers if a different device has taken over.
   if (meta && meta.enabled && meta.owner && meta.owner.device === meta.device) {
-    flush().catch(() => {});
+    automatic(true);
     return true;
   }
   if (connecting) await connecting;
   if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
   try {
-    do { await flush(); } while (meta.outbox.length);
+    while (meta.outbox.length) await flush();
     const result = await request('claim', { knownRev: meta.rev });
     accept(result);
     return true;
@@ -202,10 +214,6 @@ async function beginStudy() {
     }
     return true; // Known local owner can continue offline, then upload its answers.
   }
-}
-function startPoll() {
-  clearInterval(poll);
-  if (active && meta && meta.enabled) poll = setInterval(() => flush().catch(() => {}), 30000);
 }
 function start() {
   if (ready) return;
@@ -221,10 +229,9 @@ function start() {
     else {
       connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
     }
-    startPoll();
   } catch (error) { ready = false; failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
 }
-function foreground() { active = true; if (!ready) start(); else if (meta.enabled) flush().catch(() => {}); startPoll(); }
-function background() { active = false; clearInterval(poll); if (meta && meta.enabled) flush().catch(() => {}); clearTimeout(timer); timer = null; }
-function dispose() { clearTimeout(timer); clearInterval(poll); store.onChange(null); listeners.clear(); }
+function foreground(online) { active = true; if (online) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
+function background() { active = false; if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }
+function dispose() { clearTimeout(timer); store.onChange(null); listeners.clear(); }
 module.exports = { start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };

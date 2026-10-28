@@ -57,6 +57,7 @@ async function handle(event) {
   const ref = db.collection(RECORDS).doc(id);
   const now = Date.now();
   let step = event.action;
+  let createdSnapshot = false;
   try {
     if (event.action === 'status' || event.action === 'sync' && (!event.events || !event.events.length)) {
       const row = await read(ref);
@@ -92,7 +93,7 @@ async function handle(event) {
         }
         if (event.action === 'claim') record.owner = { device: event.device, epoch: (record.owner && record.owner.epoch || 0) + 1 };
         if (event.action === 'sync') {
-          if (!Array.isArray(event.events) || event.events.length > 20) throw new Error('invalid-events');
+          if (!Array.isArray(event.events) || event.events.length > 60) throw new Error('invalid-events');
           for (const item of event.events) {
             if (item.device !== event.device || !Number.isSafeInteger(item.seq) || item.seq < 1) throw new Error('invalid-event-id');
             const ack = record.acks[event.device] || 0;
@@ -115,6 +116,7 @@ async function handle(event) {
         step = 'snapshot-write';
         await transaction.collection(SNAPSHOTS).doc(`${id}-${today}`).set({ data: { owner: id, day: today, payload: pack(record.bundle), at: now } });
         record.snapshotDay = today;
+        createdSnapshot = true;
       }
       step = 'record-write';
       await target.set({ data: { payload: pack(record), updatedAt: now, protocol: model.VERSION } });
@@ -124,7 +126,7 @@ async function handle(event) {
     // wx-server-sdk versions may wrap the transaction callback result.
     const result = transactionResult && transactionResult.result || transactionResult;
     // Rolling seven-day backups: delete only this user's older snapshots.
-    if (result && result.ok && result.exists) {
+    if (createdSnapshot && result && result.ok && result.exists) {
       await db.collection(SNAPSHOTS).where({ owner: id, day: db.command.lt(dateKey(now - 6 * 86400000)) }).remove().catch(() => {});
     }
     return result;

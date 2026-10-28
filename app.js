@@ -22,7 +22,7 @@ App({
     }
     cloudSync.start();
     wx.onNetworkStatusChange((event) => {
-      if (event.isConnected) { audio.prepare(); cloudSync.foreground(); }
+      if (event.isConnected) { audio.prepare(); cloudSync.foreground(true); }
     });
   },
   onShow() { prepareAudioWhenOnline(); cloudSync.foreground(); },

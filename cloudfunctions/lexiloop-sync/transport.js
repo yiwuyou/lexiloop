@@ -27,7 +27,7 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
     }
     async function output(result) {
       const text = JSON.stringify(result);
-      if (text.length <= SIZE) return result;
+      if (Buffer.byteLength(text) <= 24000) return result;
       if (Buffer.byteLength(text) > MAX) throw new Error('transfer-too-large');
       const value = token(), count = Math.ceil(text.length / SIZE), expires = now + LIFE;
       // An immutable response snapshot prevents mixing two archive revisions.

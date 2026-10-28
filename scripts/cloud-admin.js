@@ -28,4 +28,11 @@ if (action === 'inspect') {
   for (const name of ['lexiloop_sync', 'lexiloop_snapshots']) api('ModifyResourcePermission', { ResourceType: 'collection', Resource: name, Permission: 'ADMINONLY' });
 } else if (action === 'health') {
   run(['fn', 'invoke', 'lexiloop-sync', '--data', JSON.stringify({ action: 'health' }), '--json']);
-} else throw new Error('Supported operations: inspect, create, permissions, lock, health');
+} else if (action === 'cycle') {
+  api('DescribeEnvAccountCircle', {});
+  api('DescribeBillingInfo', { EnvIds: [envId] });
+} else if (action === 'usage') {
+  const [StartDate, EndDate] = process.argv.slice(3);
+  if (![StartDate, EndDate].every(value => /^\d{4}-\d{2}-\d{2}$/.test(value || ''))) throw new Error('Supply the current billing-cycle start/end dates');
+  api('DescribeCreditsUsage', { StartDate, EndDate });
+} else throw new Error('Supported operations: inspect, create, create-transfers, permissions, lock, health, cycle, usage');

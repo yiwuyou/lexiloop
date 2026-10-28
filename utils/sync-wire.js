@@ -13,8 +13,11 @@ async function parts(count, task) {
 }
 async function send(call, event) {
   const text = JSON.stringify(event);
+  // Conservative UTF-8 upper bound (surrogate pairs count as six bytes).
+  let bytes = text.length;
+  for (let i = 0; i < text.length; i++) bytes += text.charCodeAt(i) > 2047 ? 2 : text.charCodeAt(i) > 127 ? 1 : 0;
   let result;
-  if (text.length <= SIZE) result = await call(event);
+  if (bytes <= 24000) result = await call(event);
   else {
     const count = Math.ceil(text.length / SIZE);
     if (count > 2100) throw new Error('sync-payload-too-large');
