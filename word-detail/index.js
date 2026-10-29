@@ -20,6 +20,11 @@ Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoa
   },
   toggleWeak() { const state = store.getState(); weak.toggle(state, this.data.word.id, Date.now()); store.saveState(state); this.refresh(); },
   toggleSentence() { const w = this.data.word; const state = store.getState(); sentences.toggle(state, { sentence: w.example, translation: w.translation, word: w.word, wordId: w.id }); store.saveState(state); this.refresh(); },
+  goBack() {
+    if (this.returning) return;
+    this.returning = true;
+    wx.navigateBack({ delta: 1, fail: () => { this.returning = false; wx.showToast({ title: '暂时无法返回，请重试', icon: 'none' }); } });
+  },
   onHide() { this.request = (this.request || 0) + 1; this.playRequested = false; this.setData({ audioLoading: false }); if (this.audio) this.audio.stop(); },
   onUnload() { this.disposed = true; this.playRequested = false; this.request = (this.request || 0) + 1; if (this.audio) this.audio.destroy(); }
 });
