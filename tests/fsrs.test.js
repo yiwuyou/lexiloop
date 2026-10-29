@@ -76,7 +76,7 @@ page.onUnload();
 const study = fs.readFileSync(require.resolve('../pages/study/index.wxml'), 'utf8');
 const detail = fs.readFileSync(require.resolve('../word-detail/index.wxml'), 'utf8');
 assert.ok(study.includes('<word-card') && detail.includes('<word-card'), 'learning and details share the same content component');
-assert.ok(!detail.includes('data-grade') && detail.includes('show-relations="{{false}}"'), 'details have neither grading nor recursive relations');
+assert.ok(!detail.includes('data-grade') && !detail.includes('openRelations') && !fs.readFileSync(require.resolve('../components/word-card/index.wxml'), 'utf8').includes('relation-trigger'), 'details have neither grading nor recursive relations');
 const relation = fs.readFileSync(require.resolve('../components/word-relations/index.wxml'), 'utf8');
 assert.ok(!relation.includes('继续关联'));
 assert.ok(relation.includes('catchtap="close"') && relation.indexOf('</view></view>') < relation.indexOf('class="sheet-head"'), 'the close control is outside the drag-capture container');

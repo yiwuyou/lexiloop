@@ -169,9 +169,11 @@ try {
   }
   const studyStyles = read('pages/study/index.wxss');
   const cardMarkup = read('components/word-card/index.wxml');
-  assert.ok(cardMarkup.indexOf('class="relation-trigger"') < cardMarkup.indexOf('class="word-main"'), 'relations belong to the metadata row so the word keeps its full line');
+  const studyMarkup = read('pages/study/index.wxml');
+  assert.ok(!cardMarkup.includes('relation-trigger'), 'relations stay outside the scrolling word card and keep the word line clear');
+  assert.ok(studyMarkup.indexOf('class="relation-trigger"') > studyMarkup.indexOf('</scroll-view>') && studyMarkup.indexOf('class="relation-trigger"') < studyMarkup.indexOf('class="rating-grid"'), 'the entry stays on the right above the ratings even when the card scrolls');
   assert.ok(!/<view class="word-heading">[\s\S]*?<button[\s\S]*?<\/view>/.test(cardMarkup.split('class="pronunciation"')[0]), 'the word heading must not share space with a button');
-  assert.ok(/\.word-meta \.relation-trigger\s*\{[^}]*min-width:\s*76px[^}]*min-height:\s*44px/.test(studyStyles), 'the quiet metadata action retains a full touch target on narrow screens');
+  assert.ok(/\.relation-trigger\s*\{[^}]*min-width:\s*76px[^}]*min-height:\s*44px/.test(studyStyles), 'the quiet bottom action retains a full touch target on narrow screens');
   assert.ok(!dialog.includes('class="section-note"') && !dialog.includes('class="footnote"'), 'internal sorting/matching/workflow notes must not clutter the learning dialog');
   assert.ok(dialog.includes('相近义项') && dialog.includes('机构释义'), 'retain word-specific learning content');
   console.log('First-touch collection, gesture deduplication/scroll cancellation, stable async layout, write failure rollback, context/library saves and dialog style guards passed.');
