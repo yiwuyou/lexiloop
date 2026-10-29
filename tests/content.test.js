@@ -188,6 +188,7 @@ for (const [head, phrase] of Object.entries(reviewedPhrases)) {
   assert.ok(word, `reviewed phrase has no vocabulary head: ${head}`);
   assert.strictEqual(word.phrase, phrase, `reviewed phrase missing from ${head}`);
 }
+assert.ok((reviewedPhrases.esteem || '').includes('self-esteem 自尊'), 'keep the familiar esteem expression when rewriting its memory guide');
 const packedPhrases = require('../phrase-data/ready');
 assert.ok(Object.keys(packedPhrases).length >= 450, 'too few high-confidence common phrases');
 assert.ok(fs.statSync(path.join(root, 'phrase-data', 'ready.js')).size < 2 * 1024 * 1024,
