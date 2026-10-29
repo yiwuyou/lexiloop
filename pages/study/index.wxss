@@ -556,9 +556,10 @@
 .sentence-heading { display: flex; align-items: center; justify-content: space-between; }
 .sentence-save { display: inline-flex; align-items: center; justify-content: center; width: auto; flex: 0 0 auto; min-width: 124rpx; min-height: 80rpx; margin: 0; padding: 10rpx 8rpx; background: transparent; color: #246b49; font-size: 24rpx; line-height: 1.5; }
 .sentence-save::after { border: 0; }
-.word-heading { display: flex; align-items: center; justify-content: center; gap: 14rpx; margin-bottom: 18rpx; }
-.word-heading .word { display: block; flex: 0 1 auto; min-width: 0; margin: 0; text-align: center; }
-.word-heading .relation-trigger { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 132rpx; width: 132rpx; min-width: 132rpx; max-width: 132rpx; min-height: 88rpx; margin: 0; padding: 12rpx 10rpx; border: 1rpx solid #d7e5dc; border-radius: 999rpx; background: #f8fbf9; color: var(--main-strong); font-size: 25rpx; line-height: 1.4; }
+.word-heading { display: block; margin-bottom: 18rpx; text-align: center; }
+.word-heading .word { display: block; width: 100%; min-width: 0; margin: 0; text-align: center; }
+.word-meta .relation-trigger { display: inline-flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; width: auto; min-width: 76px; min-height: 44px; margin: -8rpx -8rpx -8rpx 0; padding: 8rpx; border: 0; border-radius: 8rpx; background: transparent; color: var(--main-strong); font-size: 24rpx; line-height: 1.4; }
+.relation-trigger::after { border: 0; }
 .relation-trigger-label { display: block; padding: 0; white-space: nowrap; }
 .context-heading { margin-top: 32rpx; }
-.context-heading .context-word { flex: 0 1 auto; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.context-heading .context-word { display: block; width: 100%; min-width: 0; margin: 0; overflow-wrap: anywhere; }

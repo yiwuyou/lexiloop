@@ -34,9 +34,10 @@
       <view class="context-card card">
         <view class="word-meta">
           <text>{{word.sourceLabel}}</text>
-          <text class="kind">{{questionLabel}}</text>
+          <button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+          <text class="kind" wx:else>{{questionLabel}}</text>
         </view>
-        <view class="word-heading context-heading"><text class="context-word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations"><text class="relation-trigger-label">关联词 ›</text></button></view>
+        <view class="word-heading context-heading"><text class="context-word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text></view>
         <text class="sentence">{{question.sentence}}</text>
         <button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
         <text class="context-prompt">{{questionPrompt}}</text>

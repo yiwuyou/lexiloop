@@ -1,10 +1,11 @@
-      <view class="word-card card">
+      <view class="word-card card {{revealed ? 'is-answer' : 'is-recall'}}">
         <view class="word-meta">
           <text>{{word.sourceLabel}}</text>
-          <text class="kind">{{phaseLabel}}</text>
+          <button class="relation-trigger" wx:if="{{showRelations && revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+          <text class="kind" wx:else>{{phaseLabel}}</text>
         </view>
         <view class="word-main">
-          <view class="word-heading"><text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{showRelations && revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
+          <view class="word-heading"><text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text></view>
           <view class="pronunciation" wx:if="{{word.audio}}" bindtap="playPronunciation" role="button" aria-label="播放单词发音">
             <view class="audio-button">{{audioLoading ? '…' : '▶'}}</view>
             <text class="ipa">{{word.ipa || '播放发音'}}</text>

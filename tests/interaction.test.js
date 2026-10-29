@@ -168,8 +168,10 @@ try {
     assert.ok(markup.includes('bindtouchend="sentenceTouchEnd"') && markup.includes('catchtap="tapSentence"'));
   }
   const studyStyles = read('pages/study/index.wxss');
-  assert.ok(/\.word-heading\s*\{[^}]*display:\s*flex[^}]*gap:\s*14rpx/.test(studyStyles), 'relation button must sit next to the word, not at the card edge');
-  assert.ok(/\.word-heading \.relation-trigger\s*\{[^}]*min-width:\s*132rpx[^}]*min-height:\s*88rpx/.test(studyStyles), 'button needs a visible 66 by 44 px tap target at standard scale');
+  const cardMarkup = read('components/word-card/index.wxml');
+  assert.ok(cardMarkup.indexOf('class="relation-trigger"') < cardMarkup.indexOf('class="word-main"'), 'relations belong to the metadata row so the word keeps its full line');
+  assert.ok(!/<view class="word-heading">[\s\S]*?<button[\s\S]*?<\/view>/.test(cardMarkup.split('class="pronunciation"')[0]), 'the word heading must not share space with a button');
+  assert.ok(/\.word-meta \.relation-trigger\s*\{[^}]*min-width:\s*76px[^}]*min-height:\s*44px/.test(studyStyles), 'the quiet metadata action retains a full touch target on narrow screens');
   assert.ok(!dialog.includes('class="section-note"') && !dialog.includes('class="footnote"'), 'internal sorting/matching/workflow notes must not clutter the learning dialog');
   assert.ok(dialog.includes('相近义项') && dialog.includes('机构释义'), 'retain word-specific learning content');
   console.log('First-touch collection, gesture deduplication/scroll cancellation, stable async layout, write failure rollback, context/library saves and dialog style guards passed.');
