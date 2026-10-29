@@ -181,8 +181,11 @@ async function testComponent() {
 
   observe(true, 'first');
   assert.strictEqual(instance.data.loading, true);
-  instance.explore({ currentTarget: { dataset: { id: 'second' } } });
-  assert.strictEqual(instance.data.canGoBack, true);
+  instance.openDetail({ currentTarget: { dataset: { id: 'second' } } });
+  assert.strictEqual(events.pop(), 'detail');
+  assert.strictEqual(requests.length, 1, 'related words open details without starting another relation request');
+  assert.strictEqual(instance.explore, undefined);
+  observe(true, 'second');
   requests[1].resolve(makeResult('second'));
   await flush();
   assert.strictEqual(instance.data.result.target.id, 'second');
@@ -198,11 +201,11 @@ async function testComponent() {
   assert.strictEqual(instance.data.semantic.length, 15);
   assert.strictEqual(instance.data.shapes.length, 13);
 
-  instance.goBack();
+  observe(true, 'first');
   assert.strictEqual(requests[2].id, 'first');
   requests[2].resolve(makeResult('first'));
   await flush();
-  assert.strictEqual(instance.data.canGoBack, false);
+  assert.strictEqual(instance.data.result.target.id, 'first');
 
   observe(true, 'closing');
   instance.close();
@@ -283,7 +286,7 @@ function testLibraryAndTemplates() {
   let library;
   global.Page = value => { library = value; };
   const writes = [];
-  const stored = { mem_vocab_state_v1: clone(state), mem_vocab_settings_v1: { schemaVersion: 2, reviewLimitVersion: 1 } };
+  const stored = { mem_vocab_state_v1: clone(state), mem_vocab_settings_v1: { schemaVersion: 2, reviewLimitVersion: 1, examPlanVersion: 1 } };
   global.wx = {
     getStorageSync: key => stored[key] ? clone(stored[key]) : '',
     setStorageSync: (key, value) => { writes.push(key); stored[key] = clone(value); },
@@ -305,8 +308,8 @@ function testLibraryAndTemplates() {
 
   const libraryTemplate = source('pages/library/index.wxml');
   assert.ok(libraryTemplate.indexOf('bindtap="showWords"') < libraryTemplate.indexOf('bindtap="showDays"'), 'word list button must precede low-frequency day view');
-  const studyTemplate = source('pages/study/index.wxml');
-  assert.ok(/wx:if="\{\{revealed\}\}"[^>]*bindtap="openRelations"|bindtap="openRelations"[^>]*wx:if="\{\{revealed\}\}"/.test(studyTemplate), 'word relations must not leak the answer before recall is revealed');
+  const studyTemplate = source('pages/study/index.wxml') + source('components/word-card/index.wxml');
+  assert.ok(/wx:if="\{\{(?:showRelations && )?revealed\}\}"[^>]*bindtap="openRelations"|bindtap="openRelations"[^>]*wx:if="\{\{(?:showRelations && )?revealed\}\}"/.test(studyTemplate), 'word relations must not leak the answer before recall is revealed');
   assert.ok(/wx:if="\{\{contextAnswered\}\}"[^>]*bindtap="openRelations"|bindtap="openRelations"[^>]*wx:if="\{\{contextAnswered\}\}"/.test(studyTemplate), 'context questions must be answered before relation meanings appear');
   const componentTemplate = source('components/word-relations/index.wxml');
   assert.ok(componentTemplate.indexOf('机构释义') < componentTemplate.indexOf('日常常用义'), 'institution meaning must come before everyday senses');
@@ -326,7 +329,7 @@ function testStudyDialogIsInPlace() {
   const navigation = [];
   const localState = clone(state);
   localState.daily['2026-10-23'] = { newDone: 23, dueDone: 41, completedAt: 0 };
-  const stored = { mem_vocab_state_v1: localState, mem_vocab_settings_v1: { schemaVersion: 2, reviewLimitVersion: 1 } };
+  const stored = { mem_vocab_state_v1: localState, mem_vocab_settings_v1: { schemaVersion: 2, reviewLimitVersion: 1, examPlanVersion: 1 } };
   global.wx = {
     getStorageSync: key => stored[key] ? clone(stored[key]) : '',
     setStorageSync: (key, value) => { writes.push(key); stored[key] = clone(value); },
@@ -380,6 +383,22 @@ function testStudyDialogIsInPlace() {
   assert.strictEqual(JSON.stringify(stored), originalStorage, 'daily progress and all persisted learning records are unchanged');
   assert.deepStrictEqual(writes, [], 'opening and closing require no learning-data writes');
   assert.deepStrictEqual(navigation, [], 'closing the popup must not navigate, relaunch, redirect or switch tabs');
+  study.data.contentScrollTop = 180;
+  study.openWordDetail({ detail: { wordId: idFor('migrate') } });
+  assert.ok(navigation[0][1].url.startsWith('/word-detail/index?id='));
+  study.data.relationsOpen = false;
+  study.data.revealed = false;
+  study.data.contextAnswered = false;
+  study.data.contentScrollTop = 0;
+  study.onShow();
+  assert.strictEqual(study.data.relationsOpen, true);
+  assert.strictEqual(study.data.revealed, true);
+  assert.strictEqual(study.data.contextAnswered, true);
+  assert.strictEqual(study.data.contentScrollTop, 180);
+  assert.strictEqual(study.data.word, originalWord, 'detail return preserves the same learning word');
+  assert.strictEqual(JSON.stringify(study.session), originalSession);
+  assert.deepStrictEqual(writes, [], 'detail navigation does not submit an answer');
+  if (study.stopSync) study.stopSync();
 }
 
 (async function main() {

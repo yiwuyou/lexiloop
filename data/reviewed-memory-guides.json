@@ -556,7 +556,7 @@
   "coast": {"core":"陆地与海洋相接的海岸。","breakdown":"co·ast","breakdownNote":"词尾 ast 联到 east（东方）：面向东方海面的陆地边缘 → coast（海岸）。","cue":"","associationLabel":"近形钩子"},
   "cognitive": {"core":"与认识、思考、感知过程有关。","breakdown":"cognit·ive","breakdownNote":"cogn 表示“知道、认识”+ -ive（……的）→ cognitive（认知的）。","cue":"","associationLabel":"构词钩子"},
   "coherent": {"core":"各部分连接紧密，逻辑一致。","breakdown":"co·her·ent","breakdownNote":"co-（一起）+ her（黏住）+ -ent：各部分黏在一起 → coherent（连贯的、一致的）。","cue":"","associationLabel":"构词钩子"},
-  "coincide": {"core":"在同一时间发生，或位置、意见相同。","breakdown":"co·in·cide","breakdownNote":"co-（共同）+ in（进入）+ cide（落下）：一起落在同一点 → coincide（同时发生、相同）。","cue":"","associationLabel":"构词钩子"},
+  "coincide": {"core":"在同一时间发生，或位置、意见相同。","breakdown":"coin·cide","breakdownNote":"字形助记：coin（硬币）+ cide（拼写分段）。两枚硬币同时落在同一点 → 同时发生、重合。","cue":"","associationLabel":"字形助记"},
   "collaborate": {"core":"与别人共同工作以完成目标。","breakdown":"col·labor·ate","breakdownNote":"col-（共同）+ labor（劳动、工作）+ -ate：共同工作 → collaborate（合作、协作）。","cue":"","associationLabel":"构词钩子"},
   "colleague": {"core":"在同一组织或职业中一起工作的人。","breakdown":"col·league","breakdownNote":"col-（共同）+ league（联盟、群体）：同一工作联盟中的人 → colleague（同事）。","cue":"","associationLabel":"构词钩子"},
   "collect": {"core":"把分散的人或物集中收集到一起。","breakdown":"col·lect","breakdownNote":"col-（共同、一起）+ lect（收取、选择）：收到一起 → collect（收集）。","cue":"","associationLabel":"构词钩子"},

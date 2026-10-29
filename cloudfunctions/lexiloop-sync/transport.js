@@ -12,7 +12,7 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
     if (event.action === 'health' || !event.wireVersion) return handle(event);
     const user = identity();
     if (!user.OPENID || user.APPID !== appid) return { ok: false, code: 'IDENTITY_REQUIRED' };
-    if (event.wireVersion !== 1 || event.protocol !== 1 || !/^[a-zA-Z0-9-]{8,100}$/.test(event.device || '')) return { ok: false, code: 'PROTOCOL_MISMATCH' };
+    if (event.wireVersion !== 1 || event.protocol !== require('./model.generated').VERSION || !/^[a-zA-Z0-9-]{8,100}$/.test(event.device || '')) return { ok: false, code: 'PROTOCOL_MISMATCH', message: '请将手机和电脑都更新到新版小程序后同步' };
     const owner = crypto.createHash('sha256').update(`${appid}:${user.OPENID}:${event.device}`).digest('hex');
     const table = db.collection(TABLE), now = Date.now();
     const token = () => crypto.randomBytes(24).toString('hex');
@@ -77,7 +77,7 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
         if (text.length !== head.length || Buffer.byteLength(text) > MAX || checksum(text) !== head.checksum) throw new Error('transfer-checksum-mismatch');
         const inner = JSON.parse(text);
         if (!['bootstrap', 'attach', 'sync', 'claim', 'status'].includes(inner.action)) throw new Error('invalid-transfer-action');
-        return await output(await handle({ ...inner, device: event.device, protocol: 1 }));
+        return await output(await handle({ ...inner, device: event.device, protocol: require('./model.generated').VERSION }));
       }
       if (event.action.startsWith('wire-')) throw new Error('invalid-transfer-action');
       return await output(await handle(event));

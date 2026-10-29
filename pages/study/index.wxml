@@ -15,43 +15,7 @@
     <view wx:if="{{!waiting && pendingCount && !isPractice}}" class="practice-note">已作答的词中，还有 {{pendingCount}} 词待巩固</view>
     <block wx:if="{{!waiting && !isContext}}">
       <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
-      <view class="word-card card">
-        <view class="word-meta">
-          <text>{{word.sourceLabel}}</text>
-          <text class="kind">{{phaseLabel}}</text>
-        </view>
-        <view class="word-main">
-          <view class="word-heading"><text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text><button class="relation-trigger" wx:if="{{revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
-          <view class="pronunciation" wx:if="{{word.audio}}" bindtap="playPronunciation" role="button" aria-label="播放单词发音">
-            <view class="audio-button">{{audioLoading ? '…' : '▶'}}</view>
-            <text class="ipa">{{word.ipa || '播放发音'}}</text>
-          </view>
-          <text class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>
-          <view class="answer" wx:else>
-            <block wx:if="{{word.enhanced}}">
-              <view class="meaning-heading"><text class="meaning-meta">机构释义 · {{word.partOfSpeech}}</text><button class="weak-link {{isWeakMarked ? 'is-marked' : ''}}" bindtap="toggleWeak">{{isWeakMarked ? '✓ 已在易忘' : '＋ 加入易忘'}}</button></view>
-              <text class="target-meaning">{{word.meaning}}</text>
-              <view class="understanding-panel"><text class="understanding-label">理解</text><text class="understanding-text">{{word.core || word.meaning}}</text></view>
-              <view class="memory-panel" wx:if="{{word.hasMemoryContent}}">
-                <view class="memory-head"><text class="memory-label">关联记忆</text></view>
-                <view class="memory-row" wx:if="{{word.breakdown}}"><text>拆记</text><view><text class="breakdown">{{word.breakdown}}</text><text class="memory-note">{{word.breakdownNote}}</text></view></view>
-                <view class="memory-row" wx:if="{{word.associationHint}}"><text>{{word.associationLabel || '助记'}}</text><text>{{word.associationHint}}</text></view>
-                <view class="memory-row" wx:if="{{word.contrast}}"><text>辨析</text><text>{{word.contrast}}</text></view>
-                <view class="memory-row" wx:if="{{word.phrase}}"><text>短语</text><text>{{word.phrase}}</text></view>
-                <view class="memory-row" wx:if="{{word.family}}"><text>词族</text><text>{{word.family}}</text></view>
-                <view class="memory-row" wx:if="{{word.wordForms.length}}"><text>词形</text><text><text class="form-inline" wx:for="{{word.wordForms}}" wx:key="word">{{item.word}}（{{item.label}}） </text></text></view>
-              </view>
-            </block>
-            <text class="meaning" wx:else>{{word.meaning}}</text>
-            <view class="example-panel" wx:if="{{word.example}}">
-              <view class="sentence-heading"><text class="memory-label">例句 · 放进场景记</text><button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
-              <text class="example-en">{{word.example}}</text>
-              <text class="example-zh">{{word.translation}}</text>
-            </view>
-          </view>
-        </view>
-        <button class="primary-button recall-reveal" wx:if="{{!revealed}}" bindtap="revealAnswer">显示答案</button>
-      </view>
+      <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" bindrelations="openRelations" />
       </scroll-view>
 
       <view class="rating-area" wx:if="{{revealed}}">
@@ -116,5 +80,5 @@
       <button class="primary-button" bindtap="exitStudy">返回首页</button>
     </view>
   </block>
-  <word-relations visible="{{relationsOpen}}" word-id="{{relationWordId}}" bindclose="closeRelations" />
+  <word-relations visible="{{relationsOpen}}" word-id="{{relationWordId}}" bindclose="closeRelations" binddetail="openWordDetail" />
 </view>

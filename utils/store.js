@@ -31,21 +31,23 @@ function defaultSettings() {
     reviewLimitVersion: 1,
     dailyBacklogLimit: 30,
     extraStep: 25,
-    examDate: '2026-12-15',
+    examDate: '2026-12-19', learningDeadline: '2026-12-18', examPlanVersion: 1,
   };
 }
 
 function safeGet(key, fallback) {
   try {
-    const value = wx.getStorageSync(key);
+    const value = [STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key) ? syncStorage.read(key) : wx.getStorageSync(key);
     return value || fallback;
   } catch (error) {
+    if ([STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) throw error;
     return fallback;
   }
 }
 
 function safeSet(key, value) {
-  wx.setStorageSync(key, value);
+  if ([STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) syncStorage.write(key, value);
+  else wx.setStorageSync(key, value);
   if (!quiet && changeListener && [STATE_KEY, SETTINGS_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) {
     try { changeListener(); } catch (error) { /* Local save is still durable; next sync reconciles it. */ }
   }
@@ -67,12 +69,21 @@ function ensureState() {
     }
   }
   const settings = safeGet(SETTINGS_KEY, null);
+  if (settings && settings.examPlanVersion !== 1) {
+    const backupKey = 'mem_vocab_before_fsrs_v1';
+    if (!wx.getStorageSync(backupKey)) syncStorage.write(backupKey, { at: Date.now(), state: safeGet(STATE_KEY, null), settings,
+      session: safeGet(SESSION_KEY, null), practiceSession: safeGet(PRACTICE_SESSION_KEY, null) });
+  }
   if (!settings) {
     safeSet(SETTINGS_KEY, defaultSettings());
   } else if (settings.schemaVersion !== 2 || settings.reviewLimitVersion !== 1) {
     safeSet(SETTINGS_KEY, Object.assign(defaultSettings(), settings, {
       schemaVersion: 2, dailyReviewLimit: 100, reviewLimitVersion: 1,
     }));
+  }
+  const currentSettings = safeGet(SETTINGS_KEY, null);
+  if (currentSettings && settings && settings.examPlanVersion !== 1) {
+    safeSet(SETTINGS_KEY, Object.assign({}, currentSettings, { examDate: '2026-12-19', learningDeadline: '2026-12-18', examPlanVersion: 1 }));
   }
   return true;
 }
@@ -109,7 +120,7 @@ function saveSession(session) {
 
 function clearSession(mode) {
   try {
-    wx.removeStorageSync(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY);
+    syncStorage.remove(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY);
     if (!quiet && changeListener) changeListener();
   } catch (error) {
     // A failed cleanup must not discard completed review records.
@@ -125,10 +136,10 @@ function bundle() {
   return { state: getState(), settings: getSettings(), session: getSession(), practiceSession: getSession('practice') };
 }
 function writeBundle(value) {
-  wx.setStorageSync(STATE_KEY, value.state);
+  syncStorage.write(STATE_KEY, value.state);
   wx.setStorageSync(SETTINGS_KEY, value.settings);
   [[SESSION_KEY, value.session], [PRACTICE_SESSION_KEY, value.practiceSession]].forEach(([key, session]) => {
-    if (session) wx.setStorageSync(key, session); else wx.removeStorageSync(key);
+    if (session) syncStorage.write(key, session); else syncStorage.remove(key);
   });
 }
 function replaceBundle(value) {

@@ -100,6 +100,7 @@ Page({
   },
 
   async startStudy() {
+    try { await require('../../utils/scheduler').prepare(); } catch (error) { wx.showToast({ title: '复习算法准备失败，联网后重试', icon: 'none' }); return; }
     if (!(await cloudSync.beginStudy())) return;
     const now = Date.now();
     const state = store.getState();
@@ -142,6 +143,7 @@ Page({
   },
 
   async addExtraStudy(event) {
+    try { await require('../../utils/scheduler').prepare(); } catch (error) { wx.showToast({ title: '复习算法准备失败，联网后重试', icon: 'none' }); return; }
     if (!(await cloudSync.beginStudy())) return;
     const amount = Number(event.currentTarget.dataset.amount) || 25;
     const now = Date.now();

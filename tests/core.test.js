@@ -26,16 +26,17 @@ function testScheduler() {
   const now = Date.UTC(2026, 8, 3, 0, 0, 0);
   const good = scheduler.review(null, 'good', now);
   assert.strictEqual(good.seen, true);
-  assert.strictEqual(good.interval, 3);
-  assert.strictEqual(good.dueAt, now + 3 * dates.DAY_MS);
+  assert.strictEqual(good.interval, 2);
+  assert.strictEqual(good.fsrsVersion, 'FSRS-6/ts-fsrs-5.4.1');
+  assert.strictEqual(good.dueAt, now + 2 * dates.DAY_MS);
 
   const forgotten = scheduler.review(good, 'again', now + dates.DAY_MS);
-  assert.strictEqual(forgotten.interval, 0);
+  assert.ok(forgotten.interval <= 1 && forgotten.needsRecall);
   assert.strictEqual(forgotten.lapses, 1);
-  assert.strictEqual(forgotten.dueAt, now + dates.DAY_MS + 10 * 60 * 1000);
+  assert.ok(forgotten.dueAt > now + dates.DAY_MS && forgotten.dueAt <= now + 2 * dates.DAY_MS);
 
   const easy = scheduler.review(null, 'easy', now);
-  assert.strictEqual(easy.interval, 7);
+  assert.strictEqual(easy.interval, 8);
   assert.ok(easy.dueAt > good.dueAt);
 }
 

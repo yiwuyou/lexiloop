@@ -1,3 +1,5 @@
+const scheduler = require('./utils/scheduler');
+const audioOptions = require('./utils/audio-options');
 const store = require('./utils/store');
 const audio = require('./utils/audio');
 const recoveryRelease = require('./utils/recovery-release');
@@ -13,6 +15,8 @@ function prepareAudioWhenOnline() {
 
 App({
   onLaunch() {
+    audioOptions.configure();
+    scheduler.prepare().catch(() => {});
     store.resumeCloudApply();
     store.ensureState();
     try {

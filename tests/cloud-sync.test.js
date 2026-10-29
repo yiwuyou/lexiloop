@@ -94,7 +94,7 @@ Module._load = function (name, parent, isMain) {
 };
 const server = require('../cloudfunctions/lexiloop-sync').main;
 Module._load = realLoad;
-const call = (action, data = {}) => server({ protocol: 1, action, device: 'device-a', ...data });
+const call = (action, data = {}) => server({ protocol: model.VERSION, action, device: 'device-a', ...data });
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 // Independent module graphs simulate the phone and desktop local storage.
@@ -168,6 +168,8 @@ function virtualClock() {
   };
 }
 async function main() {
+  assert.strictEqual((await call('status', { protocol: 1 })).code, 'PROTOCOL_MISMATCH', 'old schedulers cannot overwrite FSRS records');
+  assert.strictEqual((await call('status', { protocol: 1, wireVersion: 1 })).code, 'PROTOCOL_MISMATCH', 'chunk transport also rejects old schedulers');
   assert.strictEqual((await call('health')).storageReady, true);
   assert.strictEqual((await call('health')).transactionReady, true);
   assert.strictEqual(rows.size, 0, 'health diagnostics never create learning records');
@@ -280,6 +282,7 @@ async function main() {
   desktop.net.online = false;
   const queue = Array.from({ length: 150 }, (_, i) => ({ wordId: `c-1-${i + 1}`, phase: 'review' }));
   for (let i = 0; i < 160; i++) desktop.store.saveSession({ queue, index: i % 150 });
+  desktop.sync.capture(); // Deferred journal: capture at an explicit checkpoint.
   const pendingMeta = desktop.storage.read('lexiloop_cloud_sync_v1');
   assert.strictEqual(pendingMeta.outbox.flatMap(item => item.changes).filter(item => item.path.length === 1 && item.path[0] === 'session').length, 1);
   desktop.net.online = true;

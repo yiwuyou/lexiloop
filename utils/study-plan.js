@@ -11,6 +11,16 @@ const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
 const DAILY_SENTENCE_LIMIT = 30;
 
+// Separate exam coverage from the memory model: spread first checks across
+// 28 days, rather than truncating every long FSRS interval to the last day.
+function examCoverageDue(word, card, settings, now) {
+  if (!settings.learningDeadline || !card.seen || isRecoveryPending(card)) return false;
+  const end = new Date(settings.learningDeadline + 'T00:00:00+08:00').getTime();
+  const start = end - 27 * DAY_MS;
+  if (now < start || now >= end + DAY_MS || (card.passedDay || '') >= dayKey(start)) return false;
+  return now >= start + (word.position % 28) * DAY_MS;
+}
+
 function reviewPriority(state, left, right) {
   const leftCard = state.cards[left.id] || {};
   const rightCard = state.cards[right.id] || {};
@@ -77,7 +87,7 @@ function summarize(state, settings, now) {
     learned += 1;
     if (isStable(card)) stable += 1;
     if (weakBook.isMarked(state, word.id)) weak += 1;
-    if (card.needsRecall || card.needsContext || (card.dueAt <= time && card.lastAt < todayStart)) {
+    if (card.needsRecall || card.needsContext || (card.dueAt <= time && card.lastAt < todayStart) || examCoverageDue(word, card, settings, time)) {
       due.push(word);
       if (card.dueAt < todayStart && !isRecoveryPending(card)) overdue.push(word);
     } else if (isRecoveryPending(card)) {
@@ -340,6 +350,7 @@ function progressStats(state) {
 }
 
 module.exports = {
+  examCoverageDue,
   buildExtraSession,
   buildSession,
   prepareSession,

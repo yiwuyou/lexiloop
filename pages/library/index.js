@@ -52,8 +52,7 @@ Page({
   },
 
   onLoad() {
-    this.audio = wx.createInnerAudioContext();
-    this.audio.obeyMuteSwitch = false;
+    this.audio = require('../../utils/audio-options').create();
     this.audioPlaying = false;
     this.audioStarted = false;
     this.audio.onPlay(() => {
@@ -155,6 +154,8 @@ Page({
   },
 
   showWords() { this.setData({ viewMode: 'words' }); },
+
+  openWordDetail(event) { wx.navigateTo({ url: '/word-detail/index?id=' + encodeURIComponent(event.currentTarget.dataset.id) }); },
 
   openSentences() { wx.navigateTo({ url: '/pages/sentences/index' }); },
 

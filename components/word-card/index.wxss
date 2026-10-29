@@ -1,0 +1,2 @@
+@import "../../pages/study/index.wxss";
+:host { display: block; }

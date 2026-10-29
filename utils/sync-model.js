@@ -1,6 +1,6 @@
 // Shared, platform-independent synchronization protocol. Server build copies
 // this file verbatim; no credentials or device APIs belong in this module.
-const VERSION = 1;
+const VERSION = 2;
 const clone = value => JSON.parse(JSON.stringify(value));
 const maps = ['cards', 'daily', 'weakBook', 'sentenceBook', 'practice'];
 const dangerous = key => ['__proto__', 'prototype', 'constructor'].includes(key);
@@ -26,7 +26,7 @@ function unionReviews(left, right) {
 }
 function diff(before, after) {
   const changes = [];
-  const add = (path, left, right) => { if (!equal(left, right)) changes.push({ path, before: left == null ? null : left, after: right == null ? null : right }); };
+  const add = (path, left, right) => { if (JSON.stringify(left) !== JSON.stringify(right) && !equal(left, right)) changes.push({ path, before: left == null ? null : left, after: right == null ? null : right }); };
   maps.forEach(name => {
     const left = before.state[name] || {}, right = after.state[name] || {};
     Array.from(new Set(Object.keys(left).concat(Object.keys(right))))
@@ -44,7 +44,7 @@ function allowed(path) {
   if (!Array.isArray(path) || path.some(key => typeof key !== 'string' || dangerous(key))) return false;
   if (path.length === 1) return ['session', 'practiceSession'].includes(path[0]);
   if (path.length === 2) return path[0] === 'settings'
-    ? ['schemaVersion', 'dailyNewCount', 'dailyMaxNewCount', 'dailyReviewLimit', 'reviewLimitVersion', 'dailyBacklogLimit', 'extraStep', 'examDate'].includes(path[1])
+    ? ['schemaVersion', 'dailyNewCount', 'dailyMaxNewCount', 'dailyReviewLimit', 'reviewLimitVersion', 'dailyBacklogLimit', 'extraStep', 'examDate', 'learningDeadline', 'examPlanVersion'].includes(path[1])
     : path[0] === 'state' && ['recentReviews', 'progressRecovery', 'recoveryRelease'].includes(path[1]);
   return path.length === 3 && path[0] === 'state' && maps.includes(path[1]) && path[2].length <= 2000;
 }
@@ -55,6 +55,11 @@ function conservativeCard(current, incoming) {
   if (!incoming.reps && current.reps) return current;
   if (!current.reps && incoming.reps) return incoming;
   const merged = Object.assign({}, current, incoming);
+  if ((current.fsrs || incoming.fsrs) && !equal(current, incoming)) {
+    // Conflicting device models cannot be averaged into a fictitious memory.
+    // Preserve both histories and re-enter FSRS at the next actual answer.
+    merged.fsrs = null; merged.fsrsNeedsRecheck = true;
+  }
   const dates = [current.dueAt, incoming.dueAt].filter(value => Number.isFinite(value));
   merged.dueAt = dates.length ? Math.min(...dates) : 0;
   merged.interval = Math.min(current.interval || 0, incoming.interval || 0);
@@ -62,7 +67,7 @@ function conservativeCard(current, incoming) {
   merged.reps = Math.max(current.reps || 0, incoming.reps || 0);
   merged.lapses = Math.max(current.lapses || 0, incoming.lapses || 0);
   merged.lastAt = Math.max(current.lastAt || 0, incoming.lastAt || 0);
-  merged.needsRecall = Boolean(current.needsRecall || incoming.needsRecall);
+  merged.needsRecall = Boolean(merged.fsrsNeedsRecheck || current.needsRecall || incoming.needsRecall);
   merged.needsContext = current.needsContext || incoming.needsContext || '';
   merged.failedDay = [current.failedDay || '', incoming.failedDay || ''].sort().pop();
   if (merged.needsRecall) merged.lastGrade = 'hard';

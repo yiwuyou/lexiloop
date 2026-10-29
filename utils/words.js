@@ -20,7 +20,7 @@ function inflate(tuple, position) {
     position,
     sourceLabel: `${category === 'core' ? '核心' : '高频'} day ${tuple[1]} · #${tuple[2]}`,
     searchText: `${tuple[3]} ${tuple[4]}`.toLowerCase(),
-    enhanced: true,
+    enhanced: true, family: '', phrase: '', contrast: '', cue: '', wordForms: [],
   }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {},
   exampleCorrections[id] || {});
   const generated = learningContent[id] || {};

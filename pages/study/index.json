@@ -1,5 +1,8 @@
 {
   "navigationStyle": "custom",
   "disableScroll": true,
-  "usingComponents": { "word-relations": "/components/word-relations/index" }
+  "usingComponents": {
+    "word-relations": "/components/word-relations/index",
+    "word-card": "/components/word-card/index"
+  }
 }

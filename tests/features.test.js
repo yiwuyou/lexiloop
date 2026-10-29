@@ -87,10 +87,11 @@ app.subPackages.forEach((pack) => pack.pages.forEach((page) => {
 const studyTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/study/index.wxml'), 'utf8');
 assert.ok(studyTemplate.includes('{{questionLabel}}') && studyTemplate.includes('例句巩固'),
   'sentence recall and polysemy disambiguation must use visibly different labels');
-const pronunciationTag = studyTemplate.match(/<view class="pronunciation"[^>]*>/);
+const cardTemplate = fs.readFileSync(path.join(__dirname, '..', 'components/word-card/index.wxml'), 'utf8');
+const pronunciationTag = cardTemplate.match(/<view class="pronunciation"[^>]*>/);
 assert.ok(pronunciationTag && /bindtap="playPronunciation"/.test(pronunciationTag[0]),
   'the whole pronunciation pill must play audio');
-assert.ok(!/<view class="audio-button"[^>]*bindtap="playPronunciation"/.test(studyTemplate),
+assert.ok(!/<view class="audio-button"[^>]*bindtap="playPronunciation"/.test(cardTemplate),
   'the audio handler must not be limited to the small play icon');
 const todayTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxml'), 'utf8');
 const todayStyles = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxss'), 'utf8');

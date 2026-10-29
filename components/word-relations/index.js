@@ -3,14 +3,14 @@ const store = require('../../utils/store');
 
 Component({
   properties: { visible: Boolean, wordId: String },
-  data: { closing: false, dragY: 0, dragging: false, loading: false, error: '', result: null, semantic: [], shapes: [], semanticLimit: 6, shapeLimit: 6, canGoBack: false, scrollTop: 0 },
+  data: { closing: false, dragY: 0, dragging: false, loading: false, error: '', result: null, semantic: [], shapes: [], semanticLimit: 6, shapeLimit: 6, scrollTop: 0 },
   observers: {
     'visible, wordId': function (visible, wordId) {
       clearTimeout(this.closeTimer); this.closing = false; this.drag = this.mask = null;
       this.setData({ closing: false, dragY: 0, dragging: false });
       if (!visible) { this.request = (this.request || 0) + 1; return; }
       if (!wordId) return;
-      this.history = [wordId];
+      this.targetWordId = wordId;
       this.showWord(wordId);
     },
   },
@@ -46,7 +46,7 @@ Component({
     dragCancel() { this.drag = null; this.setData({ dragY: 0, dragging: false }); },
     async showWord(wordId) {
       const request = this.request = (this.request || 0) + 1;
-      this.setData({ loading: true, error: '', result: null, semantic: [], shapes: [], semanticLimit: 6, shapeLimit: 6, canGoBack: this.history.length > 1, scrollTop: this.data.scrollTop ? 0 : 1 });
+      this.setData({ loading: true, error: '', result: null, semantic: [], shapes: [], semanticLimit: 6, shapeLimit: 6, scrollTop: this.data.scrollTop ? 0 : 1 });
       try {
         const result = await relations.forWord(wordId, store.getState());
         if (request !== this.request) return;
@@ -58,17 +58,10 @@ Component({
         if (request === this.request) this.setData({ loading: false });
       }
     },
-    retry() { this.showWord(this.history[this.history.length - 1]); },
-    explore(event) {
+    retry() { this.showWord(this.targetWordId); },
+    openDetail(event) {
       const wordId = event.currentTarget.dataset.id;
-      if (!wordId || this.history[this.history.length - 1] === wordId) return;
-      this.history.push(wordId);
-      this.showWord(wordId);
-    },
-    goBack() {
-      if (this.history.length < 2) return;
-      this.history.pop();
-      this.showWord(this.history[this.history.length - 1]);
+      if (wordId && !this.closing) this.triggerEvent('detail', { wordId });
     },
     moreSemantic() {
       const limit = this.data.semanticLimit + 6;

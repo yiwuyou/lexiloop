@@ -2,9 +2,8 @@
   <view class="relation-backdrop" catchtap="close" catchtouchstart="maskStart" catchtouchend="maskEnd" catchtouchcancel="maskCancel"></view>
   <view class="relation-sheet {{dragging ? 'is-dragging' : ''}}" style="transform: translateY({{dragY}}px)" role="dialog" aria-label="词库关联词" catchtap="noop">
     <view class="sheet-handle" catchtouchstart="dragStart" catchtouchmove="dragMove" catchtouchend="dragEnd" catchtouchcancel="dragCancel">
-    <view class="sheet-grip"></view>
-    <view class="sheet-head"><view class="back-slot"><button class="back" wx:if="{{canGoBack}}" bindtap="goBack">‹ 返回</button></view><text class="sheet-title">词库关联词</text><button class="close" bindtap="close" aria-label="关闭关联词">×</button></view>
-    </view>
+    <view class="sheet-grip"></view></view>
+    <view class="sheet-head"><view class="back-slot"></view><text class="sheet-title">词库关联词</text><button class="close" catchtap="close" aria-label="关闭关联词">×</button></view>
     <scroll-view class="sheet-scroll" scroll-y="{{true}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}">
       <view class="status" wx:if="{{loading}}">加载中…</view>
       <button class="error" wx:if="{{error}}" bindtap="retry">{{error}}</button>
@@ -18,8 +17,8 @@
         <view class="relation-group semantic-group">
         <view class="section-title"><text class="section-name">意思相近</text><text>{{result.semantic.length}} 词</text></view>
         <view class="empty" wx:if="{{!semantic.length}}">词库中暂无近义词</view>
-        <view class="entry" wx:for="{{semantic}}" wx:key="head">
-          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" bindtap="explore">继续关联 ›</button></view>
+        <view class="entry" data-id="{{item.id}}" bindtap="openDetail" wx:for="{{semantic}}" wx:key="head">
+          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
           <text class="sense">相近义项：{{item.sense}}</text>
           <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
           <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
@@ -30,8 +29,8 @@
         <view class="relation-group shape-group">
         <view class="section-title"><text class="section-name">字形／结构相近</text><text>{{result.shapes.length}} 词</text></view>
         <view class="empty" wx:if="{{!shapes.length}}">词库中暂无近形关联词</view>
-        <view class="entry" wx:for="{{shapes}}" wx:key="head">
-          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord"><text wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" bindtap="explore">继续关联 ›</button></view>
+        <view class="entry" data-id="{{item.id}}" bindtap="openDetail" wx:for="{{shapes}}" wx:key="head">
+          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord"><text wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
           <view class="spelling-compare"><text>{{item.reason}}：<text wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
           <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
           <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>

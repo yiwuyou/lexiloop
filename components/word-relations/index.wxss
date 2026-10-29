@@ -8,6 +8,8 @@
 .is-closing .relation-backdrop { opacity: 0; }
 .relation-sheet.is-dragging { transition: none; }
 .sheet-grip { width: 64rpx; height: 7rpx; margin: 6rpx auto 0; border-radius: 7rpx; background: #cbd6ce; }
+.sheet-handle { min-height: 44rpx; display: flex; align-items: center; justify-content: center; }
+.sheet-handle .sheet-grip { margin: 0; }
 .word-structure { margin: 0 0 16rpx; color: #42664f; font-size: 26rpx; line-height: 1.6; }
 .word-structure text { display: block; }
 .word-structure text + text { margin-top: 6rpx; font-size: 23rpx; color: var(--muted, #657169); }

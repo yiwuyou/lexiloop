@@ -226,14 +226,14 @@ for (const [head, guide] of Object.entries(memoryGuides)) {
   }
 }
 for (const page of ['study', 'library']) {
-  const markup = fs.readFileSync(path.join(root, 'pages', page, 'index.wxml'), 'utf8');
+  const markup = fs.readFileSync(path.join(root, page === 'study' ? 'components/word-card/index.wxml' : 'pages/library/index.wxml'), 'utf8');
   assert.ok(markup.includes('partOfSpeech'));
-  assert.strictEqual(markup.includes('bindtap="showExampleSource"'), page === 'library');
+  assert.strictEqual(markup.includes('catchtap="showExampleSource"'), page === 'library');
   assert.ok(!markup.includes('exampleCredit'), 'raw attribution should be in disclosure, not inline');
 }
-assert.ok(fs.readFileSync(path.join(root, 'pages/study/index.wxml'), 'utf8').includes('wx:if="{{word.family}}"'));
-assert.ok(fs.readFileSync(path.join(root, 'pages/study/index.wxml'), 'utf8').includes('wx:if="{{word.phrase}}"'));
-assert.ok(fs.readFileSync(path.join(root, 'pages/study/index.wxml'), 'utf8').includes('关联记忆'));
+assert.ok(fs.readFileSync(path.join(root, 'components/word-card/index.wxml'), 'utf8').includes('wx:if="{{word.family}}"'));
+assert.ok(fs.readFileSync(path.join(root, 'components/word-card/index.wxml'), 'utf8').includes('wx:if="{{word.phrase}}"'));
+assert.ok(fs.readFileSync(path.join(root, 'components/word-card/index.wxml'), 'utf8').includes('关联记忆'));
 assert.ok(fs.readFileSync(path.join(root, 'pages/today/index.wxml'), 'utf8').includes('{{appVersion}}'));
 const moduleMock = { exports: {} };
 const loadedPaths = [];

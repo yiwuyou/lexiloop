@@ -10,6 +10,18 @@ const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
 let meta, flight, timer, capturing = false, ready = false, active = true;
 let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
+let captureTimer = null;
+let dirtyAt = 0;
+function captureSoon() {
+  if (captureTimer) return;
+  dirtyAt = Date.now();
+  message = '有记录待同步';
+  // Both local saves remain durable. Diff/journal work yields to card paint.
+  captureTimer = setTimeout(() => {
+    captureTimer = null;
+    try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); }
+  }, 120);
+}
 let message = '尚未开启云同步';
 let lastError = null;
 const listeners = new Set();
@@ -25,7 +37,7 @@ function status() {
   if (!meta) return { text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
   const date = new Date(meta.lastSyncedAt || 0);
   return {
-    text: message, enabled: meta.enabled, pending: meta.outbox.length, busy: !!flight,
+    text: message, enabled: meta.enabled, pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
     errorText: errors.format(lastError),
     last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
   };
@@ -38,6 +50,8 @@ function failed(error, stage, text) { lastError = errors.describe(error, stage);
 function subscribe(fn) { listeners.add(fn); fn(status()); return () => listeners.delete(fn); }
 function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.device !== meta.device); }
 function capture() {
+  const changedAt = dirtyAt || Date.now(); dirtyAt = 0;
+  clearTimeout(captureTimer); captureTimer = null;
   if (!meta || !meta.enabled || capturing) return;
   capturing = true;
   try {
@@ -61,7 +75,7 @@ function capture() {
     emit('有记录待同步');
     const answers = meta.outbox.reduce((n, event) => n + event.changes.filter(change => change.path[1] === 'recentReviews').length, 0);
     if (answers >= 10) schedule(1);
-    else schedule(60000);
+    else schedule(Math.max(1, 60000 - (Date.now() - changedAt)));
   } finally { capturing = false; }
 }
 function schedule(delay) {
@@ -101,6 +115,9 @@ async function request(action, data = {}) {
   catch (error) { if (!error.syncStage) error.syncStage = action; throw error; }
 }
 function accept(result) {
+  // A network response can beat the deferred capture timer. Capture local
+  // edits before applying its acknowledgement so no recent answer is lost.
+  capture();
   if (result.unchanged) {
     meta.owner = result.owner;
     meta.lastSyncedAt = Date.now();
@@ -224,7 +241,7 @@ function start() {
     ready = true;
     if (!meta.observed) meta.observed = model.clone(store.bundle());
     save();
-    store.onChange(capture);
+    store.onChange(captureSoon);
     if (meta.enabled) flush().catch(() => {});
     else {
       connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
@@ -232,6 +249,6 @@ function start() {
   } catch (error) { ready = false; failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
 }
 function foreground(online) { active = true; if (online) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
-function background() { active = false; if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }
-function dispose() { clearTimeout(timer); store.onChange(null); listeners.clear(); }
+function background() { active = false; try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); } if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }
+function dispose() { clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
 module.exports = { start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };

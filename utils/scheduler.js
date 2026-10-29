@@ -1,99 +1,41 @@
 const { DAY_MS, dayKey, startOfDay } = require('./date');
-
-const MINUTE_MS = 60 * 1000;
-
-const GRADE = {
-  AGAIN: 'again',
-  HARD: 'hard',
-  GOOD: 'good',
-  EASY: 'easy',
-};
-
-function initialState() {
-  return {
-    seen: false,
-    reps: 0,
-    lapses: 0,
-    interval: 0,
-    ease: 2.4,
-    dueAt: 0,
-    lastAt: 0,
-    lastGrade: '',
-    hardStreak: 0,
-  };
+const GRADE = { AGAIN: 'again', HARD: 'hard', GOOD: 'good', EASY: 'easy' };
+let engine, pending;
+function prepare() {
+  if (engine) return Promise.resolve();
+  if (typeof require.async !== 'function') { engine = require('../scheduler-data/ready'); return Promise.resolve(); }
+  if (!pending) pending = require.async('../scheduler-data/ready.js').then(value => { engine = value; pending = null; }, error => { pending = null; throw error; });
+  return pending;
 }
-
-function clamp(value, minimum, maximum) {
-  return Math.min(maximum, Math.max(minimum, value));
-}
-
+function initialState() { return { seen: false, reps: 0, lapses: 0, interval: 0, ease: 2.4, dueAt: 0, lastAt: 0, lastGrade: '', hardStreak: 0 }; }
 function review(previous, grade, now) {
-  const time = now || Date.now();
+  if (!Object.values(GRADE).includes(grade)) throw new Error('invalid-grade');
+  if (!engine && typeof require.async !== 'function') engine = require('../scheduler-data/ready');
+  if (!engine) throw new Error('复习算法尚未准备好，请稍后重试');
+  const time = now || Date.now(), today = dayKey(time);
   const state = Object.assign(initialState(), previous || {});
-  const firstReview = !state.seen || state.reps === 0;
-  let interval = state.interval || 0;
-  let ease = state.ease || 2.4;
-  let dueAt;
-  let lapses = state.lapses || 0;
-  const today = dayKey(time);
-  const failed = grade === GRADE.AGAIN || grade === GRADE.HARD;
-  const failedToday = failed || state.failedDay === today;
-  const sameDaySuccess = state.passedDay === today;
-
-  if (grade === GRADE.AGAIN) {
-    interval = 0;
-    ease = clamp(ease - 0.2, 1.3, 3.0);
-    dueAt = time + 10 * MINUTE_MS;
-    lapses += 1;
-  } else if (grade === GRADE.HARD) {
-    interval = firstReview ? 1 : Math.max(1, Math.round(interval * 1.25));
-    ease = clamp(ease - 0.08, 1.3, 3.0);
-    dueAt = time + interval * DAY_MS;
-  } else if (grade === GRADE.EASY) {
-    interval = firstReview ? 7 : Math.max(interval + 2, Math.round(interval * ease * 1.3));
-    ease = clamp(ease + 0.12, 1.3, 3.0);
-    dueAt = time + interval * DAY_MS;
-  } else {
-    interval = firstReview ? 3 : Math.max(interval + 1, Math.round(interval * ease));
-    dueAt = time + interval * DAY_MS;
-  }
-
-  // Within-session repetitions are not independent spaced successes.
-  if (!failed && failedToday) {
-    interval = 1;
-    dueAt = startOfDay(time) + DAY_MS;
-    ease = state.ease;
-  } else if (!failed && sameDaySuccess) {
-    interval = state.interval;
-    dueAt = state.dueAt;
-    ease = state.ease;
+  const failed = grade === 'again' || grade === 'hard';
+  const validModel = state.fsrsVersion === engine.version && state.fsrs;
+  // Old ease/interval values are not fabricated FSRS histories. A card enters
+  // the model at its next actual answer, without resetting learned progress.
+  const repeatedSuccess = !failed && state.passedDay === today && validModel;
+  let model = repeatedSuccess
+    ? state.fsrs : JSON.parse(JSON.stringify(engine.review(validModel || null, grade, time)));
+  let dueAt = new Date(model.due).getTime();
+  let interval = Number(model.scheduled_days || 0);
+  if (!failed && !repeatedSuccess && (state.failedDay === today || state.needsContext)) {
+    dueAt = Math.min(dueAt, startOfDay(time) + DAY_MS); interval = Math.max(0, (dueAt - time) / DAY_MS);
+    model = Object.assign({}, model, { due: new Date(dueAt).toISOString(), scheduled_days: interval });
   }
   return Object.assign({}, state, {
-    seen: true,
-    reps: state.reps + 1,
-    lapses,
-    interval,
-    ease: Number(ease.toFixed(2)),
-    dueAt,
-    lastAt: time,
-    lastGrade: grade,
-    hardStreak: grade === GRADE.HARD ? Number(state.hardStreak || 0) + 1 : 0,
-    needsRecall: failed,
-    failedDay: failed ? today : state.failedDay || '',
-    passedDay: failed ? state.passedDay || '' : today,
+    seen: true, reps: state.reps + 1, lapses: state.lapses + (grade === 'again' ? 1 : 0),
+    interval, dueAt, lastAt: time, lastGrade: grade,
+    hardStreak: grade === 'hard' ? Number(state.hardStreak || 0) + 1 : 0,
+    needsRecall: failed, failedDay: failed ? today : state.failedDay || '', passedDay: failed ? state.passedDay || '' : today,
+    fsrs: model, fsrsVersion: engine.version, fsrsNeedsRecheck: false,
   });
 }
-
-function isWeak(state) {
-  return Boolean(state && state.seen && (state.lapses >= 2 || state.lastGrade === GRADE.AGAIN));
-}
-
-function isStable(state) {
-  return Boolean(state && state.seen && state.interval >= 14 && state.lastGrade !== GRADE.AGAIN);
-}
-
-function isRecoveryPending(state) {
-  return Boolean(state && state.seen && state.recoveredAt && !Number(state.reps || 0));
-}
-
-module.exports = { GRADE, initialState, isRecoveryPending, isStable, isWeak, review };
+function isWeak(state) { return Boolean(state && state.seen && (state.lapses >= 2 || state.lastGrade === 'again')); }
+function isStable(state) { return Boolean(state && state.seen && state.interval >= 14 && !state.needsRecall && state.lastGrade !== 'again'); }
+function isRecoveryPending(state) { return Boolean(state && state.seen && state.recoveredAt && !Number(state.reps || 0)); }
+module.exports = { GRADE, initialState, isRecoveryPending, isStable, isWeak, review, prepare };

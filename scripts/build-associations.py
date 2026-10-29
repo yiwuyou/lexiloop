@@ -102,7 +102,7 @@ def main():
     CONTENT_PATH.write_text(
         '// Generated learning content with reviewed spelling-linked memory routes\n'
         'module.exports = '
-        + json.dumps(candidate, ensure_ascii=False, separators=(',', ':'))
+        + json.dumps({key: {field: value for field, value in item.items() if value != '' and not (field == 'wordForms' and value == [])} for key, item in candidate.items()}, ensure_ascii=False, separators=(',', ':'))
         + ';\n',
         'utf-8',
     )

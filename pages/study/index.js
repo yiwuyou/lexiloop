@@ -62,8 +62,8 @@ Page({
   },
 
   onLoad(options = {}) {
-    this.audio = wx.createInnerAudioContext();
-    this.audio.obeyMuteSwitch = false;
+    scheduler.prepare().catch(() => {});
+    this.audio = require('../../utils/audio-options').create();
     this.audioPlaying = false;
     this.audioStarted = false;
     this.audio.onPlay(() => {
@@ -105,9 +105,12 @@ Page({
 
   onShow() {
     this.activeStartedAt = Date.now();
-    if (this.session && !this.data.completed) this.renderCurrent();
+    if (this.detailReturn) {
+      const state = store.getState(), snapshot = this.detailReturn; this.detailReturn = null;
+      this.setData(Object.assign(snapshot, { isWeakMarked: weakBook.isMarked(state, this.data.word.id), isSentenceSaved: sentenceBook.has(state, this.data.word.example) }));
+    } else if (this.session && !this.data.completed) this.renderCurrent();
     if (this.stopSync) this.stopSync();
-    this.stopSync = cloudSync.subscribe(() => this.setData({ syncBlocked: cloudSync.blocked() }));
+    this.stopSync = cloudSync.subscribe(() => { const blocked = cloudSync.blocked(); if (blocked !== this.data.syncBlocked) this.setData({ syncBlocked: blocked }); });
   },
 
   async takeOverStudy() {
@@ -182,9 +185,15 @@ Page({
     if (this.data.isContext ? !this.data.contextAnswered : !this.data.revealed) return;
     this.setData({ relationWordId: this.data.word.id, relationsOpen: true });
   },
+  openWordDetail(event) {
+    const id = event.detail.wordId;
+    if (!getWord(id)) return;
+    this.detailReturn = { relationsOpen: true, revealed: this.data.revealed, contextAnswered: this.data.contextAnswered, contentScrollTop: this.data.contentScrollTop };
+    wx.navigateTo({ url: '/word-detail/index?id=' + encodeURIComponent(id), fail: () => { this.detailReturn = null; } });
+  },
   closeRelations() { this.setData({ relationsOpen: false }); },
 
-  renderCurrent() {
+  renderCurrent(currentState) {
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
     const renderVersion = this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
@@ -219,7 +228,7 @@ Page({
       question = Object.assign({}, question, { choices: question.choices.slice(shift).concat(question.choices.slice(0, shift)),
         answer: (question.answer - shift + question.choices.length) % question.choices.length });
     }
-    const state = store.getState();
+    const state = currentState || store.getState();
     this.setData({
       waiting: false,
       relationsOpen: false,
@@ -289,9 +298,9 @@ Page({
     const measure = () => {
       const query = wx.createSelectorQuery().in(this);
       query.select('.study-content').boundingClientRect();
-      query.select('.word-card').boundingClientRect();
+      query.select('.study-word-card').boundingClientRect();
       query.exec(rects => {
-        if (!rects[0] || !rects[1] || !this.data.revealed || this.data.word.id !== wordId || version !== this.contentRenderVersion) return;
+        if (!rects[0] || !rects[1] || rects[0].height <= 0 || rects[1].height <= 0 || !this.data.revealed || this.data.word.id !== wordId || version !== this.contentRenderVersion) return;
         const value = Math.max(1, Math.ceil(Math.min(rects[0].height, rects[1].height)));
         if (this.contentTouchActive) this.pendingContentHeight = { value, version };
         else this.setData({ contentHeight: value });
@@ -353,7 +362,7 @@ Page({
       day: this.session.day,
       wordId: word.id,
       phase: item.phase,
-      result: grade,
+      result: grade, scheduler: state.cards[word.id].fsrsVersion, modelRating: grade === 'easy' ? 4 : grade === 'good' ? 3 : 1,
       overdue: Boolean(item.overdue),
     });
 
@@ -383,7 +392,7 @@ Page({
     this.writeDailyProgress(state);
     store.saveState(state);
     store.saveSession(this.session);
-    this.renderCurrent();
+    this.renderCurrent(state);
     } finally {
       this.ratingBusy = false;
     }
@@ -438,6 +447,7 @@ Page({
       card.failedDay = dayKey(now);
       card.lastGrade = 'hard';
       card.interval = Math.min(card.interval || 1, 1);
+      if (card.fsrs) card.fsrs = Object.assign({}, card.fsrs, { due: new Date(card.dueAt).toISOString(), scheduled_days: card.interval });
       if (item.phase === 'context') card.needsContext = item.questionId;
       else card.needsRecall = true;
       state.cards[item.wordId] = card;

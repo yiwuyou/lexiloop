@@ -98,3 +98,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+## ts-fsrs 5.4.1
+
+FSRS-6 implementation by open-spaced-repetition contributors, MIT license. Vendored unchanged in scheduler-data/vendor.js; license in scheduler-data/LICENSE. Source: https://github.com/open-spaced-repetition/ts-fsrs/tree/v5.4.1 . Default parameters; no claim of personal parameter fitting.
