@@ -95,7 +95,7 @@ assert.ok(!/<view class="audio-button"[^>]*bindtap="playPronunciation"/.test(car
   'the audio handler must not be limited to the small play icon');
 const todayTemplate = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxml'), 'utf8');
 const todayStyles = fs.readFileSync(path.join(__dirname, '..', 'pages/today/index.wxss'), 'utf8');
-['以后分批复习', '旧词复习', '新词学习', '今日已过关', '主动复习'].forEach((label) => {
+['以后分批复习', '旧词复习', '新词学习', '今日学习任务', '主动复习'].forEach((label) => {
   assert.ok(todayTemplate.includes(label), `home review summary missing: ${label}`);
 });
 assert.ok(!todayTemplate.includes('积压修复'), 'the internal backlog must not be shown as a separate task');

@@ -4,8 +4,8 @@
     <view class="study-head">
       <button class="head-button" bindtap="exitStudy">返回</button>
       <view class="counter">
-        <text class="phase">{{isPractice ? '主动复习' : '今日已过关'}}</text>
-        <text class="counter-value">{{taskDone}} / {{taskTotal}} 词</text>
+        <text class="phase">{{taskLabel}}</text>
+        <text class="counter-value">已完成 {{taskDone}} / {{taskTotal}} 词</text>
       </view>
       <button class="head-button" bindtap="exitStudy">退出</button>
     </view>
@@ -75,12 +75,12 @@
       </view>
       <view class="complete-grid" wx:else>
         <view><text>{{sessionSummary.usedTime}}</text><text>今日学习用时</text></view>
-        <view><text>{{sessionSummary.newDone}}</text><text>新词</text></view>
-        <view><text>{{sessionSummary.dueDone}}</text><text>复习</text></view>
+        <view><text>{{sessionSummary.newDone}}</text><text>新词完成</text></view>
+        <view><text>{{sessionSummary.dueDone}}</text><text>旧词完成</text></view>
       </view>
       <view class="context-summary" wx:if="{{sessionSummary.contextDone}}">语境辨义 {{sessionSummary.contextCorrect}} / {{sessionSummary.contextDone}}</view>
       <view class="context-summary" wx:if="{{sessionSummary.sentenceDone}}">例句巩固 {{sessionSummary.sentenceCorrect}} / {{sessionSummary.sentenceDone}}</view>
-      <view class="context-summary" wx:if="{{!isPractice}}">{{sessionSummary.initialEstimate.resumed ? '接续时预计' : '开始时预计'}}：{{sessionSummary.initialTime}} · 今日任务已过关</view>
+      <view class="context-summary" wx:if="{{!isPractice}}">{{sessionSummary.initialEstimate.resumed ? '接续时预计' : '开始时预计'}}：{{sessionSummary.initialTime}} · 今日任务已完成</view>
       <button class="primary-button" bindtap="exitStudy">返回首页</button>
     </view>
   </block>

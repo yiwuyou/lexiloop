@@ -1,5 +1,6 @@
 const context = require('../../utils/context');
 const mastery = require('../../utils/mastery');
+const studyOrder = require('../../utils/study-order');
 const { DAY_MS, dayKey, startOfDay } = require('../../utils/date');
 const scheduler = require('../../utils/scheduler');
 const store = require('../../utils/store');
@@ -17,8 +18,8 @@ const clock = require('../../utils/learning-clock');
 const timeLedger = require('../../utils/time-ledger');
 
 const PHASE_LABELS = {
-  review: '到期复习',
-  new: '新词建联',
+  review: '旧词复习',
+  new: '新词学习',
   reinforcement: '难词强化',
   context: '延迟抽测',
   sentence: '例句巩固',
@@ -62,7 +63,7 @@ Page({
     relationsOpen: false,
     relationWordId: '',
     syncBlocked: false,
-    taskDone: 0, taskTotal: 0, stageDetail: '', usedTime: '0分钟', remainingTime: '',
+    taskLabel: '', taskDone: 0, taskTotal: 0, stageDetail: '', usedTime: '0分钟', remainingTime: '',
   },
 
   onLoad(options = {}) {
@@ -225,16 +226,14 @@ Page({
     this.pendingContentHeight = null;
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
-    if (this.session.index >= this.session.queue.length) {
-      if (!this.data.isPractice) {
-        const state = store.getState(); mastery.recover(this.session, state.cards); metrics.recover(state, this.session);
-      }
-    }
+    const state = currentState || store.getState();
+    if (this.session.index >= this.session.queue.length && !this.data.isPractice) mastery.recover(this.session, state.cards);
+    mastery.available(this.session, Date.now());
+    if (!this.data.isPractice && studyOrder.reconcile(this.session, state) && !cloudSync.blocked()) store.saveSession(this.session);
     if (this.session.index >= this.session.queue.length) {
       this.finishSession();
       return;
     }
-    mastery.available(this.session, Date.now());
     const item = this.currentItem();
     const word = getWord(item.wordId);
     if (!word) {
@@ -242,10 +241,11 @@ Page({
       this.renderCurrent();
       return;
     }
-    const samePhaseBefore = this.session.queue
-      .slice(0, this.session.index + 1)
-      .filter((candidate) => candidate.phase === item.phase).length;
-    const phaseTotal = this.session.queue.filter((candidate) => candidate.phase === item.phase).length;
+    const wordPlan = this.data.isPractice ? {} : metrics.planFor(state, this.session, this.session.day);
+    const kind = this.data.isPractice ? 'practice' : studyOrder.kindOf(item, wordPlan, state);
+    const inPhase = candidate => candidate.phase === item.phase && (this.data.isPractice || studyOrder.kindOf(candidate, wordPlan, state) === kind);
+    const samePhaseBefore = this.session.queue.slice(0, this.session.index + 1).filter(inPhase).length;
+    const phaseTotal = this.session.queue.filter(inPhase).length;
     const isQuestion = item.phase === 'context' || item.phase === 'sentence';
     let question = isQuestion ? context.getById(item.questionId) : null;
     if (question && item.retry) {
@@ -253,10 +253,10 @@ Page({
       question = Object.assign({}, question, { choices: question.choices.slice(shift).concat(question.choices.slice(0, shift)),
         answer: (question.answer - shift + question.choices.length) % question.choices.length });
     }
-    const state = currentState || store.getState();
     const task = this.data.isPractice ? { done: this.session.index, total: this.session.queue.length,
       percent: Math.round(this.session.index / this.session.queue.length * 100) } : metrics.summary(state, this.session, this.session.day);
-    const remainingPhase = new Set(this.session.queue.slice(this.session.index).filter(r => r.phase === item.phase).map(r => r.wordId)).size;
+    const active = this.data.isPractice ? Object.assign({ label: '主动复习' }, task) : metrics.section(task, kind);
+    const remainingPhase = new Set(this.session.queue.slice(this.session.index).filter(inPhase).map(r => r.wordId)).size;
     const stageDetail = isQuestion ? `第${samePhaseBefore}/${phaseTotal}题（含重练）`
       : item.phase === 'reinforcement' ? `还有${remainingPhase}词待回忆` : this.data.isPractice ? '单独统计，不抵扣今日任务' : '';
     clock.enter(item.phase);
@@ -271,7 +271,7 @@ Page({
       contextCorrect: Boolean(item.correct),
       current: this.session.index + 1,
       currentInPhase: samePhaseBefore,
-      taskDone: task.done, taskTotal: task.total, stageDetail,
+      taskLabel: active.label, taskDone: active.done, taskTotal: active.total, stageDetail,
       usedTime: timeLedger.format(timeLedger.summary(state.daily[timeLedger.dayKey(Date.now())] || {}, timeLedger.dayKey(Date.now())).seconds),
       remainingTime: metrics.estimate(state, this.session, {}, Date.now()).text,
       isContext: isQuestion,
@@ -281,7 +281,7 @@ Page({
         : '这里的词义是：',
       phaseLabel: PHASE_LABELS[item.phase] || '单词学习',
       phaseTotal,
-      progress: task.percent,
+      progress: active.percent,
       question,
       showQuestionExplanation: item.phase !== 'sentence' || Boolean(word.exampleSense),
       revealed: false,
@@ -432,6 +432,7 @@ Page({
 
     this.captureElapsed();
     this.session.index += 1;
+    studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
     store.saveState(state);
     store.saveSession(this.session);
@@ -515,8 +516,9 @@ Page({
     store.saveState(state);
     store.saveSession(this.session);
     const task = metrics.summary(state, this.session, this.session.day);
+    const active = metrics.section(task, studyOrder.kind(state, this.session, item));
     this.setData({
-      taskDone: task.done, taskTotal: task.total, progress: task.percent,
+      taskLabel: active.label, taskDone: active.done, taskTotal: active.total, progress: active.percent,
       contextAnswered: true,
       contextCorrect: correct,
       selectedChoice: index,
@@ -539,6 +541,7 @@ Page({
     this.captureElapsed();
     this.session.index += 1;
     const state = store.getState();
+    studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
     store.saveState(state);
     store.saveSession(this.session);

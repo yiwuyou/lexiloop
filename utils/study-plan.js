@@ -233,6 +233,7 @@ function prepareSession(session, state, settings, now) {
       });
     changed = true;
   }
+  if (require('./study-order').reconcile(session, state)) changed = true;
   return changed;
 }
 
@@ -292,7 +293,9 @@ function buildSession(state, settings, now) {
     batchNewGoal: newWords.length,
     extraNew: daily.extraNew || 0,
   });
-  return require('./task-carry').attach(session, state, settings, [], time);
+  require('./task-carry').attach(session, state, settings, [], time);
+  require('./study-order').reconcile(session, state);
+  return session;
 }
 
 function buildExtraSession(state, settings, requested, now) {

@@ -44,7 +44,7 @@
     <text class="backup-note">前台学习用时，后台暂停；连续3分钟未操作后暂停，触摸继续。不是纯记忆时间。</text>
     <view class="learning-day" wx:for="{{learningHistory}}" wx:key="day">
       <button class="day-record" data-day="{{item.day}}" bindtap="toggleDay"><text>{{item.day}}{{item.today ? ' · 今天' : ''}}</text><text>{{item.used}} ›</text></button>
-      <view class="day-brief">旧词 {{item.review}} · 新词 {{item.new}} {{item.wordLabel}}</view>
+      <view class="day-brief">旧词 {{item.review}} 词 · 新词 {{item.new}} 词（{{item.wordLabel}}）</view>
       <view class="day-detail" wx:if="{{expandedDay === item.day}}">
         <text>{{item.initialLabel}}：{{item.initial}}</text><text>今日已用：{{item.used}} {{item.legacyTime}}</text>
         <text wx:if="{{item.precise}}">旧词 {{item.reviewTime}} · 新词 {{item.newTime}}</text>
@@ -62,7 +62,7 @@
         <text>{{item.label}}</text>
       </view>
     </view>
-    <text class="legend">绿色：完成　橙色：部分完成　灰色：未学习。新版按过关词；旧版保留首答记录。</text>
+    <text class="legend">绿色：完成　橙色：部分完成　灰色：未学习。新版按完成词数；旧版保留首答记录。</text>
   </view>
 
   <view class="section-card card">

@@ -116,6 +116,8 @@ function summary(state, session, day = ledger.dayKey(Date.now()), preview) {
   result.percent = result.total ? Math.round(result.done / result.total * 100) : 0;
   result.reviewRemaining = result.reviewGoal - result.reviewPassed;
   result.newRemaining = result.newGoal - result.newPassed;
+  result.reviewPercent = result.reviewGoal ? Math.round(result.reviewPassed / result.reviewGoal * 100) : 0;
+  result.newPercent = result.newGoal ? Math.round(result.newPassed / result.newGoal * 100) : 0;
   result.legacy = Object.keys(plan).length < result.total || (!daily.taskPlan && Boolean(daily.dueDone || daily.newDone));
   return result;
 }
@@ -131,4 +133,9 @@ function recover(state, session) {
     waiting.add(id);
   });
 }
-module.exports = { planFor, pending, passed, commit, summary, estimate, range, recover };
+function section(task, kind) {
+  return kind === 'new'
+    ? { label: '新词学习', done: task.newPassed, total: task.newGoal, percent: task.newPercent }
+    : { label: '旧词复习', done: task.reviewPassed, total: task.reviewGoal, percent: task.reviewPercent };
+}
+module.exports = { section, planFor, pending, passed, commit, summary, estimate, range, recover };

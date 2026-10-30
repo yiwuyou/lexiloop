@@ -265,3 +265,8 @@
   color: var(--muted);
   font-size: 22rpx;
 }
+
+.daily-title { font-size: 31rpx; font-weight: 600; }
+.task-item .task-label { margin-bottom: 12rpx; color: var(--text); font-size: 26rpx; }
+.task-item .task-unit { margin-left: 5rpx; color: var(--muted); font-size: 20rpx; }
+.task-item .progress-track { margin: 14rpx 0 10rpx; }

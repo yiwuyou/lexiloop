@@ -16,17 +16,36 @@ try{
  require('../pages/study/index');
  page.data=clone(page.data);page.setData=function(patch,callback){Object.entries(patch).forEach(([key,value])=>{const parts=key.split('.');let target=this.data;for(const p of parts.slice(0,-1))target=target[p];target[parts.at(-1)]=value;});if(callback)callback();};
  page.onLoad({});page.onShow();
- assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,150);
+ assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,100);
  page.revealAnswer();now+=5000;page.rate({currentTarget:{dataset:{grade:'hard'}}});
- assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,150);
- let steps=0;
+ assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,100);
+ let steps=0,lastOldFailure=false,oldQuestionFailure=false,newFailure=false;
  while(!page.data.completed&&steps++<400){
+  if(page.currentItem().phase==='new') assert.equal(metrics.summary(store.getState(),page.session,page.session.day).reviewRemaining,0,'new words must wait for every scheduled old-word recall and question');
   now+=3000;
-  if(page.data.isContext){page.chooseContext({currentTarget:{dataset:{index:page.data.question.answer}}});page.nextContext();}
-  else{page.revealAnswer();page.rate({currentTarget:{dataset:{grade:'easy'}}});}
-  assert.equal(page.data.taskTotal,150,'repeated questions never change the word goal');
+  if(page.data.isContext){
+   let answer=page.data.question.answer;
+   if(require('../utils/study-order').kind(store.getState(),page.session,page.currentItem())==='review'&&!oldQuestionFailure){answer=(answer+1)%page.data.question.choices.length;oldQuestionFailure=true;}
+   page.chooseContext({currentTarget:{dataset:{index:answer}}});page.nextContext();
+  }else{
+   const item=page.currentItem();let grade='easy';
+   if(item.phase==='review'&&!lastOldFailure&&!page.session.queue.slice(page.session.index+1).some(x=>x.phase==='review')){grade='hard';lastOldFailure=true;}
+   if(item.phase==='new'&&!newFailure){grade='hard';newFailure=true;}
+   page.revealAnswer();page.rate({currentTarget:{dataset:{grade}}});
+  }
+  if(!page.data.completed){
+   const task=metrics.summary(store.getState(),page.session,page.session.day);
+   const kind=require('../utils/study-order').kind(store.getState(),page.session,page.currentItem());
+   const expected=metrics.section(task,kind);
+   assert.equal(page.data.taskLabel,expected.label);
+   assert.equal(page.data.taskDone,expected.done);
+   assert.equal(page.data.taskTotal,expected.total,'only the current old/new group supplies the denominator');
+   assert.equal(page.data.progress,expected.percent);
+   if(kind==='new') assert.equal(task.reviewRemaining,0,'no old-word follow-up may remain when learning a new word');
+  }
  }
  assert.ok(page.data.completed,'all required tasks eventually finish');
+ assert.ok(lastOldFailure&&oldQuestionFailure&&newFailure,'exercise the last old recall, a wrong old question, and new-word reinforcement');
  const daily=store.getState().daily['2026-10-30'];
  assert.equal(daily.dueDone,100);assert.equal(daily.newDone,50);
  const final=metrics.summary(store.getState(),null,'2026-10-30');
