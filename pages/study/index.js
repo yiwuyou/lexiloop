@@ -242,7 +242,9 @@ Page({
       currentInPhase: samePhaseBefore,
       isContext: isQuestion,
       questionLabel: item.phase === 'sentence' ? '例句巩固' : '语境辨义',
-      questionPrompt: item.phase === 'sentence' ? '结合句子回忆，这个单词的主要义是：' : '这里的词义是：',
+      questionPrompt: item.phase === 'sentence'
+        ? (word.exampleSense ? '结合句子，这个单词在本句中表示：' : '结合句子回忆，这个单词的主要义是：')
+        : '这里的词义是：',
       phaseLabel: PHASE_LABELS[item.phase] || '单词学习',
       phaseTotal,
       progress: Math.round(((this.session.index + 1) / this.session.queue.length) * 100),

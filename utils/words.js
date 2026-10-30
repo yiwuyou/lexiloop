@@ -1,7 +1,7 @@
 const tuples = require('../data/vocabulary');
 const enrichment = require('../data/enrichment');
 const learningContent = require('../data/learning-content');
-const exampleCorrections = require('../data/example-corrections');
+const readingContent = require('../data/reading-content');
 
 let cache;
 let mapCache;
@@ -21,8 +21,13 @@ function inflate(tuple, position) {
     sourceLabel: `${category === 'core' ? '核心' : '高频'} day ${tuple[1]} · #${tuple[2]}`,
     searchText: `${tuple[3]} ${tuple[4]}`.toLowerCase(),
     enhanced: true, family: '', phrase: '', contrast: '', cue: '', wordForms: [],
-  }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {},
-  exampleCorrections[id] || {});
+  }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {});
+  const reading = readingContent.sentences[readingContent.words[id]];
+  word.example = reading[0];
+  word.translation = reading[1];
+  word.exampleCredit = 'LexiLoop 编写';
+  word.phrase = readingContent.phrases[id] || '';
+  word.exampleSense = readingContent.senses[id] || '';
   const generated = learningContent[id] || {};
   // A reviewed guide is newer than the legacy enrichment hints. Re-apply only
   // its learning fields so older hand-corrected IPA/example data stays intact.
@@ -49,7 +54,7 @@ function inflate(tuple, position) {
   word.hasMemoryContent = Boolean(word.breakdown || word.associationHint || word.contrast || word.phrase
     || word.family || (word.wordForms && word.wordForms.length));
   word.exampleSourceDetail = word.exampleCredit === 'LexiLoop 编写'
-    ? '本应用编写的记忆例句，不是机构原文。'
+    ? '本应用原创的英语（二）阅读风格练习例句，不是历年真题原文或机构例句。'
     : '例句选自 Tatoeba。许可：CC BY 2.0 France。中文已转为简体。\n' + word.exampleCredit + '\nhttps://creativecommons.org/licenses/by/2.0/fr/';
   return word;
 }

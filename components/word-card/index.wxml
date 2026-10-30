@@ -27,8 +27,9 @@
             </block>
             <text class="meaning" wx:else>{{word.meaning}}</text>
             <view class="example-panel" wx:if="{{word.example}}">
-              <view class="sentence-heading"><text class="memory-label">例句 · 放进场景记</text><button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
+              <view class="sentence-heading"><text class="memory-label">阅读例句 · 原创</text><button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
               <text class="example-en">{{word.example}}</text>
+              <text class="example-zh" wx:if="{{word.exampleSense}}">例句义：{{word.exampleSense}}</text>
               <text class="example-zh">{{word.translation}}</text>
             </view>
           </view>

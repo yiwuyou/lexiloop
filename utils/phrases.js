@@ -19,6 +19,7 @@ function load() {
 
 async function phraseFor(word) {
   if (!word) return '';
+  if (word.phrase) return word.phrase;
   const phrases = await load();
   return phrases[word.id] || word.phrase || '';
 }

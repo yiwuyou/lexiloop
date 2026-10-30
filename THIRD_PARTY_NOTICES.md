@@ -2,11 +2,13 @@
 
 The institution vocabulary and meanings were supplied by the project owner. They are not relicensed by this notice. Original supplementary examples are labelled “LexiLoop 编写”. These examples are learning aids, not examination quotations.
 
+As of 0.7.0, all 2522 vocabulary-card examples use the original English II reading-oriented bank in `data/reading-content.js`, authored in `data/reading-examples.tsv`. They are not quotations from past papers or third-party translations. The editorial references and scope are documented in `data/reading-content-notes.md`. Existing user-saved sentence snapshots are not rewritten.
+
 ## Tatoeba bilingual examples
 
 Source: https://www.manythings.org/anki/ (Mandarin Chinese/English cmn-eng corpus, snapshot dated 2026-02-13), derived from https://tatoeba.org/.
 
-Text licensed under CC BY 2.0 France: https://creativecommons.org/licenses/by/2.0/fr/ . Each reused pair retains its original sentence IDs, usernames and source notice in `data/learning-content.js` (`exampleCredit`), accessible through “例句来源与说明” beside the example in the app. Chinese translations have been converted to Simplified Chinese using OpenCC during the build. Sentences were selected and paired, not presented as institution-provided content. The original attribution names are not endorsements of this application.
+Text licensed under CC BY 2.0 France: https://creativecommons.org/licenses/by/2.0/fr/ . Earlier versions selected bilingual pairs and retained original sentence IDs, usernames and source notices in `exampleCredit`. Chinese translations were converted to Simplified Chinese using OpenCC. These pairs have been replaced in current vocabulary cards by the original bank; the legacy builder and Git history retain their source context. The original attribution names are not endorsements of this application.
 
 ## ECDICT phonetics, parts of speech, glosses and inflections
 
