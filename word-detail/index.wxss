@@ -1,3 +1,5 @@
 .detail-page { padding: 24rpx 26rpx calc(160rpx + env(safe-area-inset-bottom)); background: var(--surface); min-height: 100vh; box-sizing: border-box; }
-.detail-footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 16rpx 26rpx calc(20rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--line); background: var(--surface); }
-.detail-back { width: 100%; min-height: 44px; }
+.detail-footer { display: flex; align-items: center; gap: 12px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 16rpx 26rpx calc(20rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid var(--line); background: var(--surface); }
+.detail-back { flex: 1; min-width: 0; width: auto; min-height: 48px; margin: 0; }
+.detail-relations { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; min-width: 76px; min-height: 48px; margin: 0; padding: 0 8rpx; border: 0; background: transparent; color: var(--main-strong); font-size: 25rpx; line-height: 1.4; }
+.detail-relations::after { border: 0; }

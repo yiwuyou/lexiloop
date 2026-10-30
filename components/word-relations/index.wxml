@@ -16,10 +16,11 @@
         </view>
         <view class="relation-group semantic-group">
         <view class="section-title"><text class="section-name">意思相近</text><text>{{result.semantic.length}} 词</text></view>
-        <view class="empty" wx:if="{{!semantic.length}}">词库中暂无近义词</view>
+        <view class="empty" wx:if="{{!semantic.length}}">暂未收录已核对的近义关联</view>
         <view class="entry" data-id="{{item.id}}" bindtap="openDetail" wx:for="{{semantic}}" wx:key="head">
           <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
           <text class="sense">相近义项：{{item.sense}}</text>
+          <text class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
           <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
           <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
           <text class="source">{{item.sourceLabel}}</text>

@@ -2,5 +2,7 @@
   <word-card wx:if="{{word}}" word="{{word}}" revealed="{{true}}" phase-label="词条详情" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" />
   <view class="detail-footer" wx:if="{{word}}">
     <button class="secondary-button detail-back" bindtap="goBack" aria-label="返回上一页">返回</button>
+    <button class="detail-relations" bindtap="openRelations" aria-label="查看{{word.word}}的关联词">关联词 ›</button>
   </view>
+  <word-relations visible="{{relationsOpen}}" word-id="{{word.id}}" bindclose="closeRelations" binddetail="openWordDetail" />
 </view>

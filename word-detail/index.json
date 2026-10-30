@@ -1,6 +1,7 @@
 {
   "navigationBarTitleText": "单词详情",
   "usingComponents": {
-    "word-card": "/components/word-card/index"
+    "word-card": "/components/word-card/index",
+    "word-relations": "/components/word-relations/index"
   }
 }

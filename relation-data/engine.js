@@ -121,7 +121,7 @@ function build(wordId, data, state) {
   if (map[head].over) target.breakdown = 'over + ' + head.slice(4);
   if (head === 'overhaul') target.breakdownNote = 'haul：拖、拉。原指拉开索具检查，后来引申为彻底检修、大修。';
   const semantic = (data.synonyms[head] || []).filter((link) => map[link.word] && link.word !== head)
-    .map((link) => Object.assign(decorate(map[link.word], data, state), { sense: link.sense || '部分义项接近，请对照两种释义', parts: [{ text: link.word, shared: false }] }))
+    .map((link) => Object.assign(decorate(map[link.word], data, state), { sense: link.sense || '部分义项接近，请对照两种释义', note: link.note || '', parts: [{ text: link.word, shared: false }] }))
     .sort((left, right) => Number(right.learned) - Number(left.learned) || left.head.localeCompare(right.head));
   const shapes = shapeLinks(head, data).map((link) => {
     const entry = decorate(map[link.head], data, state);

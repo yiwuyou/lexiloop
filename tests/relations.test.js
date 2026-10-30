@@ -57,6 +57,17 @@ function testCorpus() {
     });
   });
 
+  const reviewed = require('../data/word-relations.json').semanticPairs;
+  reviewed.forEach(pair => {
+    for (const [from, to] of [pair.words, pair.words.slice().reverse()]) {
+      const link = engine.build(idFor(from), relationData, state).semantic.find(item => item.head === to);
+      assert.ok(link, from + ' must link to ' + to + ' in both directions');
+      assert.strictEqual(link.sense, pair.sense);
+      assert.strictEqual(link.note, pair.note, 'keep the sense boundary and usage distinction');
+    }
+  });
+  assert.ok(!engine.build(idFor('include'), relationData, state).semantic.some(item => item.head === 'require'), 'do not invent transitive synonyms via involve');
+
   const snapshot = JSON.stringify(state);
   const results = new Map();
   for (const word of words) {
@@ -401,6 +412,68 @@ function testStudyDialogIsInPlace() {
   if (study.stopSync) study.stopSync();
 }
 
+function testDetailRelationsNavigation() {
+  let definition;
+  const navigation = [], warnings = [];
+  const current = { route: 'word-detail/index', data: { word: getWord(idFor('include')) } };
+  let pages = [{ route: 'pages/library/index' }, current];
+  const before = JSON.stringify(state);
+  const dependencies = {
+    '../utils/words': { getWord },
+    '../utils/store': { getState: () => state, saveState() { assert.fail('detail exploration must not grade or change learning state'); } },
+    '../utils/weak-book': { isMarked: () => false },
+    '../utils/sentence-book': { has: () => false },
+    '../utils/audio': {},
+    '../utils/learning-clock': { enter() {} },
+  };
+  evaluate('word-detail/index.js', name => {
+    assert.ok(dependencies[name], name); return dependencies[name];
+  }, {
+    Page(value) { definition = value; },
+    getCurrentPages: () => pages,
+    wx: {
+      navigateTo(options) { navigation.push(['to', options]); },
+      navigateBack(options) { navigation.push(['back', options]); },
+      showToast(options) { warnings.push(options.title); },
+    },
+  });
+  const detail = Object.assign({}, definition, {
+    data: Object.assign(clone(definition.data), { word: current.data.word }),
+    setData(patch) { Object.assign(this.data, patch); },
+  });
+  detail.openRelations();
+  assert.strictEqual(detail.data.relationsOpen, true);
+  detail.closeRelations();
+  assert.strictEqual(detail.data.relationsOpen, false);
+  detail.openRelations();
+  const openInvolve = { detail: { wordId: idFor('involve') } };
+  detail.openWordDetail(openInvolve);
+  detail.openWordDetail(openInvolve);
+  assert.strictEqual(navigation.length, 1, 'double taps must not push duplicate detail pages');
+  assert.ok(navigation[0][1].url.endsWith('id=' + idFor('involve')));
+  assert.strictEqual(detail.data.word.id, idFor('include'));
+  assert.strictEqual(detail.data.relationsOpen, true, 'return to the same source relation list');
+  navigation[0][1].fail();
+  assert.strictEqual(detail.openingDetail, false, 'failed navigation permits another attempt');
+  assert.strictEqual(warnings.length, 1);
+  detail.onShow();
+  assert.strictEqual(detail.data.relationsOpen, true);
+  const earlier = { route: 'word-detail/index', data: { word: getWord(idFor('involve')), relationsOpen: true }, setData(patch) { Object.assign(this.data, patch); } };
+  pages = [earlier, current];
+  detail.openWordDetail(openInvolve);
+  assert.strictEqual(navigation[1][0], 'back', 'revisiting an open word reuses its existing detail page');
+  assert.strictEqual(navigation[1][1].delta, 1);
+  navigation[1][1].success();
+  assert.strictEqual(earlier.data.relationsOpen, false, 'the selected word must show its complete detail card, not an old popup');
+  detail.onShow();
+  detail.openWordDetail({ detail: { wordId: 'missing' } });
+  assert.strictEqual(navigation.length, 2);
+  assert.strictEqual(JSON.stringify(state), before);
+  const config = JSON.parse(source('word-detail/index.json'));
+  assert.strictEqual(config.usingComponents['word-relations'], '/components/word-relations/index');
+  assert.ok(source('word-detail/index.wxml').includes('bindclose="closeRelations"'));
+}
+
 (async function main() {
   testCorpus();
   await testLazyLoader();
@@ -408,5 +481,6 @@ function testStudyDialogIsInPlace() {
   testDismissGestures();
   testLibraryAndTemplates();
   testStudyDialogIsInPlace();
+  testDetailRelationsNavigation();
   console.log('Relation loader caching/retry, dialog request races, in-place study resume, read-only behavior, recall gates and cross-day library search passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

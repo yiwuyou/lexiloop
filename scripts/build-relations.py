@@ -290,13 +290,55 @@ def definitions(entry):
     return result
 
 
+def apply_reviewed_pairs(data, pairs, heads):
+    """Explicit, symmetric sense links; never infer transitive synonymy."""
+    synonyms = {head: {link['word']: link for link in links}
+                for head, links in data['synonyms'].items()}
+    seen = set()
+    for pair in pairs:
+        left, right = pair['words']
+        key = tuple(sorted((left, right)))
+        if left == right or left not in heads or right not in heads or key in seen:
+            raise ValueError('Invalid or duplicate reviewed semantic pair: ' + repr(key))
+        if not pair.get('sense') or not pair.get('note') or not pair.get('sources'):
+            raise ValueError('Reviewed pairs need a shared sense, usage note and sources')
+        seen.add(key)
+        for source, target in [(left, right), (right, left)]:
+            synonyms.setdefault(source, {})[target] = {
+                'word': target, 'sense': pair['sense'], 'note': pair['note']}
+    data['synonyms'] = {head: [links[target] for target in sorted(links)]
+                        for head, links in sorted(synonyms.items()) if links}
+    return data
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--project', type=Path, required=True)
-    parser.add_argument('--ecdict', type=Path, required=True)
+    parser.add_argument('--ecdict', type=Path)
+    parser.add_argument('--reviewed-only', action='store_true', help='Apply checked pairs to an existing offline corpus without replacing dictionary data')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     project = args.project
+    if args.reviewed_only:
+        vocab = load_js(project / 'data/vocabulary.js')
+        content = load_js(project / 'data/learning-content.js')
+        heads = {content['-'.join(map(str, row[:3]))]['spokenWord'].lower() for row in vocab}
+        pairs = json.loads((project / 'data/word-relations.json').read_text('utf-8')).get('semanticPairs', [])
+        data = apply_reviewed_pairs(load_js(args.output), pairs, heads)
+        args.output.write_text('// ECDICT glosses + reviewed meaning groups; exact-definition semantic edges.\nmodule.exports = ' +
+            json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
+        audit_path = args.output.with_suffix('.audit.json')
+        report = json.loads(audit_path.read_text('utf-8')) if audit_path.exists() else {}
+        report.update({'synonymHeads': len(data['synonyms']),
+            'directedSynonymEdges': sum(map(len, data['synonyms'].values())),
+            'reviewedSemanticPairs': len(pairs), 'bytes': args.output.stat().st_size})
+        report.setdefault('spotChecks', {}).update({head: {'common': data['common'][head], 'synonyms': data['synonyms'].get(head, [])}
+            for head in sorted({word for pair in pairs for word in pair['words']})})
+        audit_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', 'utf-8')
+        print(json.dumps({key: report[key] for key in ['synonymHeads', 'directedSynonymEdges', 'reviewedSemanticPairs', 'bytes']}))
+        return
+    if not args.ecdict:
+        parser.error('--ecdict is required for a full dictionary build')
     sys.path.insert(0, str(args.ecdict.parent / 'tools'))
     try:
         from opencc import OpenCC
@@ -374,11 +416,13 @@ def main():
     data = {'common': common, 'synonyms': {head: [{'word': target, 'sense': sense}
             for target, sense in sorted(targets.items())] for head, targets in sorted(edges.items()) if targets},
             'families': families, 'contrasts': contrasts}
+    data = apply_reviewed_pairs(data, relations.get('semanticPairs', []), heads)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text('// ECDICT glosses + reviewed meaning groups; exact-definition semantic edges.\nmodule.exports = ' +
         json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
     report = {'sourceRecords': len(vocab), 'heads': len(heads),
         'reviewedCommonCount': len(set(REVIEWED_COMMON) & heads),
+        'reviewedSemanticPairs': len(relations.get('semanticPairs', [])),
         'commonAvailable': sum(value != '暂无可靠常用释义' for value in common.values()),
         'synonymHeads': len(data['synonyms']), 'directedSynonymEdges': sum(map(len, data['synonyms'].values())),
         'automaticUndirectedEdges': auto_count, 'families': len(families), 'contrasts': len(contrasts),

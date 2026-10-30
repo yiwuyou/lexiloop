@@ -3,12 +3,12 @@
   "heads": 2514,
   "reviewedCommonCount": 60,
   "commonAvailable": 2514,
-  "synonymHeads": 338,
-  "directedSynonymEdges": 562,
+  "synonymHeads": 342,
+  "directedSynonymEdges": 574,
   "automaticUndirectedEdges": 16,
   "families": 67,
   "contrasts": 27,
-  "bytes": 230796,
+  "bytes": 233833,
   "missingCommon": [],
   "spotChecks": {
     "deliberate": {
@@ -88,6 +88,95 @@
           "sense": "移居（emigrate 专指移居国外）"
         }
       ]
+    },
+    "comprise": {
+      "common": "动词：包含、构成",
+      "synonyms": [
+        {
+          "word": "contain",
+          "sense": "整体包含部分（动词义）",
+          "note": "contain：强调内部含有某物；comprise：强调构成整体的各个部分。只在“整体包含部分”这一义项对照。"
+        },
+        {
+          "word": "include",
+          "sense": "包括组成部分（动词义）",
+          "note": "include：列出整体中的一部分，不要求列全；comprise：整体由所列部分组成。不要把中文“包括”直接等同为所有用法相同。"
+        }
+      ]
+    },
+    "contain": {
+      "common": "动词：包含、容纳、控制；动词：自制",
+      "synonyms": [
+        {
+          "word": "comprise",
+          "sense": "整体包含部分（动词义）",
+          "note": "contain：强调内部含有某物；comprise：强调构成整体的各个部分。只在“整体包含部分”这一义项对照。"
+        },
+        {
+          "word": "include",
+          "sense": "包括、包含（动词义）",
+          "note": "include：整体中包括某部分，常用于列举；contain：内部含有某物，也可指内容或成分。中文都可译为“包含”，侧重点不同。"
+        },
+        {
+          "word": "involve",
+          "sense": "包含某个部分（动词义）",
+          "note": "involve：活动或情况涉及某个重要、必要的部分或结果；contain：内部含有某物。关联用于辨别“包含”的不同语境，不表示可以随意替换。"
+        }
+      ]
+    },
+    "include": {
+      "common": "动词：包括、把...算入、包住",
+      "synonyms": [
+        {
+          "word": "comprise",
+          "sense": "包括组成部分（动词义）",
+          "note": "include：列出整体中的一部分，不要求列全；comprise：整体由所列部分组成。不要把中文“包括”直接等同为所有用法相同。"
+        },
+        {
+          "word": "contain",
+          "sense": "包括、包含（动词义）",
+          "note": "include：整体中包括某部分，常用于列举；contain：内部含有某物，也可指内容或成分。中文都可译为“包含”，侧重点不同。"
+        },
+        {
+          "word": "involve",
+          "sense": "包含某个部分（动词义）",
+          "note": "include：把人或事物作为整体的一部分包括在内；involve：某事涉及、需要某个重要或必要的部分。二者部分义项接近，不能在所有句子中互换。"
+        }
+      ]
+    },
+    "involve": {
+      "common": "动词：包括、使陷于、潜心于、包围",
+      "synonyms": [
+        {
+          "word": "contain",
+          "sense": "包含某个部分（动词义）",
+          "note": "involve：活动或情况涉及某个重要、必要的部分或结果；contain：内部含有某物。关联用于辨别“包含”的不同语境，不表示可以随意替换。"
+        },
+        {
+          "word": "include",
+          "sense": "包含某个部分（动词义）",
+          "note": "include：把人或事物作为整体的一部分包括在内；involve：某事涉及、需要某个重要或必要的部分。二者部分义项接近，不能在所有句子中互换。"
+        },
+        {
+          "word": "require",
+          "sense": "需要某个必要部分（动词义）",
+          "note": "involve doing：做某事涉及或需要某项活动；require：需要某物，或要求某人做某事。involve 常接 doing；require 可用 require somebody to do，也可用 require doing 表示“需被……”。"
+        }
+      ]
+    },
+    "require": {
+      "common": "动词：需要、命令、要求",
+      "synonyms": [
+        {
+          "word": "involve",
+          "sense": "需要某个必要部分（动词义）",
+          "note": "involve doing：做某事涉及或需要某项活动；require：需要某物，或要求某人做某事。involve 常接 doing；require 可用 require somebody to do，也可用 require doing 表示“需被……”。"
+        },
+        {
+          "word": "necessitate",
+          "sense": "需要（动词义）"
+        }
+      ]
     }
   },
   "negativePairs": {
@@ -111,5 +200,6 @@
     "terrible/tremendous": false,
     "automatic/voluntary": false,
     "appoint/nominate": false
-  }
+  },
+  "reviewedSemanticPairs": 6
 }
