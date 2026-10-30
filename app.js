@@ -30,5 +30,5 @@ App({
     });
   },
   onShow() { prepareAudioWhenOnline(); cloudSync.foreground(); },
-  onHide() { cloudSync.background(); },
+  onHide() { try { require('./utils/learning-clock').pause(); } finally { cloudSync.background(); } },
 });

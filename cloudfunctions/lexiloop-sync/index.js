@@ -12,7 +12,10 @@ const pack = value => zlib.gzipSync(Buffer.from(JSON.stringify(value))).toString
 const unpack = value => JSON.parse(zlib.gunzipSync(Buffer.from(value, 'base64'), { maxOutputLength: 8 * 1024 * 1024 }).toString());
 const dateKey = time => new Date(time + 8 * 3600000).toISOString().slice(0, 10);
 function checkBundle(bundle) {
-  if (!model.valid(bundle) || JSON.stringify(bundle).length > 2000000 || Object.keys(bundle.state.cards).length > 3000) throw new Error('invalid-bundle');
+  // Pass snapshots and timing intervals grow with each study day. Keep a byte
+  // bound below the existing 8MiB decompression ceiling instead of dropping
+  // otherwise valid long-term records at the old two-million-character limit.
+  if (!model.valid(bundle) || Buffer.byteLength(JSON.stringify(bundle), 'utf8') > 6 * 1024 * 1024 || Object.keys(bundle.state.cards).length > 3000) throw new Error('invalid-bundle');
 }
 async function read(ref) {
   try {

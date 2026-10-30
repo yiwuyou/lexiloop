@@ -1,0 +1,30 @@
+const assert=require('assert');
+const {rollover}=require('../utils/session-rollover');
+const {getWords}=require('../utils/words');
+const metrics=require('../utils/learning-metrics');
+const words=getWords(),day='2026-10-31',now=Date.parse(day+'T10:00:00+08:00');
+const state={cards:{},daily:{'2026-10-30':{dueDone:100,newDone:50,minutes:40}},recentReviews:[]};
+words.slice(0,200).forEach(w=>state.cards[w.id]={seen:true,reps:2,dueAt:now-10000,lastAt:now-86400000,passedDay:'2026-10-30'});
+const id=words[0].id,old={day:'2026-10-30',index:1,queue:[{wordId:words[1].id,phase:'review'},{wordId:id,phase:'context',questionId:'existing-question'}],dueDone:100,newDone:50,dueGoal:100,newGoal:50};
+const before=JSON.stringify(state.cards);
+// A good recall yesterday may have a future FSRS due date, but its unfinished
+// question must still carry over without changing that memory model.
+state.cards[id].dueAt=now+4*86400000;
+const actualBefore=JSON.stringify(state.cards);
+assert.equal(rollover(old,state,{dailyNewCount:50,dailyReviewLimit:100,dailyBacklogLimit:30},now),true);
+assert.equal(old.day,day);assert.equal(old.index,0);
+assert.equal(old.queue[0].wordId,id);assert.equal(old.queue[0].phase,'review','today still needs actual independent recall');
+assert.equal(old.queue[1].questionId,'existing-question','preserve unfinished question');
+assert.equal(old.dueDone,0);assert.equal(old.newDone,0);
+assert.equal(metrics.summary(state,old,day).total,150);
+assert.equal(JSON.stringify(state.cards),actualBefore,'rollover never fabricates a grade');
+assert.equal(state.daily['2026-10-30'].minutes,40);
+assert.equal(rollover(old,state,{},now),false);
+const crowded={cards:{},daily:{},recentReviews:[]};
+words.slice(0,150).forEach(w=>crowded.cards[w.id]={seen:true,reps:2,dueAt:now+86400000,lastAt:now-86400000});
+const backlog={day:'2026-10-30',index:0,queue:words.slice(0,150).map(w=>({wordId:w.id,phase:'context',questionId:'saved-'+w.id})),dueGoal:100,newGoal:50};
+rollover(backlog,crowded,{dailyNewCount:50,dailyReviewLimit:100,dailyBacklogLimit:30},now);
+assert.equal(backlog.dueGoal,100);
+assert.equal(Object.values(crowded.daily[day].carryTasks).filter(r=>r.item).length,150,'excess pending words stay durable for later days');
+assert.equal(backlog.queue.filter(r=>r.phase==='context').length,100,'the daily cap is unchanged');
+console.log('Midnight keeps questions/history, requires real recall and respects the unchanged daily limits.');

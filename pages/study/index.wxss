@@ -560,9 +560,35 @@
 .word-heading .word { display: block; width: 100%; min-width: 0; margin: 0; text-align: center; }
 .rating-header { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; margin-bottom: 8rpx; }
 .rating-header .rating-label { flex: 1; min-width: 0; margin-bottom: 0; text-align: left; }
-.relation-actions { display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; margin-top: 8rpx; }
 .relation-trigger { display: inline-flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; width: auto; min-width: 76px; min-height: 44px; margin: 0; padding: 8rpx; border: 0; border-radius: 8rpx; background: transparent; color: var(--main-strong); font-size: 24rpx; line-height: 1.4; }
 .relation-trigger::after { border: 0; }
 .relation-trigger-label { display: block; padding: 0; white-space: nowrap; }
 .context-heading { margin-top: 32rpx; }
 .context-heading .context-word { display: block; width: 100%; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+
+/* One definition line; reserve space for the less frequent weak-word action. */
+.meaning-heading { flex-wrap: nowrap; gap: 10rpx; }
+.meaning-meta { white-space: nowrap; font-size: 22rpx; }
+.weak-link { flex: 0 0 auto; white-space: nowrap; }
+.example-en, .example-zh, .sentence, .translation, .explanation { line-height: 1.4; }
+.sentence-heading { min-height: 44px; }
+.example-zh { margin-top: 6rpx; }
+.sentence { padding: 18rpx 20rpx; }
+.context-heading { margin-top: 18rpx; }
+.context-prompt { margin: 20rpx 0 12rpx; }
+.choice-list { gap: 10rpx; }
+.choice { min-height: 88rpx; padding: 12rpx 20rpx; }
+.stage-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6rpx 12rpx; font-size: 22rpx; color: var(--muted); margin: -4rpx 4rpx 14rpx; flex-shrink: 0; }
+.context-feedback { flex-shrink: 0; margin-top: 10rpx; padding: 0 18rpx 14rpx; border-radius: 20rpx; }
+.feedback-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12rpx; }
+.feedback-head .result-title { margin: 0; font-size: 26rpx; }
+.context-feedback .translation { font-size: 25rpx; margin-bottom: 0; }
+.context-feedback .explanation { font-size: 22rpx; margin-top: 6rpx; }
+.next-button { width: 100%; min-height: 48px; margin: 10rpx 0 0; padding: 14rpx 20rpx; border-radius: 22rpx; }
+.study-page { padding-bottom: calc(16rpx + env(safe-area-inset-bottom)); }
+.is-answer .word-main { padding-top: 10rpx; }
+.is-answer .word-heading { margin-bottom: 10rpx; }
+.is-answer .pronunciation { margin-bottom: 12rpx; }
+.is-answer .understanding-panel { margin-top: 6rpx; margin-bottom: 6rpx; }
+.is-answer .memory-panel { padding-top: 10rpx; padding-bottom: 10rpx; }
+.is-answer .memory-row { padding-top: 5rpx; padding-bottom: 5rpx; }

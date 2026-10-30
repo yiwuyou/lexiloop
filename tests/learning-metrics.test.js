@@ -1,0 +1,56 @@
+const assert = require('assert');
+const metrics = require('../utils/learning-metrics');
+const ledger = require('../utils/time-ledger');
+const model = require('../utils/sync-model');
+const now = Date.parse('2026-10-30T10:00:00+08:00'), day = '2026-10-30';
+const state = { cards: {}, daily: {}, recentReviews: [] };
+const queue = Array.from({length:150},(_,i)=>({wordId:'w'+i,phase:i<100?'review':'new'}));
+const session = {day,index:0,queue,dueGoal:100,newGoal:50,dueDone:0,newDone:0};
+metrics.commit(state,session,now);
+assert.deepStrictEqual([metrics.summary(state,session,day).done,metrics.summary(state,session,day).total],[0,150]);
+// First successful recall is held until its actual sentence task is answered.
+state.cards.w0={passedDay:day};session.index=1;
+session.queue.push({wordId:'w0',phase:'sentence',answered:false});
+metrics.commit(state,session,now+1000);
+assert.equal(metrics.summary(state,session,day).done,0);
+session.queue[150].answered=true;session.queue[150].correct=true;
+metrics.commit(state,session,now+2000);
+assert.equal(metrics.summary(state,session,day).done,1);
+assert.equal(session.dueDone,1);
+// Hundreds of retries do not inflate the goal or first-answer count.
+session.queue.push(...Array.from({length:100},()=>({wordId:'w1',phase:'reinforcement'})));
+assert.equal(metrics.summary(state,session,day).total,150);
+state.cards.w0.needsRecall=true;
+metrics.commit(state,session,now+3000);
+assert.equal(metrics.summary(state,session,day).done,0);
+assert.equal(session.dueDone,1);
+assert.equal(state.daily[day].initialEstimate.at,now);
+// The only deliberate expansion is a new base word, not an extra attempt.
+session.queue.push({wordId:'w150',phase:'new'});session.newGoal=51;
+metrics.commit(state,session,now+4000);
+assert.equal(metrics.summary(state,session,day).total,151);
+const time = {time:{version:1,legacySeconds:120,segments:{a:{start:now,end:now+60000,phase:'review'},b:{start:now+30000,end:now+90000,phase:'new'}}}};
+const total=ledger.summary(time,day);
+assert.equal(total.seconds,210,'overlapping devices count 90 seconds, not 120');
+assert.equal(total.phases.review+total.phases.new,90);
+assert.equal(ledger.format(15),'15秒');assert.equal(ledger.format(0),'0分钟');
+const left={version:1,legacySeconds:120,segments:{a:{start:now,end:now+60000,phase:'review'}}};
+const right={version:1,legacySeconds:120,segments:{a:{start:now,end:now+80000,phase:'review'}}};
+assert.equal(ledger.summary({time:ledger.merge(ledger.merge(left,right),left)},day).seconds,200,'replay cannot double time');
+// New daily fields merge across devices; a later failure wins over earlier pass.
+const blank=()=>({state:{schemaVersion:3,cards:{},daily:{},weakBook:{},recentReviews:[]},settings:{schemaVersion:2},session:null,practiceSession:null});
+const base=blank(),a=blank(),b=blank();
+a.state.daily[day]={taskPlan:{w0:'review'},taskStatus:{w0:{at:now,passed:true}},time:left};
+b.state.daily[day]={taskPlan:{w1:'new'},taskStatus:{w0:{at:now+1,passed:false}},time:right};
+const merged=blank();
+for(const [i,next] of [a,b].entries())model.apply(merged,{device:'device-'+i,seq:1,baseRev:0,changes:model.diff(base,next)},{versions:{},nextRev:i+1});
+assert.deepStrictEqual(merged.state.daily[day].taskPlan,{w0:'review',w1:'new'});
+assert.equal(merged.state.daily[day].taskStatus.w0.passed,false);
+assert.equal(ledger.summary(merged.state.daily[day],day).seconds,200);
+assert.equal(model.VERSION,3);
+const extraState={cards:{old:{seen:true,passedDay:day,needsRecall:true}},daily:{[day]:{taskPlan:{old:'review'}}},recentReviews:[]};
+const extraSession={day,index:0,queue:[],dueGoal:1,newGoal:0};
+metrics.recover(extraState,extraSession);metrics.recover(extraState,extraSession);
+assert.equal(extraSession.queue.length,1,'an unfinished earlier word stays required during an added batch, without duplicate retries');
+assert.equal(extraSession.queue[0].phase,'reinforcement');
+console.log('Fixed word goals, answer gates, retries, explicit expansion and convergent daily/time merges passed.');

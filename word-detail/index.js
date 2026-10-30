@@ -3,7 +3,10 @@ const store = require('../utils/store');
 const weak = require('../utils/weak-book');
 const sentences = require('../utils/sentence-book');
 const resources = require('../utils/audio');
+const clock = require('../utils/learning-clock');
 Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoading: false },
+  onShow() { clock.enter('detail', Date.now(), 'detail'); },
+  onLearningTouch() { clock.touch('detail', 'detail'); },
   onLoad(options) {
     const word = getWord(options.id);
     if (!word) { wx.showToast({ title: '没有找到这个单词', icon: 'none' }); wx.navigateBack(); return; }
@@ -25,6 +28,6 @@ Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoa
     this.returning = true;
     wx.navigateBack({ delta: 1, fail: () => { this.returning = false; wx.showToast({ title: '暂时无法返回，请重试', icon: 'none' }); } });
   },
-  onHide() { this.request = (this.request || 0) + 1; this.playRequested = false; this.setData({ audioLoading: false }); if (this.audio) this.audio.stop(); },
-  onUnload() { this.disposed = true; this.playRequested = false; this.request = (this.request || 0) + 1; if (this.audio) this.audio.destroy(); }
+  onHide() { clock.pause('detail'); this.request = (this.request || 0) + 1; this.playRequested = false; this.setData({ audioLoading: false }); if (this.audio) this.audio.stop(); },
+  onUnload() { clock.pause('detail'); this.disposed = true; this.playRequested = false; this.request = (this.request || 0) + 1; if (this.audio) this.audio.destroy(); }
 });

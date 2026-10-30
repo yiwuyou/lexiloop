@@ -12,6 +12,9 @@ const weakBook = require('../../utils/weak-book');
 const sentenceBook = require('../../utils/sentence-book');
 const sentenceTap = require('../../utils/sentence-tap');
 const cloudSync = require('../../utils/cloud-sync');
+const metrics = require('../../utils/learning-metrics');
+const clock = require('../../utils/learning-clock');
+const timeLedger = require('../../utils/time-ledger');
 
 const PHASE_LABELS = {
   review: '到期复习',
@@ -59,6 +62,7 @@ Page({
     relationsOpen: false,
     relationWordId: '',
     syncBlocked: false,
+    taskDone: 0, taskTotal: 0, stageDetail: '', usedTime: '0分钟', remainingTime: '',
   },
 
   onLoad(options = {}) {
@@ -99,17 +103,22 @@ Page({
       store.saveState(state);
       store.saveSession(this.session);
     }
-    this.activeStartedAt = Date.now();
     this.renderCurrent();
   },
 
   onShow() {
-    this.activeStartedAt = Date.now();
+    if (this.session && !this.data.isPractice) {
+      const state = store.getState();
+      if (require('../../utils/session-rollover').rollover(this.session, state, store.getSettings())) { this.detailReturn = null; store.saveState(state); store.saveSession(this.session); }
+    }
     if (this.detailReturn) {
       const state = store.getState(), snapshot = this.detailReturn; this.detailReturn = null;
       this.setData(Object.assign(snapshot, { isWeakMarked: weakBook.isMarked(state, this.data.word.id), isSentenceSaved: sentenceBook.has(state, this.data.word.example) }));
     } else if (this.session && !this.data.completed) this.renderCurrent();
     if (this.stopSync) this.stopSync();
+    if (this.stopClock) this.stopClock();
+    this.stopClock = clock.subscribe(time => this.setData({ usedTime: timeLedger.format(time.seconds) }));
+    if (this.session && !this.data.completed) clock.enter(this.currentItem().phase);
     this.stopSync = cloudSync.subscribe(() => { const blocked = cloudSync.blocked(); if (blocked !== this.data.syncBlocked) this.setData({ syncBlocked: blocked }); });
   },
 
@@ -118,7 +127,6 @@ Page({
     this.session = store.getSession(this.data.isPractice ? 'practice' : undefined);
     if (!this.session) { wx.reLaunch({ url: '/pages/today/index' }); return; }
     this.setData({ syncBlocked: false, completed: false });
-    this.activeStartedAt = Date.now();
     this.renderCurrent();
   },
 
@@ -130,8 +138,9 @@ Page({
     this.setData({ audioLoading: false, relationsOpen: false });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
-    this.captureElapsed();
-    this.activeStartedAt = 0;
+    this.captureElapsed(true);
+    clock.pause('study');
+    if (this.stopClock) this.stopClock();
     if (this.session && !this.data.completed && !cloudSync.blocked()) store.saveSession(this.session);
   },
 
@@ -141,21 +150,28 @@ Page({
     clearTimeout(this.contentLayoutTimer);
     this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
     this.audioRequest = (this.audioRequest || 0) + 1;
-    this.captureElapsed();
+    this.captureElapsed(true);
+    clock.pause('study');
+    if (this.stopClock) this.stopClock();
     if (this.session && !this.data.completed && !cloudSync.blocked()) store.saveSession(this.session);
     if (this.audio) this.audio.destroy();
     this.audio = null;
   },
 
-  captureElapsed() {
-    if (!this.activeStartedAt || !this.session) return;
-    const seconds = Math.max(0, Math.round((Date.now() - this.activeStartedAt) / 1000));
-    this.session.elapsedSeconds = (this.session.elapsedSeconds || 0) + seconds;
-    this.activeStartedAt = Date.now();
+  captureElapsed(force) {
+    if (force) { try { clock.capture(); } catch (error) { /* Timing cannot block navigation or grading. */ } }
+    if (this.session) this.session.elapsedSeconds = timeLedger.summary(store.getState().daily[this.session.day] || {}, this.session.day).seconds;
   },
+  onLearningTouch() { const item = this.session && this.currentItem(); if (item && item.phase && !this.data.completed) clock.touch(item.phase); },
 
   writeDailyProgress(state, completedAt) {
     if (this.data.isPractice) return null;
+    const latest = store.getState().daily[this.session.day];
+    if (latest && latest.time) {
+      const local = state.daily[this.session.day] || (state.daily[this.session.day] = {});
+      local.time = timeLedger.merge(local.time, latest.time);
+    }
+    metrics.commit(state, this.session);
     const previous = state.daily[this.session.day] || {};
     state.daily[this.session.day] = Object.assign({}, previous, {
       completedAt: completedAt || 0,
@@ -167,7 +183,7 @@ Page({
       dueDone: this.session.dueDone,
       backlogDone: this.session.backlogDone || 0,
       dueGoal: this.session.dueGoal,
-      minutes: Math.max(1, Math.round((this.session.elapsedSeconds || 0) / 60)),
+      minutes: Math.floor(timeLedger.summary(state.daily[this.session.day], this.session.day).seconds / 60),
       newDone: this.session.newDone,
       newGoal: this.session.newGoal,
       ratings: this.session.ratings,
@@ -179,6 +195,13 @@ Page({
 
   currentItem() {
     return this.session.queue[this.session.index] || null;
+  },
+  rollToToday() {
+    if (this.data.isPractice) return false;
+    const state = store.getState();
+    if (!require('../../utils/session-rollover').rollover(this.session, state, store.getSettings())) return false;
+    store.saveState(state); store.saveSession(this.session); this.renderCurrent(state);
+    return true;
   },
 
   openRelations() {
@@ -203,7 +226,9 @@ Page({
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
     if (this.session.index >= this.session.queue.length) {
-      if (!this.data.isPractice) mastery.recover(this.session, store.getState().cards);
+      if (!this.data.isPractice) {
+        const state = store.getState(); mastery.recover(this.session, state.cards); metrics.recover(state, this.session);
+      }
     }
     if (this.session.index >= this.session.queue.length) {
       this.finishSession();
@@ -229,6 +254,12 @@ Page({
         answer: (question.answer - shift + question.choices.length) % question.choices.length });
     }
     const state = currentState || store.getState();
+    const task = this.data.isPractice ? { done: this.session.index, total: this.session.queue.length,
+      percent: Math.round(this.session.index / this.session.queue.length * 100) } : metrics.summary(state, this.session, this.session.day);
+    const remainingPhase = new Set(this.session.queue.slice(this.session.index).filter(r => r.phase === item.phase).map(r => r.wordId)).size;
+    const stageDetail = isQuestion ? `第${samePhaseBefore}/${phaseTotal}题（含重练）`
+      : item.phase === 'reinforcement' ? `还有${remainingPhase}词待回忆` : this.data.isPractice ? '单独统计，不抵扣今日任务' : '';
+    clock.enter(item.phase);
     this.setData({
       waiting: false,
       relationsOpen: false,
@@ -240,6 +271,9 @@ Page({
       contextCorrect: Boolean(item.correct),
       current: this.session.index + 1,
       currentInPhase: samePhaseBefore,
+      taskDone: task.done, taskTotal: task.total, stageDetail,
+      usedTime: timeLedger.format(timeLedger.summary(state.daily[timeLedger.dayKey(Date.now())] || {}, timeLedger.dayKey(Date.now())).seconds),
+      remainingTime: metrics.estimate(state, this.session, {}, Date.now()).text,
       isContext: isQuestion,
       questionLabel: item.phase === 'sentence' ? '例句巩固' : '语境辨义',
       questionPrompt: item.phase === 'sentence'
@@ -247,8 +281,9 @@ Page({
         : '这里的词义是：',
       phaseLabel: PHASE_LABELS[item.phase] || '单词学习',
       phaseTotal,
-      progress: Math.round(((this.session.index + 1) / this.session.queue.length) * 100),
+      progress: task.percent,
       question,
+      showQuestionExplanation: item.phase !== 'sentence' || Boolean(word.exampleSense),
       revealed: false,
       selectedChoice: item.selectedChoice == null ? -1 : item.selectedChoice,
       total: this.session.queue.length,
@@ -274,6 +309,7 @@ Page({
     this.setData({ 'word.phrase': phrase });
   },
   onContentTouchStart() {
+    this.onLearningTouch();
     this.contentTouchActive = true;
     clearTimeout(this.contentLayoutTimer);
   },
@@ -343,6 +379,11 @@ Page({
     if (!['again', 'hard', 'good', 'easy'].includes(grade)) return;
     this.ratingBusy = true;
     try {
+    this.onLearningTouch();
+    if (!this.data.isPractice) {
+      const rolloverState = store.getState();
+      if (require('../../utils/session-rollover').rollover(this.session, rolloverState, store.getSettings())) { store.saveState(rolloverState); store.saveSession(this.session); this.renderCurrent(rolloverState); return; }
+    }
     if (this.data.isPractice) {
       const state = store.getState();
       practice.recordAnswer(state, this.session, grade);
@@ -436,7 +477,9 @@ Page({
 
   chooseContext(event) {
     if (cloudSync.blocked()) return;
+    if (this.rollToToday()) return;
     if (this.data.contextAnswered) return;
+    this.onLearningTouch(); this.captureElapsed();
     const index = Number(event.currentTarget.dataset.index);
     const question = this.data.question;
     const correct = index === question.answer;
@@ -464,13 +507,16 @@ Page({
       phase: item.phase,
       result: correct ? 'correct' : 'wrong',
     });
-    store.saveState(state);
     // Save the answered state before leaving the explanation screen.
     item.answered = true;
     item.correct = correct;
     item.selectedChoice = index;
+    this.writeDailyProgress(state);
+    store.saveState(state);
     store.saveSession(this.session);
+    const task = metrics.summary(state, this.session, this.session.day);
     this.setData({
+      taskDone: task.done, taskTotal: task.total, progress: task.percent,
       contextAnswered: true,
       contextCorrect: correct,
       selectedChoice: index,
@@ -479,7 +525,9 @@ Page({
 
   nextContext() {
     if (cloudSync.blocked()) return;
+    if (this.rollToToday()) return;
     if (!this.data.contextAnswered) return;
+    this.onLearningTouch();
     const item = this.currentItem();
     if (item.phase === 'sentence') {
       this.session.sentenceDone = (this.session.sentenceDone || 0) + 1;
@@ -499,14 +547,16 @@ Page({
 
   finishSession() {
     if (cloudSync.blocked()) return;
-    this.captureElapsed();
+    this.captureElapsed(true);
     const now = Date.now();
     const state = store.getState();
-    const minutes = Math.max(1, Math.round((this.session.elapsedSeconds || 0) / 60));
+    const time = timeLedger.summary(state.daily[timeLedger.dayKey(now)] || {}, timeLedger.dayKey(now));
+    const minutes = Math.floor(time.seconds / 60);
+    clock.pause('study');
     if (this.data.isPractice) {
       store.clearSession('practice');
       this.setData({ completed: true, sessionSummary: {
-        minutes, practiceDone: this.session.answers.length,
+        minutes, usedTime: timeLedger.format(time.seconds), practiceDone: this.session.answers.length,
         remembered: this.session.ratings.good + this.session.ratings.easy,
       } });
       cloudSync.flush().catch(() => {});
@@ -514,6 +564,8 @@ Page({
     }
     const summary = this.writeDailyProgress(state, now);
     summary.minutes = minutes;
+    summary.usedTime = timeLedger.format(time.seconds);
+    summary.initialTime = summary.initialEstimate ? metrics.range(summary.initialEstimate.seconds) : '旧版未记录';
     store.saveState(state);
     store.clearSession();
     this.setData({ completed: true, sessionSummary: summary });
@@ -521,7 +573,7 @@ Page({
   },
 
   exitStudy() {
-    this.captureElapsed();
+    this.captureElapsed(true);
     if (this.session && !this.data.completed && !cloudSync.blocked()) {
       const state = store.getState();
       this.writeDailyProgress(state);

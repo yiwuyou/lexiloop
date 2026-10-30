@@ -5,6 +5,8 @@ const practice = require('../../utils/practice');
 const audio = require('../../utils/audio');
 const appVersion = require('../../utils/version');
 const cloudSync = require('../../utils/cloud-sync');
+const metrics = require('../../utils/learning-metrics');
+const timeLedger = require('../../utils/time-ledger');
 
 function greeting(hour) {
   if (hour < 6) return '夜深了';
@@ -14,6 +16,7 @@ function greeting(hour) {
   return '晚上好';
 }
 
+function isFormalSession(session, now) { return session && session.mode !== 'practice' && session.day === dates.dayKey(now); }
 Page({
   data: {
     completed: false,
@@ -66,6 +69,10 @@ Page({
     const stats = plan.summarize(state, settings, now);
     const progress = plan.progressStats(state);
     const summary = store.getTodaySummary(state, now);
+    const task = metrics.summary(state, session, dates.dayKey(now), stats);
+    const time = timeLedger.summary(summary || {}, dates.dayKey(now));
+    const estimate = metrics.estimate(state, isFormalSession(session, now) ? session : null,
+      { review: task.reviewRemaining, new: task.newRemaining }, now);
     const isTodaySession = Boolean(session && session.day === dates.dayKey(now));
     const todayReviewDone = isTodaySession
       ? (session.dueDone || 0)
@@ -78,6 +85,10 @@ Page({
     const remainingCapacity = Math.max(0, (settings.dailyMaxNewCount || 100) - Math.max(settings.dailyNewCount, todayNew));
     this.setData({
       completed: Boolean(summary && summary.completedAt && !(session && session.day === dates.dayKey(now) && session.index < session.queue.length)),
+      task, usedTime: timeLedger.format(time.seconds), remainingTime: task.remaining ? estimate.text : '已完成',
+      futureReviewCount: Math.max(0, stats.remainingReviewCount - task.reviewRemaining),
+      initialTime: summary && summary.initialEstimate ? metrics.range(summary.initialEstimate.seconds) : summary && summary.completedAt ? '旧版未记录' : estimate.text,
+      initialLabel: summary && summary.initialEstimate ? (summary.initialEstimate.resumed ? '接续时预计' : '开始时预计') : '计划预计',
       dateText: dates.formatMonthDay(now),
       daysToExam: dates.daysUntil(settings.examDate, now),
       remainingDueCount: stats.remainingReviewCount,
@@ -106,6 +117,7 @@ Page({
     const state = store.getState();
     const settings = store.getSettings();
     let session = store.getSession();
+    if (require('../../utils/session-rollover').rollover(session, state, settings, now)) store.saveSession(session);
     if (plan.prepareSession(session, state, settings, now)) store.saveSession(session);
     if (!session || session.day !== dates.dayKey(now) || session.index >= session.queue.length) {
       session = plan.buildSession(state, settings, now);
@@ -115,6 +127,10 @@ Page({
       }
       store.saveSession(session);
     }
+    metrics.commit(state, session, now);
+    state.daily[session.day].dueGoal = session.dueGoal;
+    state.daily[session.day].newGoal = session.newGoal;
+    store.saveState(state);
     wx.navigateTo({ url: '/pages/study/index' });
   },
 
@@ -160,6 +176,7 @@ Page({
       extraNew: session.extraNew,
       newGoal: session.newGoal,
     });
+    metrics.commit(state, session, now);
     store.saveState(state);
     store.saveSession(session);
     wx.navigateTo({ url: '/pages/study/index' });

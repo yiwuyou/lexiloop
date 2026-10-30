@@ -228,7 +228,7 @@ for (const [head, guide] of Object.entries(memoryGuides)) {
 }
 for (const page of ['study', 'library']) {
   const markup = fs.readFileSync(path.join(root, page === 'study' ? 'components/word-card/index.wxml' : 'pages/library/index.wxml'), 'utf8');
-  assert.ok(markup.includes('partOfSpeech'));
+  assert.ok(markup.includes('shortPartOfSpeech'));
   assert.strictEqual(markup.includes('catchtap="showExampleSource"'), page === 'library');
   assert.ok(!markup.includes('exampleCredit'), 'raw attribution should be in disclosure, not inline');
 }

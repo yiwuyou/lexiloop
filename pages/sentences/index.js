@@ -1,10 +1,14 @@
 const store = require('../../utils/store');
 const book = require('../../utils/sentence-book');
+const clock = require('../../utils/learning-clock');
 
 Page({
   copyWord: require('../../utils/copy-word'),
   data: { entries: [], count: 0, hideEnglish: false, hideChinese: false, limit: 30 },
-  onShow() { this.refresh(); },
+  onShow() { this.refresh(); clock.enter('practice', Date.now(), 'sentences'); },
+  onLearningTouch() { clock.touch('practice', 'sentences'); },
+  onHide() { clock.pause('sentences'); },
+  onUnload() { clock.pause('sentences'); },
   refresh() {
     const entries = book.list(store.getState());
     this.setData({ count: entries.length, entries: entries.slice(0, this.data.limit) });

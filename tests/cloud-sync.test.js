@@ -168,6 +168,7 @@ function virtualClock() {
   };
 }
 async function main() {
+  assert.strictEqual((await call('status', { protocol: 2 })).code, 'PROTOCOL_MISMATCH', 'older clients cannot overwrite daily timing and pass ledgers');
   assert.strictEqual((await call('status', { protocol: 1 })).code, 'PROTOCOL_MISMATCH', 'old schedulers cannot overwrite FSRS records');
   assert.strictEqual((await call('status', { protocol: 1, wireVersion: 1 })).code, 'PROTOCOL_MISMATCH', 'chunk transport also rejects old schedulers');
   assert.strictEqual((await call('health')).storageReady, true);
@@ -480,6 +481,14 @@ async function main() {
   const row = Array.from(rows.entries()).find(([key]) => key.startsWith('lexiloop_sync/'))[1];
   assert.ok(zlib.gunzipSync(Buffer.from(row.payload, 'base64')).length > 0);
   phone.sync.dispose(); desktop.sync.dispose();
-  console.log('Cloud sync passed: protocol merge, delete tombstones, duplicate retry, user/AppID isolation, conservative conflicts, first seed, offline outbox, desktop restore, ownership and in-flight edits.');
+  identity = { OPENID:'timing-history-fixture', APPID:'wxee41f64becac8cf2' };
+  const longHistory = clone(base);
+  longHistory.state.historyFixture = 'x'.repeat(3 * 1024 * 1024);
+  assert.strictEqual((await call('bootstrap', {bundle:longHistory})).ok,true,'longer daily records survive the old 2M-character boundary');
+  assert.strictEqual((await call('status')).bundle.state.historyFixture.length,3 * 1024 * 1024);
+  identity = { OPENID:'oversized-history-fixture', APPID:'wxee41f64becac8cf2' };
+  longHistory.state.historyFixture = 'x'.repeat(6 * 1024 * 1024 + 1);
+  assert.strictEqual((await call('bootstrap', {bundle:longHistory})).ok,false,'retain a bounded archive below the decompression ceiling');
+  console.log('Cloud sync passed: protocol merge, delete tombstones, duplicate retry, user/AppID isolation, conservative conflicts, first seed, offline outbox, desktop restore, ownership, in-flight edits and bounded long histories.');
 }
 main().catch(error => { console.error(error); process.exit(1); });

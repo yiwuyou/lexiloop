@@ -55,7 +55,7 @@
         </view>
         <text class="word-ipa" wx:if="{{item.ipa}}">{{item.ipa}}</text>
         <text class="word-meaning">{{item.meaning}}</text>
-        <text class="word-pos">{{item.partOfSpeech}}</text>
+        <text class="word-pos">{{item.shortPartOfSpeech}}</text>
         <text class="word-source">{{item.sourceLabel}}</text>
         <view class="library-example" wx:if="{{item.example}}"><text>{{item.example}}</text><text>{{item.translation}}</text><button class="weak-manage" data-id="{{item.id}}" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{item.isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button><text class="source-link" data-id="{{item.id}}" catchtap="showExampleSource" role="button">例句来源与说明</text></view>
       </view>

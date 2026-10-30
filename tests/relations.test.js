@@ -344,7 +344,7 @@ function testStudyDialogIsInPlace() {
   study.data = clone(study.data);
   study.setData = function (values, callback) { Object.assign(this.data, values); if (callback) callback(); };
   study.session = {
-    day: '2026-10-23', index: 1,
+    day: require('../utils/date').dayKey(Date.now()), index: 1,
     queue: [{ wordId: idFor('liberate'), phase: 'review', answered: true }, { wordId: idFor('deliberate'), phase: 'review', answered: false }, { wordId: idFor('migrate'), phase: 'new', answered: false }],
     dueDone: 1, newDone: 0, ratings: { hard: 1 },
   };

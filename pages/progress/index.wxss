@@ -175,3 +175,9 @@
 .sync-error { margin-top: 22rpx; padding: 20rpx; border-radius: 16rpx; background: #fff5e8; color: #79552b; font-size: 23rpx; line-height: 1.6; overflow-wrap: break-word; }
 .sync-error > text { display: block; white-space: pre-wrap; }
 .copy-sync-error { width: 100%; margin-top: 14rpx; padding: 14rpx 10rpx; color: #79552b; background: transparent; font-size: 24rpx; line-height: 1.5; }
+
+.day-record { display:flex; justify-content:space-between; gap:16rpx; width:100%; min-height:44px; padding:10rpx 0; background:transparent; color:var(--text); font-size:25rpx; text-align:left; }
+.day-record::after { border:0; }
+.learning-day { padding:8rpx 0 14rpx; border-bottom:1rpx solid var(--line); }
+.day-brief, .day-detail { color:var(--muted); font-size:23rpx; line-height:1.45; }
+.day-detail text { display:block; margin-top:8rpx; }

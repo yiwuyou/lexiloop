@@ -40,6 +40,21 @@
   </view>
 
   <view class="section-card card">
+    <view class="section-head"><text>每日学习记录</text></view>
+    <text class="backup-note">前台学习用时，后台暂停；连续3分钟未操作后暂停，触摸继续。不是纯记忆时间。</text>
+    <view class="learning-day" wx:for="{{learningHistory}}" wx:key="day">
+      <button class="day-record" data-day="{{item.day}}" bindtap="toggleDay"><text>{{item.day}}{{item.today ? ' · 今天' : ''}}</text><text>{{item.used}} ›</text></button>
+      <view class="day-brief">旧词 {{item.review}} · 新词 {{item.new}} {{item.wordLabel}}</view>
+      <view class="day-detail" wx:if="{{expandedDay === item.day}}">
+        <text>{{item.initialLabel}}：{{item.initial}}</text><text>今日已用：{{item.used}} {{item.legacyTime}}</text>
+        <text wx:if="{{item.precise}}">旧词 {{item.reviewTime}} · 新词 {{item.newTime}}</text>
+        <text wx:if="{{item.precise}}">强化/例句 {{item.extraTime}} · 主动练习 {{item.practiceTime}} · 查详情 {{item.detailTime}}</text>
+      </view>
+    </view>
+    <text class="backup-note" wx:if="{{!learningHistory.length}}">开始学习后保留每日记录。</text>
+    <button class="secondary-button" wx:if="{{historyCount > historyLimit}}" bindtap="moreHistory">查看更多日期</button>
+  </view>
+  <view class="section-card card">
     <view class="section-head"><text>近7天完成情况</text></view>
     <view class="week-chart">
       <view class="day-column" wx:for="{{week}}" wx:key="key">
@@ -47,12 +62,12 @@
         <text>{{item.label}}</text>
       </view>
     </view>
-    <text class="legend">绿色：完成　橙色：部分完成　灰色：未学习</text>
+    <text class="legend">绿色：完成　橙色：部分完成　灰色：未学习。新版按过关词；旧版保留首答记录。</text>
   </view>
 
   <view class="section-card card">
     <view class="section-head"><text>近7天学习质量</text></view>
-    <view class="quality-row"><text>到期复习完成率</text><text>{{dueCompletionRate}}%</text></view>
+    <view class="quality-row"><text>旧词首答完成率</text><text>{{dueCompletionRate}}%</text></view>
     <view class="quality-row"><text>新词首次能认出</text><text>{{firstRecognitionRate}}%</text></view>
     <view class="quality-row"><text>当前易忘词</text><text>{{stats.weak}}词</text></view>
   </view>

@@ -1,6 +1,7 @@
 // Shared, platform-independent synchronization protocol. Server build copies
 // this file verbatim; no credentials or device APIs belong in this module.
-const VERSION = 2;
+const VERSION = 3;
+const timeLedger = require('./time-ledger');
 const clone = value => JSON.parse(JSON.stringify(value));
 const maps = ['cards', 'daily', 'weakBook', 'sentenceBook', 'practice'];
 const dangerous = key => ['__proto__', 'prototype', 'constructor'].includes(key);
@@ -78,6 +79,39 @@ function mergeDaily(current = {}, incoming = {}) {
   ['dueDone', 'newDone', 'backlogDone', 'dueGoal', 'newGoal', 'reinforcementDone', 'contextDone', 'contextCorrect', 'sentenceDone', 'sentenceCorrect', 'minutes', 'extraNew']
     .forEach(key => { result[key] = Math.max(current[key] || 0, incoming[key] || 0); });
   result.completedAt = current.completedAt && incoming.completedAt ? Math.max(current.completedAt, incoming.completedAt) : 0;
+  return mergeLearningDaily(current, result);
+}
+function mergeLearningDaily(current = {}, incoming = {}) {
+  const result = Object.assign({}, incoming);
+  for (const key of ['taskPlan', 'firstAnswers', 'firstOverdue']) {
+    if (current[key] || incoming[key]) result[key] = Object.assign({}, current[key], incoming[key]);
+    Object.keys(result[key] || {}).forEach(id => {
+      if (current[key] && current[key][id] === 'new' || incoming[key] && incoming[key][id] === 'new') result[key][id] = 'new';
+    });
+  }
+  if (current.taskStatus || incoming.taskStatus) {
+    result.taskStatus = Object.assign({}, current.taskStatus);
+    Object.entries(incoming.taskStatus || {}).forEach(([id, value]) => {
+      const old = result.taskStatus[id];
+      if (!old || value.at > old.at || (value.at === old.at && !value.passed)) result.taskStatus[id] = value;
+    });
+  }
+  if (current.initialEstimate && (!incoming.initialEstimate || current.initialEstimate.at < incoming.initialEstimate.at)) result.initialEstimate = current.initialEstimate;
+  if (current.carryTasks || incoming.carryTasks) {
+    result.carryTasks = Object.assign({}, current.carryTasks);
+    Object.entries(incoming.carryTasks || {}).forEach(([id, value]) => {
+      const old = result.carryTasks[id];
+      if (!old || value.at > old.at || value.at === old.at && !value.item) result.carryTasks[id] = value;
+    });
+  }
+  if (current.time || incoming.time) result.time = timeLedger.merge(current.time, incoming.time);
+  if (current.firstAnswerOffset || incoming.firstAnswerOffset) {
+    result.firstAnswerOffset = {
+      review: Math.max(current.firstAnswerOffset && current.firstAnswerOffset.review || 0, incoming.firstAnswerOffset && incoming.firstAnswerOffset.review || 0),
+      new: Math.max(current.firstAnswerOffset && current.firstAnswerOffset.new || 0, incoming.firstAnswerOffset && incoming.firstAnswerOffset.new || 0),
+      backlog: Math.max(current.firstAnswerOffset && current.firstAnswerOffset.backlog || 0, incoming.firstAnswerOffset && incoming.firstAnswerOffset.backlog || 0),
+    };
+  }
   return result;
 }
 function deriveDaily(bundle) {
@@ -126,7 +160,7 @@ function apply(bundle, event, context = {}) {
       else if (path[0] === 'settings') value = current; // Do not roll back a newer online setting.
     }
     if (value == null) delete parent[key];
-    else parent[key] = clone(value);
+    else parent[key] = clone(path[1] === 'daily' ? mergeLearningDaily(current, value) : value);
     versions[versionKey] = { rev: context.nextRev || 0, device: event.device, seq: event.seq };
   });
   deriveDaily(bundle);

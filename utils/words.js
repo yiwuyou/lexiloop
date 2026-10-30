@@ -56,6 +56,10 @@ function inflate(tuple, position) {
   word.exampleSourceDetail = word.exampleCredit === 'LexiLoop 编写'
     ? '本应用原创的英语（二）阅读风格练习例句，不是历年真题原文或机构例句。'
     : '例句选自 Tatoeba。许可：CC BY 2.0 France。中文已转为简体。\n' + word.exampleCredit + '\nhttps://creativecommons.org/licenses/by/2.0/fr/';
+  word.shortPartOfSpeech = (word.partOfSpeech.match(/\b(?:adj|adv|vt|vi|v|n|pron|prep|conj|interj|num|art|aux|det)\./g) || []).filter((value, i, all) => all.indexOf(value) === i).join(' / ')
+    || (/介词/.test(word.partOfSpeech) ? 'prep. phr.' : 'modal phr.');
+  if (word.shortPartOfSpeech.includes('vt.') && word.shortPartOfSpeech.includes('vi.')) word.shortPartOfSpeech = word.shortPartOfSpeech.replace('vt.', 'v.').replace(' / vi.', '').replace('vi. / ', '');
+  word.shortPartOfSpeech = word.shortPartOfSpeech.replace(/ \/ /g, '/');
   return word;
 }
 

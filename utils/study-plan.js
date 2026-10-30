@@ -286,12 +286,13 @@ function buildSession(state, settings, now) {
     }));
   newWords.forEach((word) => queue.push({ wordId: word.id, phase: 'new', reinforced: false }));
 
-  return makeSession(today, time, queue, daily, {
+  const session = makeSession(today, time, queue, daily, {
     dueGoal: (daily.dueDone || 0) + stats.scheduledDue.length,
     newGoal: (daily.newDone || 0) + newWords.length,
     batchNewGoal: newWords.length,
     extraNew: daily.extraNew || 0,
   });
+  return require('./task-carry').attach(session, state, settings, [], time);
 }
 
 function buildExtraSession(state, settings, requested, now) {

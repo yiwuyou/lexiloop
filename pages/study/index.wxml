@@ -1,18 +1,18 @@
-<view class="study-page {{completed ? 'is-completed' : ''}} {{!revealed && !isContext ? 'is-recall' : 'is-answer'}}">
+<view class="study-page {{completed ? 'is-completed' : ''}} {{!revealed && !isContext ? 'is-recall' : 'is-answer'}}" bindtouchstart="onLearningTouch">
   <view class="sync-status" wx:if="{{syncBlocked}}">已在另一台设备继续。<button class="head-button" bindtap="takeOverStudy">在此接着学</button></view>
   <block wx:if="{{!completed}}">
     <view class="study-head">
       <button class="head-button" bindtap="exitStudy">返回</button>
       <view class="counter">
-        <text class="phase">{{phaseLabel}}</text>
-        <text class="counter-value">{{currentInPhase}} / {{phaseTotal}}</text>
+        <text class="phase">{{isPractice ? '主动复习' : '今日已过关'}}</text>
+        <text class="counter-value">{{taskDone}} / {{taskTotal}} 词</text>
       </view>
       <button class="head-button" bindtap="exitStudy">退出</button>
     </view>
     <view class="study-progress"><view style="width: {{progress}}%"></view></view>
     <text class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
 
-    <view wx:if="{{!waiting && pendingCount && !isPractice}}" class="practice-note">已作答的词中，还有 {{pendingCount}} 词待巩固</view>
+    <view class="stage-status"><text>{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><text>已用 {{usedTime}}</text></view>
     <block wx:if="{{!waiting && !isContext}}">
       <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
       <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" />
@@ -52,15 +52,12 @@
             bindtap="chooseContext"
           >{{item}}</button>
         </view>
-        <view class="context-result {{contextCorrect ? 'correct' : 'wrong'}}" wx:if="{{contextAnswered}}">
-          <text class="result-title">{{contextCorrect ? '判断正确' : '这次选错了'}}</text>
-          <text class="translation">{{question.translation}}</text>
-          <text class="explanation">{{question.explanation}}</text>
-        </view>
       </view>
       </scroll-view>
-      <view class="relation-actions" wx:if="{{contextAnswered}}">
-        <button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+      <view class="context-result context-feedback {{contextCorrect ? 'correct' : 'wrong'}}" wx:if="{{contextAnswered}}">
+        <view class="feedback-head"><text class="result-title">{{contextCorrect ? '判断正确' : '这次选错了'}}</text><button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
+        <text class="translation">{{question.translation}}</text>
+        <text class="explanation" wx:if="{{showQuestionExplanation}}">{{question.explanation}}</text>
       </view>
       <button class="primary-button next-button" wx:if="{{contextAnswered}}" bindtap="nextContext">继续</button>
     </block>
@@ -72,17 +69,18 @@
       <view class="complete-title">{{isPractice ? '本轮复习完成' : '今天完成了'}}</view>
       <text class="complete-note">{{isPractice ? '这次练习已单独记录，今日任务和之后的复习安排保持不变。' : '所有作答均已保存在这部手机，下次出现时间也已安排。'}}</text>
       <view class="complete-grid" wx:if="{{isPractice}}">
-        <view><text>{{sessionSummary.minutes}}</text><text>分钟</text></view>
+        <view><text>{{sessionSummary.usedTime}}</text><text>今日学习用时</text></view>
         <view><text>{{sessionSummary.practiceDone}}</text><text>练习词数</text></view>
         <view><text>{{sessionSummary.remembered}}</text><text>想起主要义</text></view>
       </view>
       <view class="complete-grid" wx:else>
-        <view><text>{{sessionSummary.minutes}}</text><text>分钟</text></view>
+        <view><text>{{sessionSummary.usedTime}}</text><text>今日学习用时</text></view>
         <view><text>{{sessionSummary.newDone}}</text><text>新词</text></view>
         <view><text>{{sessionSummary.dueDone}}</text><text>复习</text></view>
       </view>
       <view class="context-summary" wx:if="{{sessionSummary.contextDone}}">语境辨义 {{sessionSummary.contextCorrect}} / {{sessionSummary.contextDone}}</view>
       <view class="context-summary" wx:if="{{sessionSummary.sentenceDone}}">例句巩固 {{sessionSummary.sentenceCorrect}} / {{sessionSummary.sentenceDone}}</view>
+      <view class="context-summary" wx:if="{{!isPractice}}">{{sessionSummary.initialEstimate.resumed ? '接续时预计' : '开始时预计'}}：{{sessionSummary.initialTime}} · 今日任务已过关</view>
       <button class="primary-button" bindtap="exitStudy">返回首页</button>
     </view>
   </block>

@@ -20,6 +20,7 @@ function shortDate(key) {
 
 Page({
   data: {
+    learningHistory: [], historyLimit: 7, historyCount: 0, expandedDay: '',
     dueCompletionRate: 0,
     firstRecognitionRate: 0,
     firstRoundEstimate: '',
@@ -84,7 +85,8 @@ Page({
     const week = keys.map((key) => {
       const day = state.daily[key];
       const goal = day ? (day.newGoal || 0) + (day.dueGoal || 0) : 0;
-      const done = day ? (day.newDone || 0) + (day.dueDone || 0) : 0;
+      const task = day && day.taskStatus ? require('../../utils/learning-metrics').summary(state, null, key) : null;
+      const done = task ? task.done : day ? (day.newDone || 0) + (day.dueDone || 0) : 0;
       if (day) {
         dueGoal += day.dueGoal || 0;
         dueDone += day.dueDone || 0;
@@ -109,6 +111,7 @@ Page({
       dueCompletionRate: dueGoal ? Math.round((dueDone / dueGoal) * 100) : 0,
       firstRecognitionRate: newReviews.length ? Math.round((recognized / newReviews.length) * 100) : 0,
       firstRoundEstimate: `${estimate.getMonth() + 1}月${estimate.getDate()}日前后`,
+      learningHistory: require('../../utils/learning-history').rows(state, this.data.historyLimit), historyCount: Object.keys(state.daily).length,
       progress: Math.round((stats.learned / stats.total) * 100),
       stats,
       week,
@@ -116,6 +119,8 @@ Page({
     });
   },
 
+  toggleDay(event) { this.setData({ expandedDay: this.data.expandedDay === event.currentTarget.dataset.day ? '' : event.currentTarget.dataset.day }); },
+  moreHistory() { this.setData({ historyLimit: this.data.historyLimit + 30 }); this.refresh(); },
   toggleRecovery() { this.setData({ recoveryOpen: !this.data.recoveryOpen }); },
   onRecoveryDay(event) {
     const index = Number(event.detail.value);

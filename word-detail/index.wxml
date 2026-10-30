@@ -1,4 +1,4 @@
-<view class="detail-page is-answer">
+<view class="detail-page is-answer" bindtouchstart="onLearningTouch">
   <word-card wx:if="{{word}}" word="{{word}}" revealed="{{true}}" phase-label="词条详情" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" />
   <view class="detail-footer" wx:if="{{word}}">
     <button class="secondary-button detail-back" bindtap="goBack" aria-label="返回上一页">返回</button>
