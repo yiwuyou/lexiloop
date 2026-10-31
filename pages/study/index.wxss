@@ -592,3 +592,10 @@
 .is-answer .understanding-panel { margin-top: 6rpx; margin-bottom: 6rpx; }
 .is-answer .memory-panel { padding-top: 10rpx; padding-bottom: 10rpx; }
 .is-answer .memory-row { padding-top: 5rpx; padding-bottom: 5rpx; }
+
+/* Reserve room below the frequent action so it sits within thumb reach. */
+.context-actions { display: flex; flex-direction: column; flex-shrink: 0; width: 100%; padding-bottom: 64px; }
+.context-actions .next-button { align-self: stretch; width: 100%; max-width: none; height: 52px; min-height: 52px; margin: 10rpx 0 0; }
+@media (min-height: 850px) { .context-actions { padding-bottom: 72px; } }
+@media (max-height: 680px) { .context-actions { padding-bottom: 40px; } }
+@media (max-height: 480px) { .context-actions { padding-bottom: 24px; } }

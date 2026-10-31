@@ -59,7 +59,9 @@
         <text class="translation">{{question.translation}}</text>
         <text class="explanation" wx:if="{{showQuestionExplanation}}">{{question.explanation}}</text>
       </view>
-      <button class="primary-button next-button" wx:if="{{contextAnswered}}" bindtap="nextContext">继续</button>
+      <view class="context-actions" wx:if="{{contextAnswered}}">
+        <button class="primary-button next-button" bindtap="nextContext">继续</button>
+      </view>
     </block>
   </block>
 
