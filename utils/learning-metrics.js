@@ -116,8 +116,22 @@ function summary(state, session, day = ledger.dayKey(Date.now()), preview) {
   result.percent = result.total ? Math.round(result.done / result.total * 100) : 0;
   result.reviewRemaining = result.reviewGoal - result.reviewPassed;
   result.newRemaining = result.newGoal - result.newPassed;
-  result.reviewPercent = result.reviewGoal ? Math.round(result.reviewPassed / result.reviewGoal * 100) : 0;
-  result.newPercent = result.newGoal ? Math.round(result.newPassed / result.newGoal * 100) : 0;
+  // Visible word counts describe work actually done, not whether every later
+  // question is finished. Failed answers still count as a reviewed word once.
+  const first = Object.assign({}, daily.firstAnswers);
+  const remember = item => { if (plan[item.wordId] && ['review', 'new', 'reinforcement'].includes(item.phase)) first[item.wordId] = plan[item.wordId]; };
+  (state.recentReviews || []).filter(item => item.day === day).forEach(remember);
+  if (current) current.queue.slice(0, current.index).forEach(remember);
+  const count = kind => Object.values(first).filter(value => value === kind).length;
+  const offset = daily.firstAnswerOffset || {};
+  result.reviewSeen = Math.min(result.reviewGoal, Math.max(result.reviewPassed, daily.dueDone || 0, current && current.dueDone || 0, count('review') + (offset.review || 0)));
+  result.newSeen = Math.min(result.newGoal, Math.max(result.newPassed, daily.newDone || 0, current && current.newDone || 0, count('new') + (offset.new || 0)));
+  result.reviewUnseen = result.reviewGoal - result.reviewSeen;
+  result.newUnseen = result.newGoal - result.newSeen;
+  result.reviewPending = Math.max(0, result.reviewSeen - result.reviewPassed);
+  result.newPending = Math.max(0, result.newSeen - result.newPassed);
+  result.reviewPercent = result.reviewGoal ? Math.round(result.reviewSeen / result.reviewGoal * 100) : 0;
+  result.newPercent = result.newGoal ? Math.round(result.newSeen / result.newGoal * 100) : 0;
   result.legacy = Object.keys(plan).length < result.total || (!daily.taskPlan && Boolean(daily.dueDone || daily.newDone));
   return result;
 }
@@ -135,7 +149,7 @@ function recover(state, session) {
 }
 function section(task, kind) {
   return kind === 'new'
-    ? { label: '新词学习', done: task.newPassed, total: task.newGoal, percent: task.newPercent }
-    : { label: '旧词复习', done: task.reviewPassed, total: task.reviewGoal, percent: task.reviewPercent };
+    ? { label: '新词学习', verb: '已学', done: task.newSeen, total: task.newGoal, percent: task.newPercent, pending: task.newPending }
+    : { label: '旧词复习', verb: '已复习', done: task.reviewSeen, total: task.reviewGoal, percent: task.reviewPercent, pending: task.reviewPending };
 }
 module.exports = { section, planFor, pending, passed, commit, summary, estimate, range, recover };

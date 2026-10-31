@@ -5,7 +5,7 @@
       <button class="head-button" bindtap="exitStudy">返回</button>
       <view class="counter">
         <text class="phase">{{taskLabel}}</text>
-        <text class="counter-value">已完成 {{taskDone}} / {{taskTotal}} 词</text>
+        <text class="counter-value">{{taskVerb}} {{taskDone}} / {{taskTotal}} 词</text>
       </view>
       <button class="head-button" bindtap="exitStudy">退出</button>
     </view>

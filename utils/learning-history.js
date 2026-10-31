@@ -7,8 +7,8 @@ function rows(state, count = 7, now = Date.now()) {
     const hasStatus = Boolean(daily.taskStatus);
     return { day, used: ledger.format(time.seconds), initial: daily.initialEstimate ? metrics.range(daily.initialEstimate.seconds) : '旧版未记录',
       initialLabel: daily.initialEstimate && daily.initialEstimate.resumed ? '接续时预计' : '开始时预计',
-      review: hasStatus ? task.reviewPassed : daily.dueDone || 0, new: hasStatus ? task.newPassed : daily.newDone || 0,
-      wordLabel: hasStatus ? '已完成' : '首答（旧版）',
+      review: hasStatus ? task.reviewSeen : daily.dueDone || 0, new: hasStatus ? task.newSeen : daily.newDone || 0, reviewPending: task.reviewPending, newPending: task.newPending,
+      wordLabel: hasStatus ? '已复习/已学' : '首答（旧版）',
       reviewTime: ledger.format(p.review), newTime: ledger.format(p.new), extraTime: ledger.format(p.reinforcement + p.sentence + p.context),
       practiceTime: ledger.format(p.practice), detailTime: ledger.format(p.detail),
       legacyTime: time.legacySeconds ? '含旧版约' + Math.round(time.legacySeconds / 60) + '分钟' : '',

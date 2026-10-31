@@ -15,10 +15,10 @@
       </view>
 
       <view class="task-grid">
-        <view class="task-item"><text class="task-label">旧词复习</text><text class="task-value tabular">{{task.reviewPassed}} / {{task.reviewGoal}}<text class="task-unit">词</text></text><view class="progress-track"><view class="progress-fill" style="width: {{task.reviewPercent}}%"></view></view><text class="task-note">已完成 {{task.reviewPassed}} · 剩余 {{task.reviewRemaining}}</text></view>
-        <view class="task-item"><text class="task-label">新词学习</text><text class="task-value tabular">{{task.newPassed}} / {{task.newGoal}}<text class="task-unit">词</text></text><view class="progress-track"><view class="progress-fill" style="width: {{task.newPercent}}%"></view></view><text class="task-note">已完成 {{task.newPassed}} · 剩余 {{task.newRemaining}}</text></view>
+        <view class="task-item"><text class="task-label">旧词复习</text><text class="task-value tabular">{{task.reviewSeen}} / {{task.reviewGoal}}<text class="task-unit">词</text></text><view class="progress-track"><view class="progress-fill" style="width: {{task.reviewPercent}}%"></view></view><text class="task-note">已复习 {{task.reviewSeen}} · 未复习 {{task.reviewUnseen}}</text><text class="task-followup">待巩固 {{task.reviewPending}} 词</text></view>
+        <view class="task-item"><text class="task-label">新词学习</text><text class="task-value tabular">{{task.newSeen}} / {{task.newGoal}}<text class="task-unit">词</text></text><view class="progress-track"><view class="progress-fill" style="width: {{task.newPercent}}%"></view></view><text class="task-note">已学 {{task.newSeen}} · 未学 {{task.newUnseen}}</text><text class="task-followup">待巩固 {{task.newPending}} 词</text></view>
       </view>
-      <text class="review-note">{{task.reviewRemaining ? '先完成旧词的回忆、强化和例句，再继续新词。' : task.reviewGoal ? '旧词复习已完成，继续学习新词。' : '今天没有安排旧词复习，直接学习新词。'}}同词重复练习不重复计数。</text>
+      <text class="review-note">{{task.reviewRemaining ? (task.reviewUnseen ? '评分后计数，强化和例句不重复计数。旧词任务完成后再学新词。' : '旧词已复习一遍，还有 ' + task.reviewPending + ' 词待巩固；完成后再学新词。') : task.reviewGoal ? '旧词复习和巩固已完成，继续学习新词。' : '今天没有安排旧词复习，直接学习新词。'}}</text>
       <view class="time-record"><view><text>今日已用</text><text>{{usedTime}}</text></view><view><text>预计还需</text><text>{{remainingTime}}</text></view><view><text>{{initialLabel}}</text><text>{{initialTime}}（估算）</text></view></view>
 
       <button class="primary-button" bindtap="startStudy">{{resume ? '继续今日学习' : '开始今日学习'}}</button>

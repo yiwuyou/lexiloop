@@ -18,7 +18,7 @@ try{
  page.onLoad({});page.onShow();
  assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,100);
  page.revealAnswer();now+=5000;page.rate({currentTarget:{dataset:{grade:'hard'}}});
- assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,100);
+ assert.equal(page.data.taskDone,1,'a reviewed word counts immediately even if later consolidation is needed');assert.equal(page.data.taskTotal,100);
  let steps=0,lastOldFailure=false,oldQuestionFailure=false,newFailure=false;
  while(!page.data.completed&&steps++<400){
   if(page.currentItem().phase==='new') assert.equal(metrics.summary(store.getState(),page.session,page.session.day).reviewRemaining,0,'new words must wait for every scheduled old-word recall and question');

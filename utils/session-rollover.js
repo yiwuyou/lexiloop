@@ -9,6 +9,9 @@ function rollover(session, state, settings, now = Date.now()) {
   const tail = session.queue.slice(session.index);
   const next = plan.buildSession(state, settings, now);
   require('./task-carry').attach(next, state, settings, tail, now);
+  delete next.questionOrderVersion;
+  require('./question-order').prepare(next, state);
+  require('./study-order').reconcile(next, state);
   Object.assign(session, next);
   metrics.commit(state, session, now);
   return true;

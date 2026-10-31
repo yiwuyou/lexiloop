@@ -27,7 +27,8 @@ assert.strictEqual(session.queue.filter(item => item.questionId && item.question
 const summary = metrics.summary(state, session, day);
 assert.strictEqual(summary.reviewPassed, 67); assert.strictEqual(summary.newPassed, 18);
 assert.strictEqual(metrics.section(summary, 'review').total, 100); assert.strictEqual(metrics.section(summary, 'new').total, 50);
-assert.strictEqual(summary.reviewPercent, 67); assert.strictEqual(summary.newPercent, 36);
+assert.strictEqual(summary.reviewPercent, 100);
+assert.strictEqual(summary.reviewSeen, 100); assert.strictEqual(summary.reviewPending, 33); assert.strictEqual(summary.newPercent, 36);
 const resumed = clone(session);
 assert.strictEqual(plan.prepareSession(resumed, state, {}, now), false, 'reopening does not shuffle the same pending work again');
 // A legacy delay must never let a ready new word bypass an old recall.

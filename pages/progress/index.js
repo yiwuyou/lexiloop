@@ -86,7 +86,7 @@ Page({
       const day = state.daily[key];
       const goal = day ? (day.newGoal || 0) + (day.dueGoal || 0) : 0;
       const task = day && day.taskStatus ? require('../../utils/learning-metrics').summary(state, null, key) : null;
-      const done = task ? task.done : day ? (day.newDone || 0) + (day.dueDone || 0) : 0;
+      const done = task ? task.reviewSeen + task.newSeen : day ? (day.newDone || 0) + (day.dueDone || 0) : 0;
       if (day) {
         dueGoal += day.dueGoal || 0;
         dueDone += day.dueDone || 0;
@@ -97,7 +97,7 @@ Page({
         label: shortDate(key),
         rate,
         height: Math.max(6, rate),
-        status: rate >= 100 ? 'done' : rate > 0 ? 'partial' : 'missed',
+        status: day && day.completedAt ? 'done' : rate > 0 ? 'partial' : 'missed',
       };
     });
 

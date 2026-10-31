@@ -63,7 +63,7 @@ Page({
     relationsOpen: false,
     relationWordId: '',
     syncBlocked: false,
-    taskLabel: '', taskDone: 0, taskTotal: 0, stageDetail: '', usedTime: '0分钟', remainingTime: '',
+    taskLabel: '', taskVerb: '', taskPending: 0, taskDone: 0, taskTotal: 0, stageDetail: '', usedTime: '0分钟', remainingTime: '',
   },
 
   onLoad(options = {}) {
@@ -255,10 +255,10 @@ Page({
     }
     const task = this.data.isPractice ? { done: this.session.index, total: this.session.queue.length,
       percent: Math.round(this.session.index / this.session.queue.length * 100) } : metrics.summary(state, this.session, this.session.day);
-    const active = this.data.isPractice ? Object.assign({ label: '主动复习' }, task) : metrics.section(task, kind);
+    const active = this.data.isPractice ? Object.assign({ label: '主动复习', verb: '已练习', pending: 0 }, task) : metrics.section(task, kind);
     const remainingPhase = new Set(this.session.queue.slice(this.session.index).filter(inPhase).map(r => r.wordId)).size;
     const stageDetail = isQuestion ? `第${samePhaseBefore}/${phaseTotal}题（含重练）`
-      : item.phase === 'reinforcement' ? `还有${remainingPhase}词待回忆` : this.data.isPractice ? '单独统计，不抵扣今日任务' : '';
+      : item.phase === 'reinforcement' ? `还有${remainingPhase}词待回忆` : this.data.isPractice ? '单独统计，不抵扣今日任务' : active.pending ? `另有${active.pending}词待巩固` : '';
     clock.enter(item.phase);
     this.setData({
       waiting: false,
@@ -271,7 +271,7 @@ Page({
       contextCorrect: Boolean(item.correct),
       current: this.session.index + 1,
       currentInPhase: samePhaseBefore,
-      taskLabel: active.label, taskDone: active.done, taskTotal: active.total, stageDetail,
+      taskLabel: active.label, taskVerb: active.verb, taskPending: active.pending, taskDone: active.done, taskTotal: active.total, stageDetail,
       usedTime: timeLedger.format(timeLedger.summary(state.daily[timeLedger.dayKey(Date.now())] || {}, timeLedger.dayKey(Date.now())).seconds),
       remainingTime: metrics.estimate(state, this.session, {}, Date.now()).text,
       isContext: isQuestion,
@@ -518,7 +518,7 @@ Page({
     const task = metrics.summary(state, this.session, this.session.day);
     const active = metrics.section(task, studyOrder.kind(state, this.session, item));
     this.setData({
-      taskLabel: active.label, taskDone: active.done, taskTotal: active.total, progress: active.percent,
+      taskLabel: active.label, taskVerb: active.verb, taskPending: active.pending, taskDone: active.done, taskTotal: active.total, progress: active.percent,
       contextAnswered: true,
       contextCorrect: correct,
       selectedChoice: index,

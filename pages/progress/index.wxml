@@ -47,6 +47,7 @@
       <view class="day-brief">旧词 {{item.review}} 词 · 新词 {{item.new}} 词（{{item.wordLabel}}）</view>
       <view class="day-detail" wx:if="{{expandedDay === item.day}}">
         <text>{{item.initialLabel}}：{{item.initial}}</text><text>今日已用：{{item.used}} {{item.legacyTime}}</text>
+        <text wx:if="{{item.reviewPending || item.newPending}}">{{item.today ? '待巩固' : '当日未完成巩固'}}：旧词 {{item.reviewPending}} · 新词 {{item.newPending}}</text>
         <text wx:if="{{item.precise}}">旧词 {{item.reviewTime}} · 新词 {{item.newTime}}</text>
         <text wx:if="{{item.precise}}">强化/例句 {{item.extraTime}} · 主动练习 {{item.practiceTime}} · 查详情 {{item.detailTime}}</text>
       </view>
@@ -62,7 +63,7 @@
         <text>{{item.label}}</text>
       </view>
     </view>
-    <text class="legend">绿色：完成　橙色：部分完成　灰色：未学习。新版按完成词数；旧版保留首答记录。</text>
+    <text class="legend">柱形按已复习和已学词数；绿色：当天任务完成，橙色：进行中，灰色：未学习。</text>
   </view>
 
   <view class="section-card card">

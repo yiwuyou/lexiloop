@@ -137,7 +137,7 @@ function queueContextCheck(session, word, grade, now) {
     ? context.getRecallQuestion(word)
     : context.getByWord(word.word, Math.floor(startOfDay(time) / DAY_MS));
   if (!question) return false;
-  session.queue.push({
+  session.queue.splice(Math.min(session.queue.length, (session.index || 0) + 9), 0, {
     wordId: word.id,
     phase: needsRecall ? 'sentence' : 'context',
     questionId: question.id,
@@ -233,6 +233,7 @@ function prepareSession(session, state, settings, now) {
       });
     changed = true;
   }
+  if (require('./question-order').prepare(session, state)) changed = true;
   if (require('./study-order').reconcile(session, state)) changed = true;
   return changed;
 }
@@ -294,6 +295,7 @@ function buildSession(state, settings, now) {
     extraNew: daily.extraNew || 0,
   });
   require('./task-carry').attach(session, state, settings, [], time);
+  require('./question-order').prepare(session, state);
   require('./study-order').reconcile(session, state);
   return session;
 }
