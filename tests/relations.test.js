@@ -262,12 +262,14 @@ async function testComponent() {
 
 function testDismissGestures() {
   let definition;
+  let gestureTime = 1000;
   const tasks = new Map(); let next = 0;
   evaluate('components/word-relations/index.js', () => ({}), {
     Component(value) { definition = value; },
+    Date: { now: () => gestureTime },
     setTimeout(fn) { tasks.set(++next, fn); return next; }, clearTimeout(id) { tasks.delete(id); },
   });
-  const make = () => Object.assign({ data: clone(definition.data), events: [], setData(value) { Object.assign(this.data, value); }, triggerEvent(name) { this.events.push(name); } }, definition.methods);
+  const make = () => Object.assign({ data: clone(definition.data), events: [], updates: 0, setData(value) { this.updates++; Object.assign(this.data, value); }, triggerEvent(name) { this.events.push(name); } }, definition.methods);
   const touch = (x, y) => ({ touches: [{ clientX: x, clientY: y }], changedTouches: [{ clientX: x, clientY: y }] });
   const mask = make(); mask.maskStart(touch(30, 60)); mask.maskEnd(touch(34, 65)); mask.close();
   assert.strictEqual(mask.data.closing, true);
@@ -287,10 +289,44 @@ function testDismissGestures() {
   const detached = make(); detached.close(); definition.lifetimes.detached.call(detached);
   assert.ok(!tasks.has(detached.closeTimer), 'detaching cancels delayed parent close');
   assert.deepStrictEqual(cancelled.events, []);
+  const pull = make(); pull.contentScroll({ detail: { scrollTop: 0 } });
+  pull.contentStart(touch(100, 200)); pull.contentMove(touch(103, 275));
+  assert.strictEqual(pull.data.dragging, true); assert.strictEqual(pull.data.dragY, 75);
+  pull.contentEnd(touch(103, 275)); assert.strictEqual(pull.data.closing, true, 'downward pull from the top closes the panel');
+  tasks.get(pull.closeTimer)(); tasks.delete(pull.closeTimer);
+  assert.deepStrictEqual(pull.events, ['close']);
+  const scroll = make(); scroll.contentScroll({ detail: { scrollTop: 180 } });
+  scroll.contentStart(touch(100, 200)); scroll.contentMove(touch(100, 260));
+  scroll.contentScroll({ detail: { scrollTop: 0 } }); scroll.contentMove(touch(100, 330)); scroll.contentEnd(touch(100, 330));
+  assert.strictEqual(scroll.data.closing, false, 'scrolling back to the top cannot turn into dismissal within the same gesture');
+  assert.strictEqual(scroll.updates, 0, 'normal native scrolling must not send per-frame UI bridge writes');
+  const upward = make(); upward.contentStart(touch(100, 200)); upward.contentMove(touch(100, 160));
+  upward.contentMove(touch(100, 290)); upward.contentEnd(touch(100, 290));
+  assert.strictEqual(upward.data.closing, false, 'an upward scroll cannot reverse into an accidental close');
+  const brief = make(); brief.contentStart(touch(100, 200)); brief.contentMove(touch(100, 235)); brief.contentEnd(touch(100, 235));
+  assert.strictEqual(brief.data.closing, false); assert.strictEqual(brief.data.dragY, 0); assert.strictEqual(brief.data.dragging, false);
+  brief.openDetail({ currentTarget: { dataset: { id: 'word-after-drag' } } });
+  assert.deepStrictEqual(brief.events, [], 'a drag must not also open the word under the release point');
+  gestureTime += 201;
+  brief.openDetail({ currentTarget: { dataset: { id: 'word-after-drag' } } });
+  assert.deepStrictEqual(brief.events, ['detail'], 'an intentional tap works again after the drag');
+  const multiple = make(); multiple.contentStart(touch(100, 200));
+  multiple.contentMove({ touches: [{ clientX: 100, clientY: 280 }, { clientX: 120, clientY: 280 }] }); multiple.contentEnd(touch(100, 280));
+  assert.strictEqual(multiple.data.closing, false, 'multi-touch cancels dismissal');
+  const staleScroll = make(); staleScroll.contentStart(touch(100, 200)); staleScroll.contentMove(touch(100, 230));
+  staleScroll.contentScroll({ detail: { scrollTop: 40 } }); staleScroll.contentEnd(touch(100, 290));
+  assert.strictEqual(staleScroll.data.closing, false, 'a delayed native scroll position update cancels a false top-of-list drag');
+  const contentCancel = make(); contentCancel.contentStart(touch(100, 200)); contentCancel.contentMove(touch(100, 280)); contentCancel.contentCancel(); contentCancel.contentEnd(touch(100, 280));
+  assert.strictEqual(contentCancel.data.closing, false);
+  definition.observers['visible, wordId'].call(contentCancel, false, '');
+  assert.strictEqual(contentCancel.contentScrollTop, 0); assert.strictEqual(contentCancel.isTapBlocked(), false, 'reopening resets stale gesture guards');
   const template = source('components/word-relations/index.wxml');
   assert.ok(/relation-backdrop[^>]*catchtap="close"/.test(template));
   assert.ok(/sheet-handle[^>]*catchtouchstart="dragStart"/.test(template));
-  assert.ok(!/sheet-scroll[^>]*drag(?:Start|Move|End)/.test(template), 'scrolling the word list must not dismiss the popup');
+  assert.ok(!/sheet-scroll[^>]*catchtouchmove/.test(template), 'ordinary list scrolling must retain its native move events');
+  assert.ok(/sheet-scroll[^>]*bindscroll="contentScroll"/.test(template));
+  assert.ok(/sheet-scroll[^>]*bindtouchstart="contentStart"[^>]*bindtouchend="contentEnd"/.test(template));
+  assert.ok(/sheet-head[^>]*bindtouchstart="dragStart"/.test(template), 'the title area also supports pulling down');
 }
 
 function testLibraryAndTemplates() {

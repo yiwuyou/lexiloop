@@ -3,8 +3,8 @@
   <view class="relation-sheet {{dragging ? 'is-dragging' : ''}}" style="transform: translateY({{dragY}}px)" role="dialog" aria-label="词库关联词" catchtap="noop">
     <view class="sheet-handle" catchtouchstart="dragStart" catchtouchmove="dragMove" catchtouchend="dragEnd" catchtouchcancel="dragCancel">
     <view class="sheet-grip"></view></view>
-    <view class="sheet-head"><view class="back-slot"></view><text class="sheet-title">词库关联词</text><button class="close" catchtap="close" aria-label="关闭关联词">×</button></view>
-    <scroll-view class="sheet-scroll" scroll-y="{{true}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}">
+    <view class="sheet-head" bindtouchstart="dragStart" bindtouchmove="dragMove" bindtouchend="dragEnd" bindtouchcancel="dragCancel"><view class="back-slot"></view><text class="sheet-title">词库关联词</text><button class="close" catchtap="close" aria-label="关闭关联词">×</button></view>
+    <scroll-view class="sheet-scroll" scroll-y="{{!dragging && !closing}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}" bindscroll="contentScroll" bindtouchstart="contentStart" bindtouchmove="contentMove" bindtouchend="contentEnd" bindtouchcancel="contentCancel">
       <view class="status" wx:if="{{loading}}">加载中…</view>
       <button class="error" wx:if="{{error}}" bindtap="retry">{{error}}</button>
       <block wx:if="{{result}}">
