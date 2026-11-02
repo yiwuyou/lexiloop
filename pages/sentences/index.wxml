@@ -7,9 +7,9 @@
   </view>
   <view class="card sentence-card" wx:for="{{entries}}" wx:key="sentence">
     <view data-index="{{index}}" bindtap="reveal">
-      <text class="target" data-word="{{item.word}}" catchlongpress="copyWord">{{item.word}}</text>
-      <text class="english">{{!hideEnglish || item.revealed ? item.sentence : '点击显示英文答案'}}</text>
-      <text class="chinese">{{!hideChinese || item.revealed ? item.translation : '点击显示中文释义'}}</text>
+      <text user-select="{{true}}" class="target" data-word="{{item.word}}">{{item.word}}</text>
+      <text user-select="{{true}}" class="english">{{!hideEnglish || item.revealed ? item.sentence : '点击显示英文答案'}}</text>
+      <text user-select="{{true}}" class="chinese">{{!hideChinese || item.revealed ? item.translation : '点击显示中文释义'}}</text>
     </view>
     <button class="remove" data-index="{{index}}" bindtap="remove">取消收藏</button>
   </view>

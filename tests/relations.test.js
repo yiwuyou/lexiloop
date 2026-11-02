@@ -67,6 +67,18 @@ function testCorpus() {
     }
   });
   assert.ok(!engine.build(idFor('include'), relationData, state).semantic.some(item => item.head === 'require'), 'do not invent transitive synonyms via involve');
+  for (const group of require('../data/word-relations.json').semanticGroups) {
+    for (const from of group.words) for (const to of group.words) {
+      if (from === to) continue;
+      const link = engine.build(idFor(from), relationData, state).semantic.find(item => item.head === to);
+      assert.ok(link, from + ' / ' + to + ': reviewed sense group must be available in both directions');
+      assert.ok(link.sense && link.note);
+    }
+  }
+  const confusing = engine.build(idFor('command'), relationData, state);
+  const commend = confusing.shapes.find(item => item.head === 'commend');
+  assert.ok(commend && commend.reason === '易混词对照' && commend.note.includes('中间是 e'));
+  assert.ok(!confusing.semantic.some(item => item.head === 'commend'), 'same POS and similar spelling must not imply similar meaning');
 
   const snapshot = JSON.stringify(state);
   const results = new Map();
@@ -318,6 +330,14 @@ function testDismissGestures() {
   assert.strictEqual(staleScroll.data.closing, false, 'a delayed native scroll position update cancels a false top-of-list drag');
   const contentCancel = make(); contentCancel.contentStart(touch(100, 200)); contentCancel.contentMove(touch(100, 280)); contentCancel.contentCancel(); contentCancel.contentEnd(touch(100, 280));
   assert.strictEqual(contentCancel.data.closing, false);
+  const selection = make(); selection.contentStart(touch(100, 200)); selection.cancelContentDrag();
+  selection.contentMove(touch(100, 290)); selection.contentEnd(touch(100, 290));
+  selection.openDetail({ currentTarget: { dataset: { id: 'selected-word' } } });
+  assert.strictEqual(selection.data.closing, false, 'long-press selection must not dismiss the sheet while dragging a selection handle');
+  assert.deepStrictEqual(selection.events, [], 'text selection cannot open another word on release');
+  const held = make(); held.contentStart(touch(100, 200)); gestureTime += 450;
+  held.contentMove(touch(100, 290)); held.contentEnd(touch(100, 290));
+  assert.strictEqual(held.data.closing, false, 'a held touch gives priority to native text selection');
   definition.observers['visible, wordId'].call(contentCancel, false, '');
   assert.strictEqual(contentCancel.contentScrollTop, 0); assert.strictEqual(contentCancel.isTapBlocked(), false, 'reopening resets stale gesture guards');
   const template = source('components/word-relations/index.wxml');

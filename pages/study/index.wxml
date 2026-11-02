@@ -4,15 +4,15 @@
     <view class="study-head">
       <button class="head-button" bindtap="exitStudy">返回</button>
       <view class="counter">
-        <text class="phase">{{taskLabel}}</text>
-        <text class="counter-value">{{taskVerb}} {{taskDone}} / {{taskTotal}} 词</text>
+        <text user-select="{{true}}" class="phase">{{taskLabel}}</text>
+        <text user-select="{{true}}" class="counter-value">{{taskVerb}} {{taskDone}} / {{taskTotal}} 词</text>
       </view>
       <button class="head-button" bindtap="exitStudy">退出</button>
     </view>
     <view class="study-progress"><view style="width: {{progress}}%"></view></view>
-    <text class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
+    <text user-select="{{true}}" class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
 
-    <view class="stage-status"><text>{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><text>已用 {{usedTime}}</text></view>
+    <view class="stage-status"><text user-select="{{true}}">{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><text user-select="{{true}}">已用 {{usedTime}}</text></view>
     <block wx:if="{{!waiting && !isContext}}">
       <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
       <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" />
@@ -20,7 +20,7 @@
 
       <view class="rating-area" wx:if="{{revealed}}">
         <view class="rating-header">
-          <text class="rating-label">选择最符合刚才回忆的情况</text>
+          <text user-select="{{true}}" class="rating-label">选择最符合刚才回忆的情况</text>
           <button class="relation-trigger" wx:if="{{revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
         </view>
         <view class="rating-grid">
@@ -36,13 +36,13 @@
       <scroll-view class="study-content" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}">
       <view class="context-card card">
         <view class="word-meta">
-          <text>{{word.sourceLabel}}</text>
-          <text class="kind">{{questionLabel}}</text>
+          <text user-select="{{true}}">{{word.sourceLabel}}</text>
+          <text user-select="{{true}}" class="kind">{{questionLabel}}</text>
         </view>
-        <view class="word-heading context-heading"><text class="context-word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text></view>
-        <text class="sentence">{{question.sentence}}</text>
+        <view class="word-heading context-heading"><text user-select="{{true}}" class="context-word" data-word="{{word.word}}">{{word.word}}</text></view>
+        <text user-select="{{true}}" class="sentence">{{question.sentence}}</text>
         <button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
-        <text class="context-prompt">{{questionPrompt}}</text>
+        <text user-select="{{true}}" class="context-prompt">{{questionPrompt}}</text>
         <view class="choice-list">
           <button
             wx:for="{{question.choices}}"
@@ -55,9 +55,9 @@
       </view>
       </scroll-view>
       <view class="context-result context-feedback {{contextCorrect ? 'correct' : 'wrong'}}" wx:if="{{contextAnswered}}">
-        <view class="feedback-head"><text class="result-title">{{contextCorrect ? '判断正确' : '这次选错了'}}</text><button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
-        <text class="translation">{{question.translation}}</text>
-        <text class="explanation" wx:if="{{showQuestionExplanation}}">{{question.explanation}}</text>
+        <view class="feedback-head"><text user-select="{{true}}" class="result-title">{{contextCorrect ? '判断正确' : '这次选错了'}}</text><button class="relation-trigger" wx:if="{{contextAnswered}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
+        <text user-select="{{true}}" class="translation">{{question.translation}}</text>
+        <text user-select="{{true}}" class="explanation" wx:if="{{showQuestionExplanation}}">{{question.explanation}}</text>
       </view>
       <view class="context-actions" wx:if="{{contextAnswered}}">
         <button class="primary-button next-button" bindtap="nextContext">继续</button>
@@ -69,16 +69,16 @@
     <view class="complete-view">
       <view class="complete-check">✓</view>
       <view class="complete-title">{{isPractice ? '本轮复习完成' : '今天完成了'}}</view>
-      <text class="complete-note">{{isPractice ? '这次练习已单独记录，今日任务和之后的复习安排保持不变。' : '所有作答均已保存在这部手机，下次出现时间也已安排。'}}</text>
+      <text user-select="{{true}}" class="complete-note">{{isPractice ? '这次练习已单独记录，今日任务和之后的复习安排保持不变。' : '所有作答均已保存在这部手机，下次出现时间也已安排。'}}</text>
       <view class="complete-grid" wx:if="{{isPractice}}">
-        <view><text>{{sessionSummary.usedTime}}</text><text>今日学习用时</text></view>
-        <view><text>{{sessionSummary.practiceDone}}</text><text>练习词数</text></view>
-        <view><text>{{sessionSummary.remembered}}</text><text>想起主要义</text></view>
+        <view><text user-select="{{true}}">{{sessionSummary.usedTime}}</text><text user-select="{{true}}">今日学习用时</text></view>
+        <view><text user-select="{{true}}">{{sessionSummary.practiceDone}}</text><text user-select="{{true}}">练习词数</text></view>
+        <view><text user-select="{{true}}">{{sessionSummary.remembered}}</text><text user-select="{{true}}">想起主要义</text></view>
       </view>
       <view class="complete-grid" wx:else>
-        <view><text>{{sessionSummary.usedTime}}</text><text>今日学习用时</text></view>
-        <view><text>{{sessionSummary.newDone}}</text><text>新词完成</text></view>
-        <view><text>{{sessionSummary.dueDone}}</text><text>旧词完成</text></view>
+        <view><text user-select="{{true}}">{{sessionSummary.usedTime}}</text><text user-select="{{true}}">今日学习用时</text></view>
+        <view><text user-select="{{true}}">{{sessionSummary.newDone}}</text><text user-select="{{true}}">新词完成</text></view>
+        <view><text user-select="{{true}}">{{sessionSummary.dueDone}}</text><text user-select="{{true}}">旧词完成</text></view>
       </view>
       <view class="context-summary" wx:if="{{sessionSummary.contextDone}}">语境辨义 {{sessionSummary.contextCorrect}} / {{sessionSummary.contextDone}}</view>
       <view class="context-summary" wx:if="{{sessionSummary.sentenceDone}}">例句巩固 {{sessionSummary.sentenceCorrect}} / {{sessionSummary.sentenceDone}}</view>

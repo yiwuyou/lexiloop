@@ -35,7 +35,10 @@ for (const [i, w] of words.entries()) {
   const correct = w.exampleSense ? w.exampleSense.replace(/（[^）]*）/g, '').trim() : w.meaning;
   assert.strictEqual(q.choices[q.answer], correct, w.id + ': answer must fit the sentence sense');
   assert.strictEqual(new Set(q.choices).size, 3);
-  if (w.exampleSense) assert.ok(q.explanation.includes(w.meaning) && q.explanation.includes('补充用法'));
+  if (w.exampleSense) {
+    assert.ok(w.meaning.replace(/\s/g, '').includes(w.exampleSense.replace(/\s/g, '')), w.id + ': sentence sense outside institution meaning');
+    assert.ok(q.explanation.includes(w.meaning) && !q.explanation.includes('补充用法'));
+  }
 }
 assert.ok(Math.max(...Object.values(useCount).map(heads => heads.size)) <= 4,
   'only a few naturally shared targets may reuse a sentence; source duplicates retain their IDs');
@@ -46,10 +49,41 @@ for (const [head, expected] of [
   ['esteem', 'self-esteem 自尊'], ['devote', 'devote time to'],
   ['subject', 'be subject to'], ['account', 'account for'],
   ['comply', 'comply with'], ['attribute', 'attribute A to B'],
-  ['stem', 'stem from'], ['toll', 'take a toll on'],
+  ['stem', 'stem the spread of'], ['toll', 'pay a toll'],
 ]) assert.ok(wordByHead.get(head).phrase.includes(expected), head);
-for (const head of ['toll', 'latitude', 'lobby', 'dwell', 'objective', 'stem']) {
-  assert.ok(wordByHead.get(head).exampleSense, head + ': keep supplemental senses distinct');
+const revised = require('../data/institution-reading-review.json').reviewed;
+for (const [head, review] of Object.entries(revised)) {
+  const word = wordByHead.get(head);
+  assert.strictEqual(word.exampleSense, review.sense);
+  assert.ok(word.phrase.includes(review.phrase));
+}
+assert.ok(!/dwell on/.test(wordByHead.get('dwell').example + wordByHead.get('dwell').phrase));
+assert.ok(!wordByHead.get('command').example.includes('command of'));
+assert.strictEqual(getRecallQuestion(Object.assign({}, wordByHead.get('dwell'), { exampleSense: '反复思考' })), null,
+  'stale or unapproved extra meanings must not become a mismatched question');
+const normalize = value => value.toLowerCase().replace(/behaviour|behavio\(u\)r/g, 'behavior').replace('while/whilst', 'while').replace(/\s/g, '');
+for (const question of require('../data/context-questions')) {
+  assert.strictEqual(new Set(question.choices).size, 3, question.id + ': keep three distinct answer choices when correcting an old question');
+  const records = words.filter(word => normalize(word.spokenWord) === normalize(question.word));
+  assert.ok(records.length && question.institutionSense, question.id);
+  assert.strictEqual(question.choices[question.answer], question.institutionSense, question.id);
+  for (const word of records) assert.ok(normalize(word.meaning).includes(normalize(question.institutionSense)), question.id + ': outside this source record');
+}
+assert.ok(wordByHead.get('consume').family.includes('consumer 消费者'));
+assert.ok(wordByHead.get('consume').family.includes('consumption 消费；消耗'));
+assert.ok(!words.some(word => ['consumer', 'consumption'].includes(word.spokenWord)), 'auxiliary family words must not become new learning cards');
+for (const invalid of ['反复思考', '住']) {
+  let writes = 0;
+  const buildRequire = name => {
+    if (name === 'fs') return Object.assign({}, fs, { writeFileSync() { writes++; throw Error('unexpected authoring write'); } });
+    if (name === '../data/reading-senses.json') return Object.assign({}, require(name), { dwell: invalid });
+    if (name.startsWith('../data/')) return JSON.parse(JSON.stringify(require(name)));
+    return require(name);
+  };
+  assert.throws(() => vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../scripts/build-reading-content.js'), 'utf8'), {
+    require: buildRequire, __dirname: path.join(__dirname, '../scripts'), console,
+  }), /sentence sense must come from institution meaning/);
+  assert.strictEqual(writes, 0, 'reject out-of-source or partial senses before changing generated data');
 }
 // A card already contains its reviewed phrases. Do not download a subpackage
 // before showing them or silently replace them with an older fallback pack.
@@ -67,6 +101,6 @@ async function main() {
   await assert.rejects(moduleMock.exports.phraseFor({ id: 'fallback' }), /offline/);
   await assert.rejects(moduleMock.exports.phraseFor({ id: 'fallback' }), /offline/);
   assert.strictEqual(downloads, 2, 'a failed optional fallback must remain retryable');
-  console.log('2522 original reading examples/phrases, source meanings, supplemental-sense answers and offline immediate phrases passed.');
+  console.log('2522 reading records, institution-only answer senses, revised target examples, word families and offline immediate phrases passed.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

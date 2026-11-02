@@ -39,14 +39,25 @@ Component({
     },
     contentStart(event) {
       this.dragSource = 'content';
+      this.dragStartedAt = Date.now();
       this.drag = event.touches.length === 1 && !this.closing && (this.contentScrollTop || 0) <= 4 ? event.touches[0] : null;
     },
+    cancelContentDrag() {
+      if (this.dragSource !== 'content') return;
+      this.dragCancel();
+      this.suppressTapUntil = Date.now() + 500;
+    },
     contentMove(event) { if (this.dragSource === 'content') this.dragMove(event); },
-    contentEnd(event) { if (this.dragSource === 'content') this.dragEnd(event); },
+    contentEnd(event) {
+      if (this.dragSource !== 'content') return;
+      if (!this.data.dragging && Date.now() - this.dragStartedAt >= 400) this.cancelContentDrag();
+      else this.dragEnd(event);
+    },
     contentCancel() { if (this.dragSource === 'content') this.dragCancel(); },
     dragStart(event) { this.dragSource = 'header'; this.drag = event.touches.length === 1 && !this.closing ? event.touches[0] : null; },
     dragMove(event) {
       if (!this.drag) return;
+      if (this.dragSource === 'content' && !this.data.dragging && Date.now() - this.dragStartedAt >= 400) { this.cancelContentDrag(); return; }
       if (event.touches.length !== 1) { this.dragCancel(); return; }
       const point = event.touches[0], dy = point.clientY - this.drag.clientY;
       // Upward scrolling and horizontal movement never capture a close drag.

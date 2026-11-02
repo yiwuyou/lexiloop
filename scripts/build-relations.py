@@ -290,9 +290,36 @@ def definitions(entry):
     return result
 
 
+def reviewed_pairs(relations):
+    pairs = {tuple(sorted(pair['words'])): pair for pair in relations.get('semanticPairs', [])}
+    for group in relations.get('semanticGroups', []):
+        members = group['words']
+        if len(members) != len(set(members)) or not group.get('note') or not group.get('sources'):
+            raise ValueError('Reviewed groups need unique members, a usage note and sources')
+        for i, left in enumerate(members):
+            for right in members[i + 1:]:
+                pairs.setdefault(tuple(sorted((left, right))), {
+                    'words': [left, right], 'sense': group['sense'],
+                    'note': group['note'], 'sources': group['sources']})
+    return list(pairs.values())
+
+
+def apply_reviewed_structure(data, relations, heads):
+    for group in relations['families']:
+        members = list(dict.fromkeys(head for head in group if head in heads))
+        if len(members) >= 2 and not any(set(members) <= set(old) for old in data['families']):
+            data['families'].append(members)
+    contrasts = {tuple(sorted(pair[:2])): pair for pair in data['contrasts']}
+    for pair in relations['contrasts']:
+        if all(head in heads for head in pair[:2]):
+            contrasts[tuple(sorted(pair[:2]))] = pair
+    data['contrasts'] = list(contrasts.values())
+    return data
+
+
 def apply_reviewed_pairs(data, pairs, heads):
     """Explicit, symmetric sense links; never infer transitive synonymy."""
-    synonyms = {head: {link['word']: link for link in links}
+    synonyms = {head: {link['word']: link for link in links if not link.get('reviewed')}
                 for head, links in data['synonyms'].items()}
     seen = set()
     for pair in pairs:
@@ -305,7 +332,7 @@ def apply_reviewed_pairs(data, pairs, heads):
         seen.add(key)
         for source, target in [(left, right), (right, left)]:
             synonyms.setdefault(source, {})[target] = {
-                'word': target, 'sense': pair['sense'], 'note': pair['note']}
+                'word': target, 'sense': pair['sense'], 'note': pair['note'], 'reviewed': True}
     data['synonyms'] = {head: [links[target] for target in sorted(links)]
                         for head, links in sorted(synonyms.items()) if links}
     return data
@@ -323,17 +350,21 @@ def main():
         vocab = load_js(project / 'data/vocabulary.js')
         content = load_js(project / 'data/learning-content.js')
         heads = {content['-'.join(map(str, row[:3]))]['spokenWord'].lower() for row in vocab}
-        pairs = json.loads((project / 'data/word-relations.json').read_text('utf-8')).get('semanticPairs', [])
+        relations = json.loads((project / 'data/word-relations.json').read_text('utf-8'))
+        pairs = reviewed_pairs(relations)
         data = apply_reviewed_pairs(load_js(args.output), pairs, heads)
+        data = apply_reviewed_structure(data, relations, heads)
         args.output.write_text('// ECDICT glosses + reviewed meaning groups; exact-definition semantic edges.\nmodule.exports = ' +
             json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
         audit_path = args.output.with_suffix('.audit.json')
         report = json.loads(audit_path.read_text('utf-8')) if audit_path.exists() else {}
         report.update({'synonymHeads': len(data['synonyms']),
             'directedSynonymEdges': sum(map(len, data['synonyms'].values())),
-            'reviewedSemanticPairs': len(pairs), 'bytes': args.output.stat().st_size})
-        report.setdefault('spotChecks', {}).update({head: {'common': data['common'][head], 'synonyms': data['synonyms'].get(head, [])}
-            for head in sorted({word for pair in pairs for word in pair['words']})})
+            'reviewedSemanticPairs': len(pairs), 'reviewedSemanticGroups': len(relations.get('semanticGroups', [])),
+            'families': len(data['families']), 'contrasts': len(data['contrasts']), 'bytes': args.output.stat().st_size})
+        spot_heads = set(report.get('spotChecks', {})) | {word for pair in pairs for word in pair['words']}
+        report['spotChecks'] = {head: {'common': data['common'][head], 'synonyms': data['synonyms'].get(head, [])}
+            for head in sorted(spot_heads) if head in heads}
         audit_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', 'utf-8')
         print(json.dumps({key: report[key] for key in ['synonymHeads', 'directedSynonymEdges', 'reviewedSemanticPairs', 'bytes']}))
         return
@@ -416,13 +447,15 @@ def main():
     data = {'common': common, 'synonyms': {head: [{'word': target, 'sense': sense}
             for target, sense in sorted(targets.items())] for head, targets in sorted(edges.items()) if targets},
             'families': families, 'contrasts': contrasts}
-    data = apply_reviewed_pairs(data, relations.get('semanticPairs', []), heads)
+    data = apply_reviewed_pairs(data, reviewed_pairs(relations), heads)
+    data = apply_reviewed_structure(data, relations, heads)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text('// ECDICT glosses + reviewed meaning groups; exact-definition semantic edges.\nmodule.exports = ' +
         json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n', 'utf-8')
     report = {'sourceRecords': len(vocab), 'heads': len(heads),
         'reviewedCommonCount': len(set(REVIEWED_COMMON) & heads),
-        'reviewedSemanticPairs': len(relations.get('semanticPairs', [])),
+        'reviewedSemanticPairs': len(reviewed_pairs(relations)),
+        'reviewedSemanticGroups': len(relations.get('semanticGroups', [])),
         'commonAvailable': sum(value != '暂无可靠常用释义' for value in common.values()),
         'synonymHeads': len(data['synonyms']), 'directedSynonymEdges': sum(map(len, data['synonyms'].values())),
         'automaticUndirectedEdges': auto_count, 'families': len(families), 'contrasts': len(contrasts),

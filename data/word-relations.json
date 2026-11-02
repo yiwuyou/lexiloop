@@ -1,68 +1,1644 @@
 {
   "semanticPairs": [
-    {"words":["involve","include"],"sense":"包含某个部分（动词义）","note":"include：把人或事物作为整体的一部分包括在内；involve：某事涉及、需要某个重要或必要的部分。二者部分义项接近，不能在所有句子中互换。","sources":["https://www.oxfordlearnersdictionaries.com/definition/english/include","https://www.oxfordlearnersdictionaries.com/definition/english/involve"]},
-    {"words":["include","contain"],"sense":"包括、包含（动词义）","note":"include：整体中包括某部分，常用于列举；contain：内部含有某物，也可指内容或成分。中文都可译为“包含”，侧重点不同。","sources":["https://www.oxfordlearnersdictionaries.com/definition/english/include","https://www.oxfordlearnersdictionaries.com/definition/english/contain"]},
-    {"words":["include","comprise"],"sense":"包括组成部分（动词义）","note":"include：列出整体中的一部分，不要求列全；comprise：整体由所列部分组成。不要把中文“包括”直接等同为所有用法相同。","sources":["https://www.oxfordlearnersdictionaries.com/definition/english/include","https://www.oxfordlearnersdictionaries.com/definition/english/comprise"]},
-    {"words":["contain","comprise"],"sense":"整体包含部分（动词义）","note":"contain：强调内部含有某物；comprise：强调构成整体的各个部分。只在“整体包含部分”这一义项对照。","sources":["https://www.oxfordlearnersdictionaries.com/definition/english/contain","https://www.oxfordlearnersdictionaries.com/definition/english/comprise"]},
-    {"words":["involve","contain"],"sense":"包含某个部分（动词义）","note":"involve：活动或情况涉及某个重要、必要的部分或结果；contain：内部含有某物。关联用于辨别“包含”的不同语境，不表示可以随意替换。","sources":["https://www.oxfordlearnersdictionaries.com/definition/english/involve","https://www.oxfordlearnersdictionaries.com/definition/english/contain"]},
-    {"words":["involve","require"],"sense":"需要某个必要部分（动词义）","note":"involve doing：做某事涉及或需要某项活动；require：需要某物，或要求某人做某事。involve 常接 doing；require 可用 require somebody to do，也可用 require doing 表示“需被……”。","sources":["https://www.oxfordlearnersdictionaries.com/definition/english/involve","https://www.oxfordlearnersdictionaries.com/definition/english/require"]}
+    {
+      "words": [
+        "involve",
+        "include"
+      ],
+      "sense": "包含某个部分（动词义）",
+      "note": "include：把人或事物作为整体的一部分包括在内；involve：某事涉及、需要某个重要或必要的部分。二者部分义项接近，不能在所有句子中互换。",
+      "sources": [
+        "https://www.oxfordlearnersdictionaries.com/definition/english/include",
+        "https://www.oxfordlearnersdictionaries.com/definition/english/involve"
+      ]
+    },
+    {
+      "words": [
+        "include",
+        "contain"
+      ],
+      "sense": "包括、包含（动词义）",
+      "note": "include：整体中包括某部分，常用于列举；contain：内部含有某物，也可指内容或成分。中文都可译为“包含”，侧重点不同。",
+      "sources": [
+        "https://www.oxfordlearnersdictionaries.com/definition/english/include",
+        "https://www.oxfordlearnersdictionaries.com/definition/english/contain"
+      ]
+    },
+    {
+      "words": [
+        "include",
+        "comprise"
+      ],
+      "sense": "包括组成部分（动词义）",
+      "note": "include：列出整体中的一部分，不要求列全；comprise：整体由所列部分组成。不要把中文“包括”直接等同为所有用法相同。",
+      "sources": [
+        "https://www.oxfordlearnersdictionaries.com/definition/english/include",
+        "https://www.oxfordlearnersdictionaries.com/definition/english/comprise"
+      ]
+    },
+    {
+      "words": [
+        "contain",
+        "comprise"
+      ],
+      "sense": "整体包含部分（动词义）",
+      "note": "contain：强调内部含有某物；comprise：强调构成整体的各个部分。只在“整体包含部分”这一义项对照。",
+      "sources": [
+        "https://www.oxfordlearnersdictionaries.com/definition/english/contain",
+        "https://www.oxfordlearnersdictionaries.com/definition/english/comprise"
+      ]
+    },
+    {
+      "words": [
+        "involve",
+        "contain"
+      ],
+      "sense": "包含某个部分（动词义）",
+      "note": "involve：活动或情况涉及某个重要、必要的部分或结果；contain：内部含有某物。关联用于辨别“包含”的不同语境，不表示可以随意替换。",
+      "sources": [
+        "https://www.oxfordlearnersdictionaries.com/definition/english/involve",
+        "https://www.oxfordlearnersdictionaries.com/definition/english/contain"
+      ]
+    },
+    {
+      "words": [
+        "involve",
+        "require"
+      ],
+      "sense": "需要某个必要部分（动词义）",
+      "note": "involve doing：做某事涉及或需要某项活动；require：需要某物，或要求某人做某事。involve 常接 doing；require 可用 require somebody to do，也可用 require doing 表示“需被……”。",
+      "sources": [
+        "https://www.oxfordlearnersdictionaries.com/definition/english/involve",
+        "https://www.oxfordlearnersdictionaries.com/definition/english/require"
+      ]
+    }
   ],
   "families": [
-    ["combine","combination"],["comfort","comfortable","uncomfortable"],["commerce","commercial"],["commit","commitment"],["communicate","communication","communicative"],["commute","commuter"],["compare","comparison","comparative"],["compatible","compatibility","incompatible"],["compel","compulsion","compulsory"],["compensate","compensation"],["competent","competence","incompetent"],["complete","completion","incomplete"],["complicate","complicated","complication"],["compress","compression"],["conceive","conception","conceivable"],["concentrate","concentration"],["confess","confession"],["confide","confidential","confidence"],["conform","conformity"],["confuse","confusion","confusing","confused"],["consequence","consequent","consequently"],["conserve","conservation","conservative"],["constitute","constitution","constitutional"],["contain","container"],["contradict","contradiction","contradictory"],["converge","convergence"],["convert","conversion"],["coordinate","coordination"],["correspond","correspondence","corresponding"],
-    ["act","action","active","activity","activate","actor"],["accept","acceptable","unacceptable","acceptance"],["achieve","achievement"],["adapt","adaptation","adaptable"],["admit","admission"],["advise","advice","adviser"],["afford","affordable"],["appear","appearance","disappear","disappearance"],["apply","application","applicant"],["approve","approval","disapprove","disapproval"],["argue","argument"],["assume","assumption"],["attract","attraction","attractive"],["benefit","beneficial"],["believe","belief","believable"],["care","careful","careless"],["create","creation","creative","creativity"],["decide","decision","decisive"],["define","definition","definite"],["depend","dependent","independent","dependence","independence"],["describe","description","descriptive"],["develop","development","developer"],["differ","different","difference"],["discuss","discussion"],["divide","division"],["economy","economic","economical","economics"],["educate","education","educational"],["employ","employee","employer","employment","unemployment"],["encourage","encouragement","discourage"],["energy","energetic"],["examine","examination"],["exist","existence","existing"],["expand","expansion"],["expect","expectation","unexpected"],["explain","explanation"],["explore","exploration"],["express","expression","expressive"],["extend","extension","extensive"],["fail","failure"],["finance","financial"],["form","formation","reform"],["govern","government","governor"],["grow","growth"],["health","healthy","unhealthy"],["imagine","imagination","imaginary","imaginative"],["improve","improvement"],["include","inclusion","inclusive"],["industry","industrial","industrialize"],["inform","information"],["instruct","instruction","instructor"],["intend","intention"],["invest","investment","investor"],["judge","judgment","judgement"],["know","knowledge","knowledgeable"],["legal","illegal","legally"],["manage","management","manager"],["measure","measurement"],["nature","natural","naturally"],["observe","observation","observer"],["operate","operation","operator"],["organize","organization","organise","organisation"],["participate","participation","participant"],["permit","permission"],["persuade","persuasion","persuasive"],["pollute","pollution"],["possible","possibility","impossible"],["predict","prediction","predictable"],["prefer","preference"],["prepare","preparation"],["produce","product","production","producer","productive","productivity"],["protect","protection","protective"],["provide","provision","provider"],["publish","publication","publisher"],["real","reality","realistic","realize"],["receive","receipt","reception"],["recognize","recognition"],["reduce","reduction"],["refer","reference"],["reflect","reflection"],["relate","relation","relationship","relative"],["rely","reliable","reliability"],["require","requirement"],["respond","response","responsive"],["responsible","responsibility","irresponsible"],["satisfy","satisfaction","satisfactory"],["science","scientific","scientist"],["select","selection","selective"],["solve","solution"],["stable","stability","unstable"],["succeed","success","successful"],["suggest","suggestion"],["survive","survival","survivor"],["teach","teacher","teaching"],["tend","tendency"],["theory","theoretical"],["vary","variety","variation","various","variable"],["wide","width","widen"],["strong","strength","strengthen"],["long","length","lengthen"],["deep","depth","deepen"]
+    [
+      "combine",
+      "combination"
+    ],
+    [
+      "comfort",
+      "comfortable",
+      "uncomfortable"
+    ],
+    [
+      "commerce",
+      "commercial"
+    ],
+    [
+      "commit",
+      "commitment"
+    ],
+    [
+      "communicate",
+      "communication",
+      "communicative"
+    ],
+    [
+      "commute",
+      "commuter"
+    ],
+    [
+      "compare",
+      "comparison",
+      "comparative"
+    ],
+    [
+      "compatible",
+      "compatibility",
+      "incompatible"
+    ],
+    [
+      "compel",
+      "compulsion",
+      "compulsory"
+    ],
+    [
+      "compensate",
+      "compensation"
+    ],
+    [
+      "competent",
+      "competence",
+      "incompetent"
+    ],
+    [
+      "complete",
+      "completion",
+      "incomplete"
+    ],
+    [
+      "complicate",
+      "complicated",
+      "complication"
+    ],
+    [
+      "compress",
+      "compression"
+    ],
+    [
+      "conceive",
+      "conception",
+      "conceivable"
+    ],
+    [
+      "concentrate",
+      "concentration"
+    ],
+    [
+      "confess",
+      "confession"
+    ],
+    [
+      "confide",
+      "confidential",
+      "confidence"
+    ],
+    [
+      "conform",
+      "conformity"
+    ],
+    [
+      "confuse",
+      "confusion",
+      "confusing",
+      "confused"
+    ],
+    [
+      "consequence",
+      "consequent",
+      "consequently"
+    ],
+    [
+      "conserve",
+      "conservation",
+      "conservative"
+    ],
+    [
+      "constitute",
+      "constitution",
+      "constitutional"
+    ],
+    [
+      "contain",
+      "container"
+    ],
+    [
+      "contradict",
+      "contradiction",
+      "contradictory"
+    ],
+    [
+      "converge",
+      "convergence"
+    ],
+    [
+      "convert",
+      "conversion"
+    ],
+    [
+      "coordinate",
+      "coordination"
+    ],
+    [
+      "correspond",
+      "correspondence",
+      "corresponding"
+    ],
+    [
+      "act",
+      "action",
+      "active",
+      "activity",
+      "activate",
+      "actor"
+    ],
+    [
+      "accept",
+      "acceptable",
+      "unacceptable",
+      "acceptance"
+    ],
+    [
+      "achieve",
+      "achievement"
+    ],
+    [
+      "adapt",
+      "adaptation",
+      "adaptable"
+    ],
+    [
+      "admit",
+      "admission"
+    ],
+    [
+      "advise",
+      "advice",
+      "adviser"
+    ],
+    [
+      "afford",
+      "affordable"
+    ],
+    [
+      "appear",
+      "appearance",
+      "disappear",
+      "disappearance"
+    ],
+    [
+      "apply",
+      "application",
+      "applicant"
+    ],
+    [
+      "approve",
+      "approval",
+      "disapprove",
+      "disapproval"
+    ],
+    [
+      "argue",
+      "argument"
+    ],
+    [
+      "assume",
+      "assumption"
+    ],
+    [
+      "attract",
+      "attraction",
+      "attractive"
+    ],
+    [
+      "benefit",
+      "beneficial"
+    ],
+    [
+      "believe",
+      "belief",
+      "believable"
+    ],
+    [
+      "care",
+      "careful",
+      "careless"
+    ],
+    [
+      "create",
+      "creation",
+      "creative",
+      "creativity"
+    ],
+    [
+      "decide",
+      "decision",
+      "decisive"
+    ],
+    [
+      "define",
+      "definition",
+      "definite"
+    ],
+    [
+      "depend",
+      "dependent",
+      "independent",
+      "dependence",
+      "independence"
+    ],
+    [
+      "describe",
+      "description",
+      "descriptive"
+    ],
+    [
+      "develop",
+      "development",
+      "developer"
+    ],
+    [
+      "differ",
+      "different",
+      "difference"
+    ],
+    [
+      "discuss",
+      "discussion"
+    ],
+    [
+      "divide",
+      "division"
+    ],
+    [
+      "economy",
+      "economic",
+      "economical",
+      "economics"
+    ],
+    [
+      "educate",
+      "education",
+      "educational"
+    ],
+    [
+      "employ",
+      "employee",
+      "employer",
+      "employment",
+      "unemployment"
+    ],
+    [
+      "encourage",
+      "encouragement",
+      "discourage"
+    ],
+    [
+      "energy",
+      "energetic"
+    ],
+    [
+      "examine",
+      "examination"
+    ],
+    [
+      "exist",
+      "existence",
+      "existing"
+    ],
+    [
+      "expand",
+      "expansion"
+    ],
+    [
+      "expect",
+      "expectation",
+      "unexpected"
+    ],
+    [
+      "explain",
+      "explanation"
+    ],
+    [
+      "explore",
+      "exploration"
+    ],
+    [
+      "express",
+      "expression",
+      "expressive"
+    ],
+    [
+      "extend",
+      "extension",
+      "extensive"
+    ],
+    [
+      "fail",
+      "failure"
+    ],
+    [
+      "finance",
+      "financial"
+    ],
+    [
+      "form",
+      "formation",
+      "reform"
+    ],
+    [
+      "govern",
+      "government",
+      "governor"
+    ],
+    [
+      "grow",
+      "growth"
+    ],
+    [
+      "health",
+      "healthy",
+      "unhealthy"
+    ],
+    [
+      "imagine",
+      "imagination",
+      "imaginary",
+      "imaginative"
+    ],
+    [
+      "improve",
+      "improvement"
+    ],
+    [
+      "include",
+      "inclusion",
+      "inclusive"
+    ],
+    [
+      "industry",
+      "industrial",
+      "industrialize"
+    ],
+    [
+      "inform",
+      "information"
+    ],
+    [
+      "instruct",
+      "instruction",
+      "instructor"
+    ],
+    [
+      "intend",
+      "intention"
+    ],
+    [
+      "invest",
+      "investment",
+      "investor"
+    ],
+    [
+      "judge",
+      "judgment",
+      "judgement"
+    ],
+    [
+      "know",
+      "knowledge",
+      "knowledgeable"
+    ],
+    [
+      "legal",
+      "illegal",
+      "legally"
+    ],
+    [
+      "manage",
+      "management",
+      "manager"
+    ],
+    [
+      "measure",
+      "measurement"
+    ],
+    [
+      "nature",
+      "natural",
+      "naturally"
+    ],
+    [
+      "observe",
+      "observation",
+      "observer"
+    ],
+    [
+      "operate",
+      "operation",
+      "operator"
+    ],
+    [
+      "organize",
+      "organization",
+      "organise",
+      "organisation"
+    ],
+    [
+      "participate",
+      "participation",
+      "participant"
+    ],
+    [
+      "permit",
+      "permission"
+    ],
+    [
+      "persuade",
+      "persuasion",
+      "persuasive"
+    ],
+    [
+      "pollute",
+      "pollution"
+    ],
+    [
+      "possible",
+      "possibility",
+      "impossible"
+    ],
+    [
+      "predict",
+      "prediction",
+      "predictable"
+    ],
+    [
+      "prefer",
+      "preference"
+    ],
+    [
+      "prepare",
+      "preparation"
+    ],
+    [
+      "produce",
+      "product",
+      "production",
+      "producer",
+      "productive",
+      "productivity"
+    ],
+    [
+      "protect",
+      "protection",
+      "protective"
+    ],
+    [
+      "provide",
+      "provision",
+      "provider"
+    ],
+    [
+      "publish",
+      "publication",
+      "publisher"
+    ],
+    [
+      "real",
+      "reality",
+      "realistic",
+      "realize"
+    ],
+    [
+      "receive",
+      "receipt",
+      "reception"
+    ],
+    [
+      "recognize",
+      "recognition"
+    ],
+    [
+      "reduce",
+      "reduction"
+    ],
+    [
+      "refer",
+      "reference"
+    ],
+    [
+      "reflect",
+      "reflection"
+    ],
+    [
+      "relate",
+      "relation",
+      "relationship",
+      "relative"
+    ],
+    [
+      "rely",
+      "reliable",
+      "reliability"
+    ],
+    [
+      "require",
+      "requirement"
+    ],
+    [
+      "respond",
+      "response",
+      "responsive"
+    ],
+    [
+      "responsible",
+      "responsibility",
+      "irresponsible"
+    ],
+    [
+      "satisfy",
+      "satisfaction",
+      "satisfactory"
+    ],
+    [
+      "science",
+      "scientific",
+      "scientist"
+    ],
+    [
+      "select",
+      "selection",
+      "selective"
+    ],
+    [
+      "solve",
+      "solution"
+    ],
+    [
+      "stable",
+      "stability",
+      "unstable"
+    ],
+    [
+      "succeed",
+      "success",
+      "successful"
+    ],
+    [
+      "suggest",
+      "suggestion"
+    ],
+    [
+      "survive",
+      "survival",
+      "survivor"
+    ],
+    [
+      "teach",
+      "teacher",
+      "teaching"
+    ],
+    [
+      "tend",
+      "tendency"
+    ],
+    [
+      "theory",
+      "theoretical"
+    ],
+    [
+      "vary",
+      "variety",
+      "variation",
+      "various",
+      "variable"
+    ],
+    [
+      "wide",
+      "width",
+      "widen"
+    ],
+    [
+      "strong",
+      "strength",
+      "strengthen"
+    ],
+    [
+      "long",
+      "length",
+      "lengthen"
+    ],
+    [
+      "deep",
+      "depth",
+      "deepen"
+    ],
+    [
+      "consume",
+      "consumer",
+      "consumption"
+    ],
+    [
+      "dwell",
+      "dwelling"
+    ]
   ],
   "contrasts": [
-    ["compel","compare","compel 看词尾 -pel：迫使；compare 看 -pare：比较。一个是施加压力，一个是找异同。"],
-    ["compress","comprise","compress 有 press（压）：压缩；comprise 是“包括、由……组成”。"],
-    ["comprise","compromise","comprise：包括；compromise 多了 -om-：妥协。不要只看开头和结尾。"],
-    ["compliment","complement","compliment 中间 i：赞美；complement 中间 e：补充、使完整。"],
-    ["conscience","conscious","conscience 是“良心”；conscious 是“有意识的、察觉到的”。词尾和词性都不同。"],
-    ["contemporary","contempt","contemporary：当代的；contempt：轻蔑。相同开头不代表含义接近。"],
-    ["converge","diverge","converge：向一起汇合；diverge：向不同方向分开。"],
-    ["confident","confidential","confident：有信心的；confidential：机密的。后者多出的 -ial 不能忽略。"],
-    ["affect","effect","affect 常作动词“影响”；effect 常作名词“影响、效果”。它们也有其他用法，先辨清常见词性。"],
-    ["adapt","adopt","adapt：适应、改编；adopt：采用、收养。重点看中间 a 与 o。"],
-    ["accept","except","accept：接受；except：除……之外。重点看开头 ac- 与 ex-。"],
-    ["economic","economical","economic：经济的、经济学的；economical：节约的、省钱的。"],
-    ["principal","principle","principal：主要的、校长；principle：原则。注意词尾 -pal 与 -ple。"],
-    ["personal","personnel","personal：个人的；personnel：人员、人事部门。注意单写与双写 n。"],
-    ["desert","dessert","desert：沙漠、抛弃；dessert 双写 s：餐后甜点。"],
-    ["later","latter","later：后来、更晚；latter 双写 t：后者。"],
-    ["loose","lose","loose 双写 o：松的；lose：失去、输掉。"],
-    ["quiet","quite","quiet：安静的；quite：相当、很。注意最后三个字母的位置。"],
-    ["price","prize","price：价格；prize：奖品。重点区分 c 和 z。"],
-    ["form","from","form：形式、形成；from：来自。重点看 o 和 r 的顺序。"],
-    ["stationary","stationery","stationary：静止的；stationery：文具。词尾 a 与 e 不同。"],
-    ["rise","raise","rise 常指自己上升；raise 常指把别的东西提高、举起。"],
-    ["arise","arouse","arise：出现、产生；arouse：唤起、激起。"],
-    ["imply","infer","imply：说话者暗示；infer：听者根据线索推断。方向不同。"],
-    ["assure","ensure","assure 常用于让人放心；ensure 常用于确保事情发生。"],
-    ["insure","ensure","insure：投保；ensure：确保。不要因发音接近而混用。"],
-    ["reward","award","reward：回报、报酬；award：正式颁发的奖项或授予。"],
-    ["sensible","sensitive","sensible：明智的；sensitive：敏感的。"],
-    ["considerable","considerate","considerable：相当多的、可观的；considerate：体贴的。"],
-    ["respectful","respective","respectful：尊敬的；respective：各自的。"],
-    ["industrial","industrious","industrial：工业的；industrious：勤劳的。"],
-    ["historic","historical","historic：具有历史意义的；historical：与历史有关的。"],
-    ["access","assess","access：进入、使用的机会；assess：评估。注意中间 cc 和 ss。"],
-    ["adapt","adept","adapt：适应；adept：熟练的。重点区分第二个元音。"],
-    ["attitude","altitude","attitude：态度；altitude：海拔、高度。注意开头 att- 与 alt-。"],
-    ["aboard","abroad","aboard：在船或飞机等上；abroad：在国外。注意 r 的位置。"],
-    ["explode","explore","explode：爆炸；explore：探索。注意 d 与 r。"],
-    ["preserve","reserve","preserve：保护、保存；reserve：预留、储备。"],
-    ["resolve","dissolve","resolve：解决、决心；dissolve：溶解、解散。不要只记共同的 solve。"],
-    ["migrate","emigrate","migrate（迁移、移居）是中性总称，不强调跨国方向；emigrate（移居国外）中的 e- 可联想 exit（出去），强调从原来的国家移出；immigrate（移入、移民进入）中的 im- 可联想 in（进入），强调移入新的国家。"],
-    ["moral","morale","moral：道德的；morale 末尾多 e：士气。"],
-    ["casual","causal","casual：随意的、偶然的；causal：因果的。注意 s 与 u 的位置。"],
-    ["precede","proceed","precede：在……之前；proceed：继续进行。"],
-    ["conscious","conscientious","conscious：有意识的；conscientious：认真负责的。"],
-    ["valuable","invaluable","valuable：有价值的；invaluable：极其宝贵的。后者不是“没有价值”。"],
-    ["literal","literary","literal：字面的；literary：文学的。"],
-    ["eligible","illegible","eligible：符合资格的；illegible：字迹难以辨认的。"],
-    ["explicit","implicit","explicit：明确说出的；implicit：含蓄的、隐含的。"],
-    ["concrete","abstract","concrete：具体的；abstract：抽象的。可指出实在例子与只谈概念形成对照。"],
-    ["objective","subjective","objective：客观的；subjective：主观的。"],
-    ["credible","credulous","credible：可信的；credulous：轻信的。一个形容信息，一个形容容易相信的人。"],
-    ["detain","custody","detain 是动词，强调拘留动作；custody 是名词，强调羁押、监管或监护状态。"]
+    [
+      "command",
+      "commend",
+      "command 的中间是 a：命令、指挥；commend 的中间是 e：推荐、表扬。只作字形易混对照，不是近义词。"
+    ],
+    [
+      "compel",
+      "compare",
+      "compel 看词尾 -pel：迫使；compare 看 -pare：比较。一个是施加压力，一个是找异同。"
+    ],
+    [
+      "compress",
+      "comprise",
+      "compress 有 press（压）：压缩；comprise 是“包括、由……组成”。"
+    ],
+    [
+      "comprise",
+      "compromise",
+      "comprise：包括；compromise 多了 -om-：妥协。不要只看开头和结尾。"
+    ],
+    [
+      "compliment",
+      "complement",
+      "compliment 中间 i：赞美；complement 中间 e：补充、使完整。"
+    ],
+    [
+      "conscience",
+      "conscious",
+      "conscience 是“良心”；conscious 是“有意识的、察觉到的”。词尾和词性都不同。"
+    ],
+    [
+      "contemporary",
+      "contempt",
+      "contemporary：当代的；contempt：轻蔑。相同开头不代表含义接近。"
+    ],
+    [
+      "converge",
+      "diverge",
+      "converge：向一起汇合；diverge：向不同方向分开。"
+    ],
+    [
+      "confident",
+      "confidential",
+      "confident：有信心的；confidential：机密的。后者多出的 -ial 不能忽略。"
+    ],
+    [
+      "affect",
+      "effect",
+      "affect 常作动词“影响”；effect 常作名词“影响、效果”。它们也有其他用法，先辨清常见词性。"
+    ],
+    [
+      "adapt",
+      "adopt",
+      "adapt：适应、改编；adopt：采用、收养。重点看中间 a 与 o。"
+    ],
+    [
+      "accept",
+      "except",
+      "accept：接受；except：除……之外。重点看开头 ac- 与 ex-。"
+    ],
+    [
+      "economic",
+      "economical",
+      "economic：经济的、经济学的；economical：节约的、省钱的。"
+    ],
+    [
+      "principal",
+      "principle",
+      "principal：主要的、校长；principle：原则。注意词尾 -pal 与 -ple。"
+    ],
+    [
+      "personal",
+      "personnel",
+      "personal：个人的；personnel：人员、人事部门。注意单写与双写 n。"
+    ],
+    [
+      "desert",
+      "dessert",
+      "desert：沙漠、抛弃；dessert 双写 s：餐后甜点。"
+    ],
+    [
+      "later",
+      "latter",
+      "later：后来、更晚；latter 双写 t：后者。"
+    ],
+    [
+      "loose",
+      "lose",
+      "loose 双写 o：松的；lose：失去、输掉。"
+    ],
+    [
+      "quiet",
+      "quite",
+      "quiet：安静的；quite：相当、很。注意最后三个字母的位置。"
+    ],
+    [
+      "price",
+      "prize",
+      "price：价格；prize：奖品。重点区分 c 和 z。"
+    ],
+    [
+      "form",
+      "from",
+      "form：形式、形成；from：来自。重点看 o 和 r 的顺序。"
+    ],
+    [
+      "stationary",
+      "stationery",
+      "stationary：静止的；stationery：文具。词尾 a 与 e 不同。"
+    ],
+    [
+      "rise",
+      "raise",
+      "rise 常指自己上升；raise 常指把别的东西提高、举起。"
+    ],
+    [
+      "arise",
+      "arouse",
+      "arise：出现、产生；arouse：唤起、激起。"
+    ],
+    [
+      "imply",
+      "infer",
+      "imply：说话者暗示；infer：听者根据线索推断。方向不同。"
+    ],
+    [
+      "assure",
+      "ensure",
+      "assure 常用于让人放心；ensure 常用于确保事情发生。"
+    ],
+    [
+      "insure",
+      "ensure",
+      "insure：投保；ensure：确保。不要因发音接近而混用。"
+    ],
+    [
+      "reward",
+      "award",
+      "reward：回报、报酬；award：正式颁发的奖项或授予。"
+    ],
+    [
+      "sensible",
+      "sensitive",
+      "sensible：明智的；sensitive：敏感的。"
+    ],
+    [
+      "considerable",
+      "considerate",
+      "considerable：相当多的、可观的；considerate：体贴的。"
+    ],
+    [
+      "respectful",
+      "respective",
+      "respectful：尊敬的；respective：各自的。"
+    ],
+    [
+      "industrial",
+      "industrious",
+      "industrial：工业的；industrious：勤劳的。"
+    ],
+    [
+      "historic",
+      "historical",
+      "historic：具有历史意义的；historical：与历史有关的。"
+    ],
+    [
+      "access",
+      "assess",
+      "access：进入、使用的机会；assess：评估。注意中间 cc 和 ss。"
+    ],
+    [
+      "adapt",
+      "adept",
+      "adapt：适应；adept：熟练的。重点区分第二个元音。"
+    ],
+    [
+      "attitude",
+      "altitude",
+      "attitude：态度；altitude：海拔、高度。注意开头 att- 与 alt-。"
+    ],
+    [
+      "aboard",
+      "abroad",
+      "aboard：在船或飞机等上；abroad：在国外。注意 r 的位置。"
+    ],
+    [
+      "explode",
+      "explore",
+      "explode：爆炸；explore：探索。注意 d 与 r。"
+    ],
+    [
+      "preserve",
+      "reserve",
+      "preserve：保护、保存；reserve：预留、储备。"
+    ],
+    [
+      "resolve",
+      "dissolve",
+      "resolve：解决、决心；dissolve：溶解、解散。不要只记共同的 solve。"
+    ],
+    [
+      "migrate",
+      "emigrate",
+      "migrate（迁移、移居）是中性总称，不强调跨国方向；emigrate（移居国外）中的 e- 可联想 exit（出去），强调从原来的国家移出；immigrate（移入、移民进入）中的 im- 可联想 in（进入），强调移入新的国家。"
+    ],
+    [
+      "moral",
+      "morale",
+      "moral：道德的；morale 末尾多 e：士气。"
+    ],
+    [
+      "casual",
+      "causal",
+      "casual：随意的、偶然的；causal：因果的。注意 s 与 u 的位置。"
+    ],
+    [
+      "precede",
+      "proceed",
+      "precede：在……之前；proceed：继续进行。"
+    ],
+    [
+      "conscious",
+      "conscientious",
+      "conscious：有意识的；conscientious：认真负责的。"
+    ],
+    [
+      "valuable",
+      "invaluable",
+      "valuable：有价值的；invaluable：极其宝贵的。后者不是“没有价值”。"
+    ],
+    [
+      "literal",
+      "literary",
+      "literal：字面的；literary：文学的。"
+    ],
+    [
+      "eligible",
+      "illegible",
+      "eligible：符合资格的；illegible：字迹难以辨认的。"
+    ],
+    [
+      "explicit",
+      "implicit",
+      "explicit：明确说出的；implicit：含蓄的、隐含的。"
+    ],
+    [
+      "concrete",
+      "abstract",
+      "concrete：具体的；abstract：抽象的。可指出实在例子与只谈概念形成对照。"
+    ],
+    [
+      "objective",
+      "subjective",
+      "objective：客观的；subjective：主观的。"
+    ],
+    [
+      "credible",
+      "credulous",
+      "credible：可信的；credulous：轻信的。一个形容信息，一个形容容易相信的人。"
+    ],
+    [
+      "detain",
+      "custody",
+      "detain 是动词，强调拘留动作；custody 是名词，强调羁押、监管或监护状态。"
+    ]
+  ],
+  "semanticGroups": [
+    {
+      "sense": "拥有（动词义）",
+      "words": [
+        "possess",
+        "own"
+      ],
+      "note": "own 常强调所有权；possess 也可用于拥有技能或品质。只比较拥有义。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/possess",
+        "https://dictionary.cambridge.org/dictionary/english/own"
+      ]
+    },
+    {
+      "sense": "居住、栖身（动词义）",
+      "words": [
+        "dwell",
+        "inhabit",
+        "settle"
+      ],
+      "note": "dwell 常与 in 连用；inhabit 直接接居住地，也用于动物栖息；settle 强调迁入并定居。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/dwell",
+        "https://dictionary.cambridge.org/dictionary/english/inhabit",
+        "https://dictionary.cambridge.org/dictionary/english/settle"
+      ]
+    },
+    {
+      "sense": "控制、管理（动词义）",
+      "words": [
+        "govern",
+        "dominate",
+        "regulate",
+        "steer"
+      ],
+      "note": "govern 侧重治理或支配规则；dominate 侧重占主导；regulate 侧重调节和约束；steer 侧重引导方向。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/govern",
+        "https://dictionary.cambridge.org/dictionary/english/dominate",
+        "https://dictionary.cambridge.org/dictionary/english/regulate",
+        "https://dictionary.cambridge.org/dictionary/english/steer"
+      ]
+    },
+    {
+      "sense": "推荐（动词义）",
+      "words": [
+        "commend",
+        "recommend"
+      ],
+      "note": "commend 可指举荐，也常指表扬；recommend 常用于推荐人、事物或做法。这里只比较推荐义。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/commend",
+        "https://dictionary.cambridge.org/dictionary/english/recommend"
+      ]
+    },
+    {
+      "sense": "表扬、赞美（动词义）",
+      "words": [
+        "commend",
+        "praise",
+        "compliment"
+      ],
+      "note": "commend 常较正式；praise 泛指赞扬；compliment 常用于称赞某人的具体优点；applaud 也可表示喝彩赞许。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/commend",
+        "https://dictionary.cambridge.org/dictionary/english/praise",
+        "https://dictionary.cambridge.org/dictionary/english/compliment"
+      ]
+    },
+    {
+      "sense": "命令、指挥（动词义）",
+      "words": [
+        "command",
+        "dictate",
+        "order"
+      ],
+      "note": "command 常用于指挥或正式命令；dictate 强调发号施令；order 可指具体命令。这里只比较动词义。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/command",
+        "https://dictionary.cambridge.org/dictionary/english/dictate",
+        "https://dictionary.cambridge.org/dictionary/english/order"
+      ]
+    },
+    {
+      "sense": "观点、看法（名词义）",
+      "words": [
+        "view",
+        "outlook",
+        "perspective",
+        "angle",
+        "viewpoint"
+      ],
+      "note": "view 和 viewpoint 指看法；outlook 可指总体观念；perspective 和 angle 常强调观察问题的角度。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/view",
+        "https://dictionary.cambridge.org/dictionary/english/outlook",
+        "https://dictionary.cambridge.org/dictionary/english/perspective",
+        "https://dictionary.cambridge.org/dictionary/english/angle",
+        "https://dictionary.cambridge.org/dictionary/english/viewpoint"
+      ]
+    },
+    {
+      "sense": "解释、说明（动词义）",
+      "words": [
+        "explain",
+        "interpret",
+        "account"
+      ],
+      "note": "explain 解释原因或内容；interpret 解释含义，也可指口译；account 的说明义常见于 account for。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/explain",
+        "https://dictionary.cambridge.org/dictionary/english/interpret",
+        "https://dictionary.cambridge.org/dictionary/english/account"
+      ]
+    },
+    {
+      "sense": "取消、撤销（动词义）",
+      "words": [
+        "cancel",
+        "withdraw",
+        "undo"
+      ],
+      "note": "cancel 取消安排；withdraw 撤回或撤销原有决定；undo 取消先前操作或效果，使用对象不同。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/cancel",
+        "https://dictionary.cambridge.org/dictionary/english/withdraw",
+        "https://dictionary.cambridge.org/dictionary/english/undo"
+      ]
+    },
+    {
+      "sense": "缺点、缺陷（名词义）",
+      "words": [
+        "defect",
+        "flaw",
+        "shortcoming",
+        "drawback"
+      ],
+      "note": "defect 和 flaw 常指缺陷；shortcoming 指不足；drawback 常指某事带来的不利之处。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/defect",
+        "https://dictionary.cambridge.org/dictionary/english/flaw",
+        "https://dictionary.cambridge.org/dictionary/english/shortcoming",
+        "https://dictionary.cambridge.org/dictionary/english/drawback"
+      ]
+    },
+    {
+      "sense": "障碍、阻碍（名词义）",
+      "words": [
+        "barrier",
+        "obstacle",
+        "handicap"
+      ],
+      "note": "barrier 常指屏障或限制；obstacle 指妨碍前进的因素；handicap 指造成不利的障碍或条件。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/barrier",
+        "https://dictionary.cambridge.org/dictionary/english/obstacle",
+        "https://dictionary.cambridge.org/dictionary/english/handicap"
+      ]
+    },
+    {
+      "sense": "反对（动词义）",
+      "words": [
+        "object",
+        "oppose",
+        "protest"
+      ],
+      "note": "object 常用 object to；oppose 直接接反对对象；protest 强调公开抗议；disapprove 表示不赞同。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/object",
+        "https://dictionary.cambridge.org/dictionary/english/oppose",
+        "https://dictionary.cambridge.org/dictionary/english/protest"
+      ]
+    },
+    {
+      "sense": "承诺（动词义）",
+      "words": [
+        "pledge",
+        "promise",
+        "commit"
+      ],
+      "note": "promise 和 pledge 可指承诺；commit 常见于 commit oneself to，强调使自己承担义务。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/pledge",
+        "https://dictionary.cambridge.org/dictionary/english/promise",
+        "https://dictionary.cambridge.org/dictionary/english/commit"
+      ]
+    },
+    {
+      "sense": "捐献（动词义）",
+      "words": [
+        "contribute",
+        "donate"
+      ],
+      "note": "donate 常指捐钱或物品；contribute 可指捐献，也可指贡献或促成，只在捐献义对照。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/contribute",
+        "https://dictionary.cambridge.org/dictionary/english/donate"
+      ]
+    },
+    {
+      "sense": "区别、差别（名词义）",
+      "words": [
+        "difference",
+        "distinction"
+      ],
+      "note": "difference 泛指差异；distinction 常强调可辨认的区别或作出的区分。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/difference",
+        "https://dictionary.cambridge.org/dictionary/english/distinction"
+      ]
+    },
+    {
+      "sense": "关系、联系（名词义）",
+      "words": [
+        "relation",
+        "relationship"
+      ],
+      "note": "relation 和 relationship 指关系；connection 常强调事物之间的联系，不能替换所有固定搭配。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/relation",
+        "https://dictionary.cambridge.org/dictionary/english/relationship"
+      ]
+    },
+    {
+      "sense": "连接、联系（动词义）",
+      "words": [
+        "connect",
+        "relate"
+      ],
+      "note": "connect 和 link 可表示连接；relate 常用 relate A to B，说明二者的联系。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/connect",
+        "https://dictionary.cambridge.org/dictionary/english/relate"
+      ]
+    },
+    {
+      "sense": "要求、需要（动词义）",
+      "words": [
+        "require",
+        "request",
+        "demand"
+      ],
+      "note": "require 侧重必要条件或要求；request 较礼貌地请求；demand 的要求语气更强。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/require",
+        "https://dictionary.cambridge.org/dictionary/english/request",
+        "https://dictionary.cambridge.org/dictionary/english/demand"
+      ]
+    },
+    {
+      "sense": "准确、正确（形容词义）",
+      "words": [
+        "accurate",
+        "correct",
+        "precise"
+      ],
+      "note": "correct 强调没有错误；accurate 强调符合事实；precise 和 exact 强调精确，修饰对象有差别。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/accurate",
+        "https://dictionary.cambridge.org/dictionary/english/correct",
+        "https://dictionary.cambridge.org/dictionary/english/precise"
+      ]
+    },
+    {
+      "sense": "关心、关注（名词或动词义项）",
+      "words": [
+        "care",
+        "concern",
+        "regard"
+      ],
+      "note": "care 可指关心和照料；concern 可指关切；regard 在机构资料中也有注意、关心义，固定搭配不同。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/care",
+        "https://dictionary.cambridge.org/dictionary/english/concern",
+        "https://dictionary.cambridge.org/dictionary/english/regard"
+      ]
+    },
+    {
+      "sense": "处理（动词义）",
+      "words": [
+        "treat",
+        "deal",
+        "address"
+      ],
+      "note": "handle 泛指处理；treat 可指对待或处理；deal 常用 deal with；address 强调着手处理问题。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/treat",
+        "https://dictionary.cambridge.org/dictionary/english/deal",
+        "https://dictionary.cambridge.org/dictionary/english/address"
+      ]
+    },
+    {
+      "sense": "提供、供应（动词义）",
+      "words": [
+        "provide",
+        "offer",
+        "supply",
+        "render"
+      ],
+      "note": "provide 和 supply 常指提供所需物；offer 强调主动提供或提出；render 的提供义较正式，常接 assistance 等词。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/provide",
+        "https://dictionary.cambridge.org/dictionary/english/offer",
+        "https://dictionary.cambridge.org/dictionary/english/supply",
+        "https://dictionary.cambridge.org/dictionary/english/render"
+      ]
+    },
+    {
+      "sense": "管理、治理（动词义）",
+      "words": [
+        "manage",
+        "govern",
+        "administer"
+      ],
+      "note": "manage 常指管理具体事务；govern 常指治理；administer 常指执行管理，不能覆盖各词的全部义项。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/manage",
+        "https://dictionary.cambridge.org/dictionary/english/govern",
+        "https://dictionary.cambridge.org/dictionary/english/administer"
+      ]
+    },
+    {
+      "sense": "使用、利用（动词义）",
+      "words": [
+        "utilize",
+        "employ",
+        "apply",
+        "exploit",
+        "manipulate"
+      ],
+      "note": "utilize 和 employ 可指使用；apply 常指应用方法；exploit 可指利用资源，也可指剥削；manipulate 可指操作或操纵。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/utilize",
+        "https://dictionary.cambridge.org/dictionary/english/employ",
+        "https://dictionary.cambridge.org/dictionary/english/apply",
+        "https://dictionary.cambridge.org/dictionary/english/exploit",
+        "https://dictionary.cambridge.org/dictionary/english/manipulate"
+      ]
+    },
+    {
+      "sense": "调整、调节（动词义）",
+      "words": [
+        "adjust",
+        "modify",
+        "regulate"
+      ],
+      "note": "adjust 常指适度调整；modify 指修改；regulate 常指按规则调节或控制。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/adjust",
+        "https://dictionary.cambridge.org/dictionary/english/modify",
+        "https://dictionary.cambridge.org/dictionary/english/regulate"
+      ]
+    },
+    {
+      "sense": "合并、结合（动词义）",
+      "words": [
+        "combine",
+        "merge",
+        "incorporate"
+      ],
+      "note": "combine 泛指结合；merge 强调合并为一体；incorporate 常指将部分并入整体。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/combine",
+        "https://dictionary.cambridge.org/dictionary/english/merge",
+        "https://dictionary.cambridge.org/dictionary/english/incorporate"
+      ]
+    },
+    {
+      "sense": "具体的（形容词义）",
+      "words": [
+        "concrete",
+        "specific"
+      ],
+      "note": "concrete 与抽象相对；specific 强调明确、特定，二者只在具体明确这一义项相近。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/concrete",
+        "https://dictionary.cambridge.org/dictionary/english/specific"
+      ]
+    },
+    {
+      "sense": "反驳（动词义）",
+      "words": [
+        "contradict",
+        "counter",
+        "retort"
+      ],
+      "note": "contradict 指反驳或与之矛盾；counter 指提出反对意见；retort 常指迅速反驳。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/contradict",
+        "https://dictionary.cambridge.org/dictionary/english/counter",
+        "https://dictionary.cambridge.org/dictionary/english/retort"
+      ]
+    },
+    {
+      "sense": "现代、当代的（形容词义）",
+      "words": [
+        "contemporary",
+        "modern"
+      ],
+      "note": "contemporary 常指当代或同时代；modern 常指现代，历史范围和固定搭配不同。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/contemporary",
+        "https://dictionary.cambridge.org/dictionary/english/modern"
+      ]
+    },
+    {
+      "sense": "仪器、装置（名词义）",
+      "words": [
+        "device",
+        "instrument"
+      ],
+      "note": "device 泛指装置；instrument 常指特定用途的仪器；apparatus 常指成套设备。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/device",
+        "https://dictionary.cambridge.org/dictionary/english/instrument"
+      ]
+    },
+    {
+      "sense": "决定（动词义）",
+      "words": [
+        "decide",
+        "determine",
+        "resolve"
+      ],
+      "note": "decide 指作决定；determine 可指决定或确定；resolve 常强调下决心或正式决定。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/decide",
+        "https://dictionary.cambridge.org/dictionary/english/determine",
+        "https://dictionary.cambridge.org/dictionary/english/resolve"
+      ]
+    },
+    {
+      "sense": "目的、目标（名词义）",
+      "words": [
+        "objective",
+        "target",
+        "purpose"
+      ],
+      "note": "aim、goal、objective 常指目标；target 常指明确的目标；purpose 侧重目的或用途。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/objective",
+        "https://dictionary.cambridge.org/dictionary/english/target",
+        "https://dictionary.cambridge.org/dictionary/english/purpose"
+      ]
+    },
+    {
+      "sense": "后果、结果（名词义）",
+      "words": [
+        "consequence",
+        "result",
+        "outcome",
+        "aftermath"
+      ],
+      "note": "result 和 outcome 指结果；consequence 常含后果意味；aftermath 常指坏事之后的影响。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/consequence",
+        "https://dictionary.cambridge.org/dictionary/english/result",
+        "https://dictionary.cambridge.org/dictionary/english/outcome",
+        "https://dictionary.cambridge.org/dictionary/english/aftermath"
+      ]
+    },
+    {
+      "sense": "建议（名词义）",
+      "words": [
+        "advice",
+        "suggestion",
+        "proposal"
+      ],
+      "note": "advice 常指忠告；suggestion 指建议；proposal 常指较完整或正式提出的方案。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/advice",
+        "https://dictionary.cambridge.org/dictionary/english/suggestion",
+        "https://dictionary.cambridge.org/dictionary/english/proposal"
+      ]
+    },
+    {
+      "sense": "收入（名词义）",
+      "words": [
+        "income",
+        "revenue"
+      ],
+      "note": "income 泛指收入；revenue 常指机构或政府收入；earnings 常指劳动或经营所得。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/income",
+        "https://dictionary.cambridge.org/dictionary/english/revenue"
+      ]
+    },
+    {
+      "sense": "利润、收益（名词义）",
+      "words": [
+        "profit",
+        "benefit",
+        "gain"
+      ],
+      "note": "profit 常指利润；benefit 常指益处；gain 可指所得，只在收益这一部分含义对照。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/profit",
+        "https://dictionary.cambridge.org/dictionary/english/benefit",
+        "https://dictionary.cambridge.org/dictionary/english/gain"
+      ]
+    },
+    {
+      "sense": "雇用（动词义）",
+      "words": [
+        "employ",
+        "recruit"
+      ],
+      "note": "employ 指雇用；hire 常指聘用；recruit 强调招募新人，过程侧重点不同。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/employ",
+        "https://dictionary.cambridge.org/dictionary/english/recruit"
+      ]
+    },
+    {
+      "sense": "缺乏、不足（名词义）",
+      "words": [
+        "shortage",
+        "deficiency",
+        "deficit"
+      ],
+      "note": "shortage 常指供应不足；lack 泛指缺乏；deficiency 指不足或缺陷；deficit 常指赤字或差额。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/shortage",
+        "https://dictionary.cambridge.org/dictionary/english/deficiency",
+        "https://dictionary.cambridge.org/dictionary/english/deficit"
+      ]
+    },
+    {
+      "sense": "临时、暂时的（形容词义）",
+      "words": [
+        "temporary",
+        "transient"
+      ],
+      "note": "temporary 指暂时；transient 强调短暂；provisional 强调暂定，等待正式安排。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/temporary",
+        "https://dictionary.cambridge.org/dictionary/english/transient"
+      ]
+    },
+    {
+      "sense": "必要、重要的（形容词义）",
+      "words": [
+        "essential",
+        "vital",
+        "crucial"
+      ],
+      "note": "necessary 强调必需；essential 指不可或缺；vital、crucial 强调至关重要。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/essential",
+        "https://dictionary.cambridge.org/dictionary/english/necessary",
+        "https://dictionary.cambridge.org/dictionary/english/vital",
+        "https://dictionary.cambridge.org/dictionary/english/crucial"
+      ]
+    },
+    {
+      "sense": "危险、威胁（名词义）",
+      "words": [
+        "danger",
+        "threat",
+        "menace",
+        "hazard"
+      ],
+      "note": "danger 泛指危险；threat 和 menace 常指威胁；hazard 常指潜在危险因素。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/danger",
+        "https://dictionary.cambridge.org/dictionary/english/threat",
+        "https://dictionary.cambridge.org/dictionary/english/menace",
+        "https://dictionary.cambridge.org/dictionary/english/hazard"
+      ]
+    },
+    {
+      "sense": "伤害、损害（动词义）",
+      "words": [
+        "damage",
+        "impair"
+      ],
+      "note": "damage 指造成损坏；harm 指伤害；impair 强调削弱功能或能力，程度和对象不同。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/damage",
+        "https://dictionary.cambridge.org/dictionary/english/impair"
+      ]
+    },
+    {
+      "sense": "摧毁、毁坏（动词义）",
+      "words": [
+        "destroy",
+        "ruin",
+        "wreck"
+      ],
+      "note": "destroy 强调摧毁；ruin 强调毁坏价值或前途；wreck 常指严重破坏。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/destroy",
+        "https://dictionary.cambridge.org/dictionary/english/ruin",
+        "https://dictionary.cambridge.org/dictionary/english/wreck"
+      ]
+    },
+    {
+      "sense": "保护（动词义）",
+      "words": [
+        "protect",
+        "defend",
+        "guard",
+        "shield",
+        "safeguard"
+      ],
+      "note": "protect 泛指保护；defend 常指抵御攻击；guard 强调看护；shield 强调遮护；safeguard 强调防范风险。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/protect",
+        "https://dictionary.cambridge.org/dictionary/english/defend",
+        "https://dictionary.cambridge.org/dictionary/english/guard",
+        "https://dictionary.cambridge.org/dictionary/english/shield",
+        "https://dictionary.cambridge.org/dictionary/english/safeguard"
+      ]
+    },
+    {
+      "sense": "隐藏、隐瞒（动词义）",
+      "words": [
+        "conceal",
+        "withhold"
+      ],
+      "note": "hide 和 conceal 指隐藏；withhold 强调扣留或不提供信息，只在隐瞒信息时相近。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/conceal",
+        "https://dictionary.cambridge.org/dictionary/english/withhold"
+      ]
+    },
+    {
+      "sense": "发现（动词义）",
+      "words": [
+        "discover",
+        "detect",
+        "spot"
+      ],
+      "note": "discover 常指首次发现；detect 常指察觉隐蔽变化；find 泛指找到；spot 强调注意到。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/discover",
+        "https://dictionary.cambridge.org/dictionary/english/detect",
+        "https://dictionary.cambridge.org/dictionary/english/spot"
+      ]
+    },
+    {
+      "sense": "出现（动词义）",
+      "words": [
+        "appear",
+        "emerge",
+        "arise",
+        "occur"
+      ],
+      "note": "appear 和 emerge 可指出现；arise 常指问题产生；occur 常指发生，不适用于所有相同对象。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/appear",
+        "https://dictionary.cambridge.org/dictionary/english/emerge",
+        "https://dictionary.cambridge.org/dictionary/english/arise",
+        "https://dictionary.cambridge.org/dictionary/english/occur"
+      ]
+    },
+    {
+      "sense": "维持、保留（动词义）",
+      "words": [
+        "maintain",
+        "retain"
+      ],
+      "note": "maintain 强调维持状态；retain 强调保留；keep 用途更广，只比较保留或维持义。",
+      "sources": [
+        "https://dictionary.cambridge.org/dictionary/english/maintain",
+        "https://dictionary.cambridge.org/dictionary/english/retain"
+      ]
+    }
   ]
 }

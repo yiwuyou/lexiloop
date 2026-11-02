@@ -9,6 +9,7 @@ const learning = require('../data/learning-content');
 const enrichment = require('../data/enrichment');
 const reviewed = require('../data/retained-phrases.json');
 const sensesByHead = require('../data/reading-senses.json');
+const familiesByHead = require('../data/reviewed-word-families.json');
 const tuplesByHead = new Map();
 for (const row of vocabulary) {
   const id = row.slice(0, 3).join('-');
@@ -85,12 +86,19 @@ for (const [i, line] of source.split(/\r?\n/).entries()) {
       assert.ok(hasTarget(english, head, content), `line ${i + 1}: ${head} not a real word/form in sentence`);
       words[id] = sentenceIndex;
       phrases[id] = merged;
-      if (sensesByHead[head]) senses[id] = sensesByHead[head];
+      if (sensesByHead[head]) {
+        const sense = sensesByHead[head];
+        const institution = String(content.meaning || '').split(/[；;]/).map(value => value.replace(/\s/g, ''));
+        assert.ok(sense && institution.includes(sense.replace(/\s/g, '')),
+          `line ${i + 1}: ${head} sentence sense must come from institution meaning`);
+        assert.ok(!/补充|非“|搭配义/.test(sense), `line ${i + 1}: no supplemental sentence senses`);
+        senses[id] = sense;
+      }
     }
   }
 }
 assert.strictEqual(seen.size, tuplesByHead.size, 'reading examples must cover every spoken head');
-for (const head of Object.keys(sensesByHead)) assert.ok(seen.has(head), 'unknown supplemental sense head: ' + head);
+for (const head of Object.keys(sensesByHead)) assert.ok(seen.has(head), 'unknown institution sense head: ' + head);
 assert.strictEqual(Object.keys(words).length, vocabulary.length, 'reading examples must cover every source record');
 assert.ok(reviewed.esteem.includes('self-esteem 自尊'));
 const writeModule = (file, data, comment) => fs.writeFileSync(path.join(root, file), (comment ? '// ' + comment + '\n' : '') + 'module.exports=' + JSON.stringify(data) + ';\n');
@@ -99,6 +107,15 @@ const writeModule = (file, data, comment) => fs.writeFileSync(path.join(root, fi
 for (const dataset of [learning, enrichment]) {
   for (const content of Object.values(dataset)) {
     for (const key of ['example', 'translation', 'exampleCredit', 'phrase']) delete content[key];
+  }
+}
+// Reviewed derivations have priority over mechanically generated inflections.
+// Keep wordForms internally for matching genuine inflected tokens in examples.
+for (const [head, family] of Object.entries(familiesByHead)) {
+  assert.ok(tuplesByHead.has(head) && family && /[\u4e00-\u9fff]/.test(family), 'invalid reviewed family: ' + head);
+  for (const { id } of tuplesByHead.get(head)) {
+    learning[id].family = family;
+    if (enrichment[id]) enrichment[id].family = family;
   }
 }
 writeModule('data/learning-content.js', learning);

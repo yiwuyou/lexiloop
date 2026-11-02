@@ -176,6 +176,25 @@ try {
   assert.ok(/\.relation-trigger\s*\{[^}]*min-width:\s*76px[^}]*min-height:\s*44px/.test(studyStyles), 'the quiet bottom action retains a full touch target on narrow screens');
   assert.ok(!dialog.includes('class="section-note"') && !dialog.includes('class="footnote"'), 'internal sorting/matching/workflow notes must not clutter the learning dialog');
   assert.ok(dialog.includes('相近义项') && dialog.includes('机构释义'), 'retain word-specific learning content');
+  for (const [file, classes] of [
+    ['components/word-card/index.wxml', ['example-en', 'example-zh', 'memory-note', 'understanding-text', 'target-meaning']],
+    ['pages/study/index.wxml', ['sentence', 'translation', 'explanation']],
+    ['pages/library/index.wxml', ['word-name', 'word-meaning']],
+    ['pages/sentences/index.wxml', ['english', 'chinese']],
+  ]) {
+    const template = read(file);
+    for (const name of classes) {
+      const tag = template.match(new RegExp('<text[^>]*class="' + name + '"[^>]*>'));
+      assert.ok(tag && tag[0].includes('user-select="{{true}}"'), file + ': allow selecting a word or part of a sentence');
+    }
+    assert.ok(!/(?:bind|catch)longpress="copyWord"/.test(template), 'native selection must not be replaced by whole-headword copying');
+  }
+  assert.ok(!cardMarkup.includes('word.wordForms') && !cardMarkup.includes('word.associationLabel'), 'do not render mechanical inflections or multi-line hook labels');
+  assert.ok(cardMarkup.includes('>钩子</text>'));
+  assert.ok(/\.memory-row > text:first-child\s*\{[^}]*white-space:\s*nowrap/.test(studyStyles));
+  const libraryMarkup = read('pages/library/index.wxml');
+  assert.ok(!/class="word-copy"[^>]*bindtap/.test(libraryMarkup), 'selecting example words must not navigate away');
+  assert.ok(/class="word-title-line"[^>]*bindtap="openWordDetail"/.test(libraryMarkup), 'word headings still open full details');
   console.log('First-touch collection, gesture deduplication/scroll cancellation, stable async layout, write failure rollback, context/library saves and dialog style guards passed.');
 } finally {
   clearTimeout(page.contentLayoutTimer);

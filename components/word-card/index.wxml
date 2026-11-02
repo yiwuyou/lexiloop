@@ -1,36 +1,34 @@
       <view class="word-card card {{revealed ? 'is-answer' : 'is-recall'}}">
         <view class="word-meta">
-          <text>{{word.sourceLabel}}</text>
-          <text class="kind">{{phaseLabel}}</text>
+          <text user-select="{{true}}">{{word.sourceLabel}}</text>
+          <text user-select="{{true}}" class="kind">{{phaseLabel}}</text>
         </view>
         <view class="word-main">
-          <view class="word-heading"><text class="word" data-word="{{word.word}}" bindlongpress="copyWord">{{word.word}}</text></view>
+          <view class="word-heading"><text user-select="{{true}}" class="word" data-word="{{word.word}}">{{word.word}}</text></view>
           <view class="pronunciation" wx:if="{{word.audio}}" bindtap="playPronunciation" role="button" aria-label="播放单词发音">
             <view class="audio-button">{{audioLoading ? '…' : '▶'}}</view>
-            <text class="ipa">{{word.ipa || '播放发音'}}</text>
+            <text user-select="{{true}}" class="ipa">{{word.ipa || '播放发音'}}</text>
           </view>
-          <text class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>
+          <text user-select="{{true}}" class="prompt" wx:if="{{!revealed}}">先在脑中说出主要含义</text>
           <view class="answer" wx:else>
             <block wx:if="{{word.enhanced}}">
-              <view class="meaning-heading"><text class="meaning-meta" bindtap="showPartOfSpeech">机构释义 · {{word.shortPartOfSpeech}}</text><button class="weak-link {{isWeakMarked ? 'is-marked' : ''}}" bindtap="toggleWeak">{{isWeakMarked ? '✓ 易忘' : '＋ 易忘'}}</button></view>
-              <text class="target-meaning">{{word.meaning}}</text>
-              <view class="understanding-panel"><text class="understanding-label">理解</text><text class="understanding-text">{{word.core || word.meaning}}</text></view>
+              <view class="meaning-heading"><text user-select="{{true}}" class="meaning-meta" bindtap="showPartOfSpeech">机构释义 · {{word.shortPartOfSpeech}}</text><button class="weak-link {{isWeakMarked ? 'is-marked' : ''}}" bindtap="toggleWeak">{{isWeakMarked ? '✓ 易忘' : '＋ 易忘'}}</button></view>
+              <text user-select="{{true}}" class="target-meaning">{{word.meaning}}</text>
+              <view class="understanding-panel"><text user-select="{{true}}" class="understanding-label">理解</text><text user-select="{{true}}" class="understanding-text">{{word.core || word.meaning}}</text></view>
               <view class="memory-panel" wx:if="{{word.hasMemoryContent}}">
-                <view class="memory-head"><text class="memory-label">关联记忆</text></view>
-                <view class="memory-row" wx:if="{{word.breakdown}}"><text>拆记</text><view><text class="breakdown">{{word.breakdown}}</text><text class="memory-note">{{word.breakdownNote}}</text></view></view>
-                <view class="memory-row" wx:if="{{word.associationHint}}"><text>{{word.associationLabel || '助记'}}</text><text>{{word.associationHint}}</text></view>
-                <view class="memory-row" wx:if="{{word.contrast}}"><text>辨析</text><text>{{word.contrast}}</text></view>
-                <view class="memory-row" wx:if="{{word.phrase}}"><text>短语</text><text>{{word.phrase}}</text></view>
-                <view class="memory-row" wx:if="{{word.family}}"><text>词族</text><text>{{word.family}}</text></view>
-                <view class="memory-row" wx:if="{{word.wordForms.length}}"><text>词形</text><text><text class="form-inline" wx:for="{{word.wordForms}}" wx:key="word">{{item.word}}（{{item.label}}） </text></text></view>
+                <view class="memory-head"><text user-select="{{true}}" class="memory-label">关联记忆</text></view>
+                <view class="memory-row" wx:if="{{word.breakdown}}"><text user-select="{{true}}">拆记</text><view><text user-select="{{true}}" class="breakdown">{{word.breakdown}}</text><text user-select="{{true}}" class="memory-note">{{word.breakdownNote}}</text></view></view>
+                <view class="memory-row" wx:if="{{word.associationHint}}"><text user-select="{{true}}">钩子</text><text user-select="{{true}}">{{word.associationHint}}</text></view>
+                <view class="memory-row" wx:if="{{word.contrast}}"><text user-select="{{true}}">辨析</text><text user-select="{{true}}">{{word.contrast}}</text></view>
+                <view class="memory-row" wx:if="{{word.phrase}}"><text user-select="{{true}}">短语</text><text user-select="{{true}}">{{word.phrase}}</text></view>
+                <view class="memory-row" wx:if="{{word.family}}"><text user-select="{{true}}">词族</text><text user-select="{{true}}">{{word.family}}</text></view>
               </view>
             </block>
-            <text class="meaning" wx:else>{{word.meaning}}</text>
+            <text user-select="{{true}}" class="meaning" wx:else>{{word.meaning}}</text>
             <view class="example-panel" wx:if="{{word.example}}">
-              <view class="sentence-heading"><text class="memory-label">阅读例句 · 原创</text><button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
-              <text class="example-en">{{word.example}}</text>
-              <text class="example-zh" wx:if="{{word.exampleSense}}">例句义：{{word.exampleSense}}</text>
-              <text class="example-zh">{{word.translation}}</text>
+              <view class="sentence-heading"><text user-select="{{true}}" class="memory-label">阅读例句 · 原创</text><button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏' : '☆ 收藏'}}</button></view>
+              <text user-select="{{true}}" class="example-en">{{word.example}}</text>
+              <text user-select="{{true}}" class="example-zh">{{word.translation}}</text>
             </view>
           </view>
         </view>

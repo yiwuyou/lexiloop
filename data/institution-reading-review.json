@@ -1,0 +1,438 @@
+{
+  "date": "2026-11-02",
+  "policy": "例句目标义和正确答案限于机构原释义；词族为辅助提示，不新增任务词。",
+  "reviewed": {
+    "dwell": {
+      "sense": "居住",
+      "phrase": "dwell in 居住于"
+    },
+    "command": {
+      "sense": "命令",
+      "phrase": "command someone to do 命令某人做……"
+    },
+    "inflation": {
+      "sense": "膨胀",
+      "phrase": "the inflation of a balloon 气球的膨胀"
+    },
+    "toll": {
+      "sense": "通行费",
+      "phrase": "pay a toll 支付通行费"
+    },
+    "latitude": {
+      "sense": "纬度",
+      "phrase": "at a high latitude 在高纬度地区"
+    },
+    "lobby": {
+      "sense": "门厅",
+      "phrase": "a hotel lobby 酒店门厅"
+    },
+    "cripple": {
+      "sense": "使残废",
+      "phrase": "be crippled by an injury 因受伤而残疾"
+    },
+    "pound": {
+      "sense": "磅",
+      "phrase": "a pound of 一磅……"
+    },
+    "objective": {
+      "sense": "目标",
+      "phrase": "achieve an objective 实现目标"
+    },
+    "intimate": {
+      "sense": "亲密的",
+      "phrase": "an intimate friend 一位密友"
+    },
+    "wicked": {
+      "sense": "邪恶的",
+      "phrase": "a wicked act 邪恶的行为"
+    },
+    "void": {
+      "sense": "宣布…作废",
+      "phrase": "void a contract 宣布合同作废"
+    },
+    "stem": {
+      "sense": "阻止",
+      "phrase": "stem the spread of 阻止……传播"
+    },
+    "literature": {
+      "sense": "文学作品",
+      "phrase": "modern literature 现代文学"
+    },
+    "periodical": {
+      "sense": "定期的",
+      "phrase": "periodical inspections 定期检查"
+    },
+    "liability": {
+      "sense": "债务",
+      "phrase": "current liabilities 流动负债"
+    },
+    "mortal": {
+      "sense": "不能永生的",
+      "phrase": "all humans are mortal 人终有一死"
+    },
+    "observe": {
+      "sense": "观察",
+      "phrase": "observe a change 观察变化"
+    },
+    "regard": {
+      "sense": "尊重",
+      "phrase": "hold someone in high regard 非常尊重某人"
+    },
+    "rotate": {
+      "sense": "旋转",
+      "phrase": "rotate around an axis 绕轴旋转"
+    },
+    "virtue": {
+      "sense": "美德",
+      "phrase": "the virtue of honesty 诚实这一美德"
+    },
+    "acute": {
+      "sense": "急性的",
+      "phrase": "an acute illness 急性疾病"
+    },
+    "aggressive": {
+      "sense": "好斗的",
+      "phrase": "aggressive behaviour 好斗行为"
+    },
+    "allow": {
+      "sense": "允许",
+      "phrase": "allow someone to do 允许某人做……"
+    },
+    "alive": {
+      "sense": "活着",
+      "phrase": "remain alive 仍然活着"
+    },
+    "apart": {
+      "sense": "分开",
+      "phrase": "keep A apart from B 将A与B分开"
+    },
+    "appreciate": {
+      "sense": "欣赏",
+      "phrase": "appreciate art 欣赏艺术"
+    },
+    "argue": {
+      "sense": "争论",
+      "phrase": "argue with someone 与某人争论"
+    },
+    "assume": {
+      "sense": "假设",
+      "phrase": "assume that 假设……"
+    },
+    "attend": {
+      "sense": "参加",
+      "phrase": "attend a meeting 参加会议"
+    },
+    "band": {
+      "sense": "乐队",
+      "phrase": "a local band 当地乐队"
+    },
+    "capture": {
+      "sense": "捕获",
+      "phrase": "capture an animal 捕获动物"
+    },
+    "clause": {
+      "sense": "从句",
+      "phrase": "a subordinate clause 从属分句"
+    },
+    "contest": {
+      "sense": "比赛",
+      "phrase": "enter a contest 参加比赛"
+    },
+    "dispose": {
+      "sense": "布置",
+      "phrase": "dispose chairs around a table 在桌旁布置椅子"
+    },
+    "echo": {
+      "sense": "回响",
+      "phrase": "an echo of a sound 声音的回响"
+    },
+    "elegant": {
+      "sense": "雅致的",
+      "phrase": "an elegant building 雅致的建筑"
+    },
+    "explode": {
+      "sense": "爆炸",
+      "phrase": "a gas tank explodes 燃气罐爆炸"
+    },
+    "gear": {
+      "sense": "齿轮",
+      "phrase": "a bicycle gear 自行车齿轮"
+    },
+    "input": {
+      "sense": "输入",
+      "phrase": "data input 数据输入"
+    },
+    "institution": {
+      "sense": "制度",
+      "phrase": "a democratic institution 民主制度"
+    },
+    "landscape": {
+      "sense": "景色",
+      "phrase": "a rural landscape 乡村景色"
+    },
+    "liberal": {
+      "sense": "开明的",
+      "phrase": "liberal views 开明的观点"
+    },
+    "lock": {
+      "sense": "上锁",
+      "phrase": "lock a door 锁门"
+    },
+    "magnitude": {
+      "sense": "震级",
+      "phrase": "an earthquake's magnitude 地震震级"
+    },
+    "office": {
+      "sense": "办公室",
+      "phrase": "work in an office 在办公室工作"
+    },
+    "own": {
+      "sense": "拥有",
+      "phrase": "own a business 拥有一家企业"
+    },
+    "pay": {
+      "sense": "付费",
+      "phrase": "pay for a service 为服务付费"
+    },
+    "passage": {
+      "sense": "通道",
+      "phrase": "a narrow passage 狭窄通道"
+    },
+    "pocket": {
+      "sense": "口袋",
+      "phrase": "put something in a pocket 把某物放进口袋"
+    },
+    "polish": {
+      "sense": "擦亮",
+      "phrase": "polish a surface 擦亮表面"
+    },
+    "positive": {
+      "sense": "阳性",
+      "phrase": "a positive test result 阳性检测结果"
+    },
+    "produce": {
+      "sense": "生产",
+      "phrase": "produce goods 生产商品"
+    },
+    "provision": {
+      "sense": "提供",
+      "phrase": "the provision of clean water 提供清洁用水"
+    },
+    "readily": {
+      "sense": "欣然地",
+      "phrase": "readily agree 欣然同意"
+    },
+    "reference": {
+      "sense": "参考",
+      "phrase": "reference materials 参考资料"
+    },
+    "render": {
+      "sense": "提供",
+      "phrase": "render assistance 提供援助"
+    },
+    "result": {
+      "sense": "结果",
+      "phrase": "as a result 结果"
+    },
+    "secure": {
+      "sense": "保护",
+      "phrase": "secure a building 保护建筑安全"
+    },
+    "settle": {
+      "sense": "定居",
+      "phrase": "settle in a town 在小镇定居"
+    },
+    "slim": {
+      "sense": "苗条的",
+      "phrase": "a slim figure 苗条的身材"
+    },
+    "spade": {
+      "sense": "铲",
+      "phrase": "dig with a spade 用铲挖土"
+    },
+    "stagger": {
+      "sense": "踉跄",
+      "phrase": "stagger towards 向……踉跄走去"
+    },
+    "suppose": {
+      "sense": "假设",
+      "phrase": "suppose that 假设……"
+    },
+    "tender": {
+      "sense": "提出",
+      "phrase": "tender an offer 提出报价"
+    },
+    "translate": {
+      "sense": "翻译",
+      "phrase": "translate A into B 将A翻译成B"
+    },
+    "tribute": {
+      "sense": "悼念",
+      "phrase": "a tribute to the dead 对逝者的悼念"
+    },
+    "trim": {
+      "sense": "修剪",
+      "phrase": "trim a tree 修剪树木"
+    },
+    "vocal": {
+      "sense": "发声的",
+      "phrase": "vocal training 发声训练"
+    },
+    "wake": {
+      "sense": "醒来",
+      "phrase": "wake up 醒来"
+    },
+    "workshop": {
+      "sense": "车间",
+      "phrase": "a repair workshop 维修车间"
+    },
+    "wrinkle": {
+      "sense": "皱纹",
+      "phrase": "wrinkles in the skin 皮肤上的皱纹"
+    },
+    "eject": {
+      "sense": "喷出",
+      "phrase": "eject hot gas 喷出热气"
+    },
+    "linger": {
+      "sense": "逗留",
+      "phrase": "linger in a place 在某地逗留"
+    },
+    "reverse": {
+      "sense": "颠倒",
+      "phrase": "reverse the order 颠倒顺序"
+    },
+    "scale": {
+      "sense": "秤",
+      "phrase": "weigh something on a scale 用秤称某物"
+    },
+    "sheer": {
+      "sense": "纯粹的",
+      "phrase": "sheer luck 纯粹的运气"
+    },
+    "tedious": {
+      "sense": "冗长的",
+      "phrase": "a tedious explanation 冗长的解释"
+    },
+    "afford": {
+      "sense": "买得起",
+      "phrase": "afford a home 买得起住房"
+    },
+    "culminate": {
+      "sense": "达到顶点",
+      "phrase": "culminate in a final performance 在最终演出时达到顶点"
+    },
+    "dazzle": {
+      "sense": "使目眩",
+      "phrase": "be dazzled by bright light 被强光照得目眩"
+    },
+    "deliver": {
+      "sense": "投递",
+      "phrase": "deliver a parcel 投递包裹"
+    },
+    "forge": {
+      "sense": "锻造",
+      "phrase": "forge iron 锻铁"
+    },
+    "margin": {
+      "sense": "差额",
+      "phrase": "a margin between two figures 两个数字之间的差额"
+    },
+    "operator": {
+      "sense": "操作人员",
+      "phrase": "a machine operator 机器操作人员"
+    },
+    "operational": {
+      "sense": "可使用",
+      "phrase": "be fully operational 可以完全正常使用"
+    },
+    "order": {
+      "sense": "命令",
+      "phrase": "give an order 下命令"
+    },
+    "prompt": {
+      "sense": "立即的",
+      "phrase": "a prompt reply 立即答复"
+    },
+    "regulation": {
+      "sense": "法规",
+      "phrase": "safety regulations 安全法规"
+    },
+    "robust": {
+      "sense": "耐用的",
+      "phrase": "robust equipment 耐用设备"
+    },
+    "slack": {
+      "sense": "松弛的",
+      "phrase": "a slack rope 松弛的绳子"
+    },
+    "slip": {
+      "sense": "滑倒",
+      "phrase": "slip on a wet floor 在湿地板上滑倒"
+    },
+    "soak": {
+      "sense": "浸泡",
+      "phrase": "soak clothes in water 将衣物浸泡在水中"
+    },
+    "splendid": {
+      "sense": "壮观的",
+      "phrase": "splendid scenery 壮观的景色"
+    },
+    "sprout": {
+      "sense": "发芽",
+      "phrase": "seeds sprout 种子发芽"
+    },
+    "stake": {
+      "sense": "股份",
+      "phrase": "a stake in a company 一家公司的股份"
+    },
+    "stream": {
+      "sense": "小河",
+      "phrase": "a stream flows 一条小河流淌"
+    },
+    "stretch": {
+      "sense": "伸展",
+      "phrase": "stretch a rubber band 拉伸橡皮筋"
+    },
+    "stumble": {
+      "sense": "绊倒",
+      "phrase": "stumble over a stone 被石头绊倒"
+    },
+    "swing": {
+      "sense": "摇摆",
+      "phrase": "swing in the wind 在风中摇摆"
+    },
+    "torture": {
+      "sense": "拷打",
+      "phrase": "a ban on torture 禁止拷打"
+    },
+    "undo": {
+      "sense": "取消",
+      "phrase": "undo an edit 取消一次编辑"
+    },
+    "vicious": {
+      "sense": "残酷的",
+      "phrase": "a vicious attack 残酷的袭击"
+    },
+    "vigorous": {
+      "sense": "充满活力的",
+      "phrase": "a vigorous young person 充满活力的年轻人"
+    },
+    "wedge": {
+      "sense": "楔子",
+      "phrase": "a wooden wedge 木楔"
+    },
+    "wealth": {
+      "sense": "财富",
+      "phrase": "the distribution of wealth 财富分配"
+    },
+    "wisdom": {
+      "sense": "明智",
+      "phrase": "the wisdom of a decision 一项决定的明智之处"
+    },
+    "vision": {
+      "sense": "视力",
+      "phrase": "protect one's vision 保护视力"
+    }
+  }
+}

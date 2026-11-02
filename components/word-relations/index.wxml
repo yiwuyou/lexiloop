@@ -3,40 +3,40 @@
   <view class="relation-sheet {{dragging ? 'is-dragging' : ''}}" style="transform: translateY({{dragY}}px)" role="dialog" aria-label="词库关联词" catchtap="noop">
     <view class="sheet-handle" catchtouchstart="dragStart" catchtouchmove="dragMove" catchtouchend="dragEnd" catchtouchcancel="dragCancel">
     <view class="sheet-grip"></view></view>
-    <view class="sheet-head" bindtouchstart="dragStart" bindtouchmove="dragMove" bindtouchend="dragEnd" bindtouchcancel="dragCancel"><view class="back-slot"></view><text class="sheet-title">词库关联词</text><button class="close" catchtap="close" aria-label="关闭关联词">×</button></view>
-    <scroll-view class="sheet-scroll" scroll-y="{{!dragging && !closing}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}" bindscroll="contentScroll" bindtouchstart="contentStart" bindtouchmove="contentMove" bindtouchend="contentEnd" bindtouchcancel="contentCancel">
+    <view class="sheet-head" bindtouchstart="dragStart" bindtouchmove="dragMove" bindtouchend="dragEnd" bindtouchcancel="dragCancel"><view class="back-slot"></view><text user-select="{{true}}" class="sheet-title">词库关联词</text><button class="close" catchtap="close" aria-label="关闭关联词">×</button></view>
+    <scroll-view class="sheet-scroll" scroll-y="{{!dragging && !closing}}" scroll-top="{{scrollTop}}" show-scrollbar="{{true}}" bindlongpress="cancelContentDrag" bindscroll="contentScroll" bindtouchstart="contentStart" bindtouchmove="contentMove" bindtouchend="contentEnd" bindtouchcancel="contentCancel">
       <view class="status" wx:if="{{loading}}">加载中…</view>
       <button class="error" wx:if="{{error}}" bindtap="retry">{{error}}</button>
       <block wx:if="{{result}}">
         <view class="target-card">
-          <text class="target-word" data-word="{{result.target.word}}" bindlongpress="copyWord">{{result.target.word}}</text>
-          <view class="word-structure" wx:if="{{result.target.breakdown}}"><text>{{result.target.breakdown}}</text><text wx:if="{{result.target.breakdownNote}}">{{result.target.breakdownNote}}</text></view>
-          <view class="meaning exam"><text class="label">机构释义</text><text>{{result.target.meaning}}</text></view>
-          <view class="meaning"><text class="label">日常常用义</text><text>{{result.target.common}}</text></view>
+          <text user-select="{{true}}" class="target-word" data-word="{{result.target.word}}">{{result.target.word}}</text>
+          <view class="word-structure" wx:if="{{result.target.breakdown}}"><text user-select="{{true}}">{{result.target.breakdown}}</text><text user-select="{{true}}" wx:if="{{result.target.breakdownNote}}">{{result.target.breakdownNote}}</text></view>
+          <view class="meaning exam"><text user-select="{{true}}" class="label">机构释义</text><text user-select="{{true}}">{{result.target.meaning}}</text></view>
+          <view class="meaning"><text user-select="{{true}}" class="label">日常常用义</text><text user-select="{{true}}">{{result.target.common}}</text></view>
         </view>
         <view class="relation-group semantic-group">
-        <view class="section-title"><text class="section-name">意思相近</text><text>{{result.semantic.length}} 词</text></view>
+        <view class="section-title"><text user-select="{{true}}" class="section-name">意思相近</text><text user-select="{{true}}">{{result.semantic.length}} 词</text></view>
         <view class="empty" wx:if="{{!semantic.length}}">暂未收录已核对的近义关联</view>
-        <view class="entry" data-id="{{item.id}}" bindtap="openDetail" wx:for="{{semantic}}" wx:key="head">
-          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord">{{item.word}}</text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
-          <text class="sense">相近义项：{{item.sense}}</text>
-          <text class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
-          <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
-          <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
-          <text class="source">{{item.sourceLabel}}</text>
+        <view class="entry" wx:for="{{semantic}}" wx:key="head">
+          <view class="entry-head" data-id="{{item.id}}" bindtap="openDetail"><text user-select="{{true}}" class="entry-word" data-word="{{item.word}}">{{item.word}}</text><text user-select="{{true}}" class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
+          <text user-select="{{true}}" class="sense">相近义项：{{item.sense}}</text>
+          <text user-select="{{true}}" class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
+          <view class="meaning exam"><text user-select="{{true}}" class="label">机构释义</text><text user-select="{{true}}">{{item.meaning}}</text></view>
+          <view class="meaning"><text user-select="{{true}}" class="label">日常常用义</text><text user-select="{{true}}">{{item.common}}</text></view>
+          <text user-select="{{true}}" class="source">{{item.sourceLabel}}</text>
         </view>
         <button class="more" wx:if="{{semantic.length < result.semantic.length}}" bindtap="moreSemantic">再显示 6 个近义词</button>
         </view>
         <view class="relation-group shape-group">
-        <view class="section-title"><text class="section-name">字形／结构相近</text><text>{{result.shapes.length}} 词</text></view>
+        <view class="section-title"><text user-select="{{true}}" class="section-name">字形／结构相近</text><text user-select="{{true}}">{{result.shapes.length}} 词</text></view>
         <view class="empty" wx:if="{{!shapes.length}}">词库中暂无近形关联词</view>
-        <view class="entry" data-id="{{item.id}}" bindtap="openDetail" wx:for="{{shapes}}" wx:key="head">
-          <view class="entry-head"><text class="entry-word" data-word="{{item.word}}" bindlongpress="copyWord"><text wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
-          <view class="spelling-compare"><text>{{item.reason}}：<text wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
-          <view class="meaning exam"><text class="label">机构释义</text><text>{{item.meaning}}</text></view>
-          <view class="meaning"><text class="label">日常常用义</text><text>{{item.common}}</text></view>
-          <text class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
-          <text class="source">{{item.sourceLabel}}</text>
+        <view class="entry" wx:for="{{shapes}}" wx:key="head">
+          <view class="entry-head" data-id="{{item.id}}" bindtap="openDetail"><text user-select="{{true}}" class="entry-word" data-word="{{item.word}}"><text user-select="{{true}}" wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text user-select="{{true}}" class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
+          <view class="spelling-compare"><text user-select="{{true}}">{{item.reason}}：<text user-select="{{true}}" wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
+          <view class="meaning exam"><text user-select="{{true}}" class="label">机构释义</text><text user-select="{{true}}">{{item.meaning}}</text></view>
+          <view class="meaning"><text user-select="{{true}}" class="label">日常常用义</text><text user-select="{{true}}">{{item.common}}</text></view>
+          <text user-select="{{true}}" class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
+          <text user-select="{{true}}" class="source">{{item.sourceLabel}}</text>
         </view>
         <button class="more" wx:if="{{shapes.length < result.shapes.length}}" bindtap="moreShapes">再显示 6 个字形关联词</button>
         </view>

@@ -26,9 +26,10 @@ function getByWord(word, rotation) {
 function getRecallQuestion(word) {
   if (!word || !word.example || !word.translation || !word.meaning) return null;
   const words = getWords();
-  const sentenceMeaning = word.exampleSense
-    ? word.exampleSense.replace(/（[^）]*）/g, '').trim()
-    : word.meaning;
+  // Defensive boundary for stale/imported content as well as the build-time check.
+  const allowedSense = word.exampleSense && word.meaning.split(/[；;]/).some(value => value.replace(/\s/g, '') === word.exampleSense.replace(/\s/g, ''));
+  if (word.exampleSense && !allowedSense) return null;
+  const sentenceMeaning = allowedSense ? word.exampleSense : word.meaning;
   const choices = [sentenceMeaning];
   [137, 383, 761, 1091].forEach((offset) => {
     const candidate = words[(word.position + offset) % words.length];
@@ -47,8 +48,8 @@ function getRecallQuestion(word) {
     translation: word.translation,
     choices,
     answer,
-    explanation: word.exampleSense
-      ? `这是例句巩固。本句中 ${word.word} 表示“${sentenceMeaning}”（补充用法）；机构原释义仍是“${word.meaning}”。`
+    explanation: allowedSense
+      ? `这是例句巩固。本句中 ${word.word} 对应机构释义“${sentenceMeaning}”；机构原释义是“${word.meaning}”。`
       : `这是例句巩固，不是多义辨析。${word.word} 的机构释义是“${word.meaning}”。`,
   };
 }

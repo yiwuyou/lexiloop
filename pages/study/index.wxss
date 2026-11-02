@@ -200,7 +200,7 @@
 .weak-link { width: auto; min-height: 42rpx; margin: 0; padding: 0 4rpx; border: 0; border-radius: 0; background: transparent; color: var(--muted); font-size: 20rpx; line-height: 42rpx; white-space: nowrap; }
 .weak-link.is-marked { color: var(--warn); }
 .memory-row { display: grid; grid-template-columns: 58rpx 1fr; gap: 10rpx; padding: 7rpx 0; text-align: left; }
-.memory-row > text:first-child { color: var(--main-strong); font-size: 22rpx; }
+.memory-row > text:first-child { color: var(--main-strong); font-size: 22rpx; white-space: nowrap; }
 .memory-row > text:last-child, .memory-row > view { color: var(--text); font-size: 24rpx; line-height: 1.42; }
 .breakdown { display: block; color: var(--text); font-family: Georgia, "Times New Roman", serif; font-size: 28rpx; letter-spacing: 1rpx; }
 .memory-note { display: block; margin-top: 2rpx; color: var(--muted); font-size: 21rpx; line-height: 1.4; }
