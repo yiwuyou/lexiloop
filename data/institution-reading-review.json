@@ -433,6 +433,46 @@
     "vision": {
       "sense": "视力",
       "phrase": "protect one's vision 保护视力"
+    },
+    "view": {
+      "sense": "观点",
+      "phrase": "in my view 在我看来"
+    },
+    "judge": {
+      "sense": "法官",
+      "phrase": "a court judge 法庭法官"
+    },
+    "operate": {
+      "sense": "操作",
+      "phrase": "operate a machine 操作机器"
+    },
+    "position": {
+      "sense": "安置",
+      "phrase": "position equipment 安置设备"
+    },
+    "serve": {
+      "sense": "提供",
+      "phrase": "serve food 提供食物"
+    },
+    "treat": {
+      "sense": "治疗",
+      "phrase": "treat an illness 治疗疾病"
+    },
+    "sense": {
+      "sense": "意义",
+      "phrase": "the sense of a word 单词的意义"
+    },
+    "value": {
+      "sense": "价值观",
+      "phrase": "shared values 共同的价值观"
+    },
+    "motion": {
+      "sense": "运动",
+      "phrase": "an object in motion 运动中的物体"
+    },
+    "public": {
+      "sense": "民众",
+      "phrase": "members of the public 民众"
     }
   }
 }
