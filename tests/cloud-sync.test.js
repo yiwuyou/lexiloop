@@ -52,6 +52,7 @@ assert.strictEqual(fs.readFileSync(path.join(root, 'utils/sync-model.js'), 'utf8
 
 // Run the actual deployed handler against a transaction-capable fake database.
 const rows = new Map();
+const databaseOps = { reads: 0, writes: 0, removeQueries: 0, deletedDocuments: 0 };
 let identity = { OPENID: 'user-1', APPID: 'wxee41f64becac8cf2' };
 let failRead = false;
 let throwMissing = false;
@@ -62,14 +63,16 @@ function collection(name, table = rows) {
     limit() { return { field() { return { async get() { if (failRead) throw new Error('offline'); return { data: [] }; } }; } }; },
     doc(id) { return {
       async get() {
+        databaseOps.reads++;
         if (failRead) throw new Error('network unavailable');
         if (throwMissing && !table.has(`${name}/${id}`)) throw { errCode: -1, errMsg: `document.get:fail document with _id ${id} does not exist` };
         return { data: table.has(`${name}/${id}`) ? clone(table.get(`${name}/${id}`)) : null };
       },
-      async set({ data }) { table.set(`${name}/${id}`, clone(data)); return {}; },
+      async set({ data }) { databaseOps.writes++; table.set(`${name}/${id}`, clone(data)); return {}; },
     }; },
     where(query) { return { async remove() {
-      for (const [id, data] of table) if (id.startsWith(`${name}/`) && (query.expires ? data.expires < query.expires.lt : data.owner === query.owner && data.day < query.day.lt)) table.delete(id);
+      databaseOps.removeQueries++;
+      for (const [id, data] of table) if (id.startsWith(`${name}/`) && (query.expires ? data.expires < query.expires.lt : data.owner === query.owner && data.day < query.day.lt)) { table.delete(id); databaseOps.deletedDocuments++; }
     } }; },
   };
 }
@@ -434,6 +437,25 @@ async function main() {
   const oldReader = client(blank()); oldReader.sync.start(); await tick(); await tick(); await oldReader.sync.enable();
   assert.strictEqual(Object.keys(oldReader.store.getState().cards).length, 1036, 'old clients still receive ordinary JSON chunks from the upgraded server');
   assert.ok(oldReader.net.calls.includes('wire-get'));
+  // Resource regression: exercise capture -> upload -> actual handler/database
+  // -> response/download. Checking only outer flush frequency misses chunks.
+  const timingState = compressedPhone.store.getState();
+  timingState.daily['2026-10-27'] = { dueGoal: 100, newGoal: 50, minutes: 0, time: { version: 1, legacySeconds: 0,
+    segments: Object.fromEntries(Array.from({ length: 500 }, (_, i) => [`cost-segment-${i}`, { start: now + i * 10000, end: now + i * 10000 + 9000, phase: 'review' }])) } };
+  compressedPhone.store.saveState(timingState); compressedPhone.sync.capture();
+  for (let i = 0; i < 8; i++) {
+    const checkpoint = compressedPhone.store.getState();
+    checkpoint.daily['2026-10-27'].minutes++;
+    checkpoint.daily['2026-10-27'].time.segments[`new-cost-segment-${i}`] = { start: now + 6000000 + i * 10000, end: now + 6000000 + i * 10000 + 9000, phase: 'review' };
+    compressedPhone.store.saveState(checkpoint); compressedPhone.sync.capture();
+  }
+  const costBefore = { ...databaseOps }, framesBefore = compressedPhone.net.calls.length;
+  await compressedPhone.sync.flush();
+  assert.ok(compressedPhone.net.calls.length - framesBefore <= 2, 'growing daily snapshots need at most two complete round-trip frames in this fixture');
+  assert.ok(databaseOps.reads - costBefore.reads <= 2 && databaseOps.writes - costBefore.writes <= 2, 'full sync must not fan out into hundreds of database operations');
+  assert.strictEqual(databaseOps.removeQueries, costBefore.removeQueries, 'compressed ordinary checkpoints need no temporary transfer cleanup');
+  await compressedDesktop.sync.flush();
+  assert.strictEqual(Object.keys(compressedDesktop.store.getState().daily['2026-10-27'].time.segments).length, 508, 'resource limits must preserve every timing interval');
   const codec = require('../utils/sync-codec');
   const brokenPacked = codec.pack(JSON.stringify({ action: 'sync', events: [] }));
   brokenPacked.checksum = '0';
