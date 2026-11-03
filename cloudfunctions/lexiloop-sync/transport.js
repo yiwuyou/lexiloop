@@ -20,10 +20,10 @@ function unpackPacked(value) {
 }
 module.exports = function transport({ db, read, appid, identity, handle }) {
   return async event => {
-    if (event.action === 'health' || !event.wireVersion) return handle(event);
+    if (event.action === 'health') return handle(event);
     const user = identity();
     if (!user.OPENID || user.APPID !== appid) return { ok: false, code: 'IDENTITY_REQUIRED' };
-    if (event.wireVersion !== 1 || event.protocol !== require('./model.generated').VERSION || !/^[a-zA-Z0-9-]{8,100}$/.test(event.device || '')) return { ok: false, code: 'PROTOCOL_MISMATCH', message: '请将手机和电脑都更新到新版小程序后同步' };
+    if (event.wireVersion && event.wireVersion !== 1 || event.protocol !== require('./model.generated').VERSION || !/^[a-zA-Z0-9-]{8,100}$/.test(event.device || '')) return { ok: false, code: 'PROTOCOL_MISMATCH', message: '请将手机和电脑都更新到新版小程序后同步' };
     const owner = crypto.createHash('sha256').update(`${appid}:${user.OPENID}:${event.device}`).digest('hex');
     const table = db.collection(TABLE), now = Date.now();
     const token = () => crypto.randomBytes(24).toString('hex');
@@ -36,6 +36,18 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
       if (!head || head.owner !== owner || head.direction !== direction || head.expires < now) throw new Error('transfer-expired-or-denied');
       return head;
     }
+    async function reserve(units) {
+      const day = new Date(now + 8 * 3600000).toISOString().slice(0, 10);
+      // Reuse the existing private temporary collection. Reserving work before
+      // a transfer bounds old clients too; no new paid service is introduced.
+      const key = `budget-${owner}-${day}`;
+      await db.runTransaction(async transaction => {
+        const target = transaction.collection(TABLE).doc(key), previous = await read(target);
+        const used = previous && previous.units || 0;
+        if (used + units > 1000) throw new Error('SYNC_DAILY_BUDGET');
+        await target.set({ data: { owner, direction: 'budget', units: used + units, expires: Date.parse(day + 'T00:00:00+08:00') + 2 * LIFE } });
+      });
+    }
     async function output(result, compact) {
       const text = JSON.stringify(result);
       if (Buffer.byteLength(text) <= 24000) return result;
@@ -46,6 +58,8 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
       if (packed && Buffer.byteLength(JSON.stringify({ ok: true, packed })) <= 24000) return { ok: true, packed };
       const body = packed ? payload : text;
       const value = token(), count = Math.ceil(body.length / SIZE), expires = now + LIFE;
+      if (count > 128) throw new Error('SYNC_PACKET_BUDGET');
+      await reserve(count + 2);
       // An immutable response snapshot prevents mixing two archive revisions.
       const metadata = packed ? { encoding: ENCODING, decodedLength: packed.length, decodedChecksum: packed.checksum } : {};
       const head = { owner, expires, direction: 'download', count, length: body.length, checksum: checksum(body), payload, ...metadata };
@@ -58,15 +72,24 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
       return output(await handle({ ...data, device: event.device, protocol: require('./model.generated').VERSION }), data.responseEncoding === ENCODING);
     }
     try {
+      if (!event.wireVersion) { await reserve(4); return await handle(event); }
       if (event.action === 'wire-packed') {
         if (!event.packed || typeof event.packed.data !== 'string' || event.packed.data.length > 24000) throw new Error('invalid-packed-data');
-        return await inner(unpackPacked(event.packed));
+        const text = unpackPacked(event.packed);
+        await reserve(4);
+        return await inner(text);
       }
       if (event.action === 'wire-begin') {
         if (!Number.isInteger(event.count) || !Number.isInteger(event.length) || event.length <= SIZE || event.length > MAX || event.count !== Math.ceil(event.length / SIZE) || event.count > 2100 || !/^[a-f0-9]{1,8}$/.test(event.checksum || '')) throw new Error('invalid-transfer-size');
+        if (event.count > 126) throw new Error('SYNC_PACKET_BUDGET');
+        await reserve(event.count * 4 + 32);
         // Expired temporary frames are not archives or backups. A single-field
         // expiry query uses the built-in index; no paid TTL/rollback service.
-        await table.where({ expires: db.command.lt(now) }).remove().catch(() => {});
+        // Never delete an unbounded backlog of expired fragments in one call.
+        await (async () => {
+          const expired = await table.where({ expires: db.command.lt(now) }).limit(20).field({ _id: true }).get();
+          await Promise.all((expired.data || []).map(row => table.doc(row._id).remove()));
+        })().catch(() => {});
         const value = token();
         if (event.encoding && (event.encoding !== ENCODING || !Number.isInteger(event.decodedLength) || event.decodedLength < 1 || event.decodedLength > MAX
           || !/^[a-f0-9]{1,8}$/.test(event.decodedChecksum || ''))) throw new Error('invalid-packed-data');
@@ -107,6 +130,7 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
         return await inner(head.encoding ? unpackPacked({ encoding: head.encoding, data: text, length: head.decodedLength, checksum: head.decodedChecksum }) : text);
       }
       if (event.action.startsWith('wire-')) throw new Error('invalid-transfer-action');
+      await reserve(['status'].includes(event.action) || event.action === 'sync' && (!event.events || !event.events.length) ? 3 : 4);
       return await output(await handle(event), event.responseEncoding === ENCODING);
     } catch (error) {
       return { ok: false, code: /^[a-zA-Z0-9_.-]{1,100}$/.test(error.message || '') ? error.message : 'TRANSFER_ERROR', message: '分块传输未完成，本机记录已保留' };

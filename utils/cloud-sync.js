@@ -4,6 +4,7 @@ const storage = require('./sync-storage');
 const errors = require('./sync-error');
 const wire = require('./sync-wire');
 const outbox = require('./sync-outbox');
+const budget = require('./sync-budget');
 const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
@@ -32,11 +33,16 @@ function load() {
     device: `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`,
     enabled: false, seq: 0, rev: 0, outbox: [], lastSyncedAt: 0, owner: null,
   };
+  if (!meta.fieldChangesVersion) {
+    meta.outbox = meta.outbox.map(event => Object.assign({}, event, { changes: model.fineChanges(event.changes) }));
+    meta.fieldChangesVersion = 1;
+  }
   if (meta.quotaRetryAt > Date.now()) {
     retryAt = Math.max(retryAt, meta.quotaRetryAt);
     lastError = meta.quotaError || lastError;
     message = '云端额度不足，记录保存在本机';
   }
+  if (meta.resourceRetryAt > Date.now()) { retryAt = Math.max(retryAt, meta.resourceRetryAt); lastError = meta.resourceError; message = '同步用量保护中，记录保存在本机'; }
   return meta;
 }
 function save() { storage.write(KEY, meta); }
@@ -46,6 +52,7 @@ function status() {
   return {
     text: message, enabled: meta.enabled, pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
     errorText: errors.format(lastError),
+    usageText: meta.requestBudget ? `本机今日已发出同步请求 ${meta.requestBudget.day === new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10) ? meta.requestBudget.calls : 0} 次` : '',
     last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
   };
 }
@@ -53,10 +60,20 @@ function emit(text) {
   if (text) message = text;
   listeners.forEach(fn => { try { fn(status()); } catch (error) { /* A UI listener cannot turn a successful upload into a failure. */ } });
 }
-function quotaPaused() { return Boolean(meta && meta.quotaRetryAt > Date.now()); }
-function clearBackoff() { retryAt = 0; failures = 0; delete meta.quotaRetryAt; delete meta.quotaError; }
+function quotaPaused() { return Boolean(meta && Math.max(meta.quotaRetryAt || 0, meta.resourceRetryAt || 0) > Date.now()); }
+function clearBackoff() { retryAt = 0; failures = 0; delete meta.quotaRetryAt; delete meta.quotaError; delete meta.resourceRetryAt; delete meta.resourceError; }
 function failed(error, stage, text) {
   lastError = errors.describe(error, stage);
+  if (/^(queue-delta-(base-mismatch|checksum)|missing-session-delta-base|sync-delta-base-mismatch)$/.test(error.message || '')) {
+    meta.forceFull = true;
+    try { save(); } catch (_) { /* Keep the local bundle and pending events untouched. */ }
+  }
+  if (error.code === 'SYNC_DAILY_BUDGET' || error.code === 'SYNC_PACKET_BUDGET') {
+    retryAt = error.retryAt || (error.code === 'SYNC_DAILY_BUDGET' ? budget.resetAt(Date.now()) : Date.now() + QUOTA_DELAY);
+    meta.resourceRetryAt = retryAt; meta.resourceError = lastError;
+    try { save(); } catch (_) { /* Preserve the original local protection error. */ }
+    emit('同步用量保护中，记录保存在本机'); return;
+  }
   if (errors.isQuota(error)) {
     retryAt = Date.now() + QUOTA_DELAY;
     if (meta) {
@@ -75,7 +92,7 @@ function capture() {
   capturing = true;
   try {
     const current = store.bundle();
-    let changes = model.diff(meta.observed || current, current);
+    let changes = model.fineDiff(meta.observed || current, current);
     if (!changes.length) return;
     meta.seq++;
     // A growing day's timing/task maps must not be resent for every pending
@@ -107,6 +124,7 @@ async function frame(data) {
   if (!ready) throw new Error('当前微信不支持云同步');
   let timeout;
   try {
+    budget.reserve(meta, data.action); save();
     const result = await Promise.race([
       wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, wireVersion: 1, device: meta.device }, data) }),
       new Promise((resolve, reject) => { timeout = setTimeout(() => reject(Object.assign(new Error('网络超时'), { code: 'SYNC_TIMEOUT' })), 15000); }),
@@ -125,7 +143,7 @@ async function frame(data) {
   } finally { clearTimeout(timeout); }
 }
 async function request(action, data = {}) {
-  try { return await wire.send(frame, Object.assign({ action, deltaVersion: 1 }, data)); }
+  try { return await wire.send(frame, Object.assign({ action, deltaVersion: meta.sessionBase ? 2 : 1 }, data, meta.forceFull ? { knownRev: 0 } : {})); }
   catch (error) { if (!error.syncStage) error.syncStage = action; throw error; }
 }
 function accept(result) {
@@ -146,7 +164,14 @@ function accept(result) {
   const previous = store.bundle();
   // Keep local records and queues while any later edits are still in flight.
   const remaining = meta.outbox.filter(event => event.seq > (result.ack || 0));
-  const combined = result.delta ? model.overlay(model.clone(previous), result.delta.changes) : model.clone(result.bundle);
+  const base = model.clone(previous);
+  if (result.delta && result.delta.format === 2) {
+    if (!meta.sessionBase) throw new Error('missing-session-delta-base');
+    base.session = model.clone(meta.sessionBase.session);
+    base.practiceSession = model.clone(meta.sessionBase.practiceSession);
+  }
+  const combined = result.delta ? model.overlay(base, result.delta.changes) : model.clone(result.bundle);
+  const sessionBase = { session: model.clone(combined.session || null), practiceSession: model.clone(combined.practiceSession || null) };
   remaining.forEach(event => model.apply(combined, event, { owner: result.owner }));
   storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
   try { store.replaceBundle(combined); }
@@ -155,6 +180,8 @@ function accept(result) {
   meta.observed = model.clone(combined);
   meta.rev = result.rev;
   meta.owner = result.owner;
+  meta.sessionBase = sessionBase;
+  delete meta.forceFull;
   meta.enabled = true;
   meta.lastSyncedAt = Date.now();
   clearBackoff();
@@ -170,7 +197,7 @@ async function flush() {
   flight = (async () => {
     try {
       checkedAt = Date.now();
-      const batch = meta.outbox.slice(0, 60);
+      const batch = budget.batch(meta.outbox);
       if (batch.length) emit('正在同步');
       const result = await request('sync', { events: batch, knownRev: meta.rev });
       if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
@@ -180,7 +207,7 @@ async function flush() {
       return true;
     } catch (error) {
       failed(error, 'apply', '同步未成功，本地记录已保存');
-      if (!errors.isQuota(error)) retryAt = Date.now() + Math.min(900000, 60000 * Math.pow(2, Math.min(failures++, 4)));
+      if (!errors.isQuota(error) && !['SYNC_DAILY_BUDGET', 'SYNC_PACKET_BUDGET'].includes(error.code)) retryAt = Date.now() + Math.min(900000, 60000 * Math.pow(2, Math.min(failures++, 4)));
       if (active && meta.outbox.length) schedule(60000);
       throw error;
     } finally { flight = null; }
@@ -208,7 +235,7 @@ async function connect(create) {
   // Initial transfers can take a while. Preserve any learning/bookmark edits
   // made after taking the seed image instead of applying an older image over them.
   if (!meta.enabled) {
-    const changes = model.diff(local, store.bundle());
+    const changes = model.fineDiff(local, store.bundle());
     if (changes.length) {
       meta.outbox.push({ device: meta.device, seq: ++meta.seq, baseRev: result.rev, epoch: result.owner && result.owner.epoch || 0, changes });
       save();
@@ -236,7 +263,7 @@ async function beginStudy() {
   if (connecting) await connecting;
   if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
   if (quotaPaused()) {
-    if (blocked()) wx.showToast({ title: '云端额度不足，暂无法接续另一台设备任务', icon: 'none' });
+    if (blocked()) wx.showToast({ title: '同步暂缓，暂无法接续另一台设备任务', icon: 'none' });
     return !blocked();
   }
   try {

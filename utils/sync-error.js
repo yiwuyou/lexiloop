@@ -12,6 +12,8 @@ function describe(error = {}, fallback = 'local') {
   const stage = error.syncStage || fallback;
   let hint = '本机记录已保留，请把这里的失败步骤和错误码发给开发者；无需清缓存或重新授权。';
   if (isQuota(error)) hint = '云端套餐资源或请求额度不足，自动同步已暂缓；额度恢复或处理套餐后可点击立即同步。待上传记录保留在本机，无需清缓存或重新授权。';
+  else if (code === 'SYNC_DAILY_BUDGET') hint = '已暂停继续发出云请求，明天恢复尝试。学习及待上传记录仍保存在本机；不要清缓存或重装。';
+  else if (code === 'SYNC_PACKET_BUDGET') hint = '程序已阻止异常大包继续拆分请求。请反馈此错误码以便处理；不要清缓存或重装。';
   else if (/env not exists|invalid env|非法的\s*env/i.test(raw)) hint = '微信端未识别目标云环境。需核对原生小程序调用链；不要再授权微搭。';
   else if (/IDENTITY_REQUIRED/.test(code)) hint = '云函数没有取得预期的微信身份，需要检查调用链；不要重置学习进度。';
   else if (/SYNC_TIMEOUT|timeout|超时/i.test(`${code} ${raw}`)) hint = '本次请求超时，记录仍在本机；稍后重试不会覆盖已有云档。';

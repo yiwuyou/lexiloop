@@ -5,8 +5,9 @@ function snapshots(outbox, changes, epoch) {
   let pending = outbox;
   const next = changes.map(change => {
     const path = change.path;
-    const session = path.length === 1;
-    const daily = path.length === 3 && path[0] === 'state' && path[1] === 'daily';
+    const session = ['session', 'practiceSession'].includes(path[0]);
+    const daily = path.length >= 3 && path[0] === 'state' && path[1] === 'daily';
+    if (change.splice) return change;
     if (!session && !daily) return change;
     let before = change.before, found = false;
     pending = pending.map(event => {
@@ -18,7 +19,7 @@ function snapshots(outbox, changes, epoch) {
       });
       return oldChanges.length === event.changes.length ? event : Object.assign({}, event, { changes: oldChanges });
     });
-    return Object.assign({}, change, { before: session ? null : before });
+    return Object.assign({}, change, { before: session && path.length === 1 ? null : before });
   });
   return { outbox: pending, changes: next };
 }

@@ -31,7 +31,7 @@ function reply(record, device, knownRev, deltaVersion) {
   const result = { ok: true, exists: true, protocol: model.VERSION, rev: record.rev, owner: record.owner, ack: record.acks[device] || 0 };
   if (knownRev === record.rev) result.unchanged = true;
   else {
-    const patch = deltaVersion === 1 && delta.since(record, knownRev);
+    const patch = [1, 2].includes(deltaVersion) && delta.since(record, knownRev, deltaVersion);
     if (patch) result.delta = patch;
     else result.bundle = record.bundle;
   }
@@ -48,7 +48,7 @@ async function handle(event) {
         await read(transaction.collection(RECORDS).doc('deployment-health-readonly'));
         return true;
       });
-      return { ok: true, protocol: model.VERSION, appid: APPID, name: 'lexiloop-sync', storageReady: true, transactionReady: true, wireCompression: 'gzip-base64' };
+      return { ok: true, protocol: model.VERSION, appid: APPID, name: 'lexiloop-sync', storageReady: true, transactionReady: true, wireCompression: 'gzip-base64', fieldChanges: true, resourceGuard: true };
     } catch (error) {
       return { ok: false, storageReady: step !== 'collections', step, code: String(error.code || error.errCode || error.name || 'UNKNOWN'), detail: String(error.errMsg || error.message || '').replace(/[a-f0-9]{32,}/gi, '[id]').slice(0, 300) };
     }

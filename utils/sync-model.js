@@ -41,9 +41,57 @@ function diff(before, after) {
   ['session', 'practiceSession'].forEach(key => add([key], before[key], after[key]));
   return changes;
 }
+const dayMaps = ['taskPlan', 'firstAnswers', 'firstOverdue', 'taskStatus', 'carryTasks', 'ratings', 'firstAnswerOffset'];
+const taskRoot = path => ['session', 'practiceSession'].includes(path[0]);
+function fingerprint(value) {
+  const text = stable(value); let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+  return (hash >>> 0).toString(16);
+}
+function fineChanges(changes) {
+  const result = [];
+  const add = (path, before, after) => { if (!equal(before, after)) result.push({ path, before: before == null ? null : before, after: after == null ? null : after }); };
+  const entries = (path, before = {}, after = {}) => {
+    for (const key of new Set(Object.keys(before || {}).concat(Object.keys(after || {})))) add(path.concat(key), before && before[key], after && after[key]);
+  };
+  for (const change of changes) {
+    const path = change.path, before = change.before, after = change.after;
+    if (path.length === 3 && path[1] === 'daily' && after) {
+      for (const key of new Set(Object.keys(before || {}).concat(Object.keys(after)))) {
+        const left = before && before[key], right = after[key], field = path.concat(key);
+        if (dayMaps.includes(key) && right) entries(field, left, right);
+        else if (key === 'time' && right) {
+          add(field.concat('version'), left && left.version, right.version);
+          add(field.concat('legacySeconds'), left && left.legacySeconds, right.legacySeconds);
+          entries(field.concat('segments'), left && left.segments, right.segments);
+        } else add(field, left, right);
+      }
+    } else if (path.length === 1 && taskRoot(path) && before && after && before.day === after.day && before.startedAt === after.startedAt) {
+      for (const key of new Set(Object.keys(before).concat(Object.keys(after)))) {
+        const left = before[key], right = after[key], field = path.concat(key);
+        if (equal(left, right)) continue;
+        if (key === 'queue' && Array.isArray(left) && Array.isArray(right)) {
+          let start = 0, tail = 0;
+          while (start < Math.min(left.length, right.length) && equal(left[start], right[start])) start++;
+          while (tail < Math.min(left.length, right.length) - start && equal(left[left.length - 1 - tail], right[right.length - 1 - tail])) tail++;
+          result.push({ path: field, splice: { start, remove: left.length - start - tail, items: right.slice(start, right.length - tail), before: fingerprint(left), after: fingerprint(right), length: left.length } });
+        } else if (['taskPlan', 'ratings'].includes(key) && right) entries(field, left, right);
+        else add(field, left, right);
+      }
+    } else result.push(change);
+  }
+  return result;
+}
+const fineDiff = (before, after) => fineChanges(diff(before, after));
 function allowed(path) {
   if (!Array.isArray(path) || path.some(key => typeof key !== 'string' || dangerous(key))) return false;
   if (path.length === 1) return ['session', 'practiceSession'].includes(path[0]);
+  if (taskRoot(path)) return path.length === 2 || path.length === 3 && ['taskPlan', 'ratings'].includes(path[1]);
+  if (path[0] === 'state' && path[1] === 'daily' && path[2] && path[2].length <= 2000) {
+    if (path.length === 4) return true;
+    if (path.length === 5) return dayMaps.includes(path[3]) || path[3] === 'time' && ['version', 'legacySeconds'].includes(path[4]);
+    if (path.length === 6) return path[3] === 'time' && path[4] === 'segments';
+  }
   if (path.length === 2) return path[0] === 'settings'
     ? ['schemaVersion', 'dailyNewCount', 'dailyMaxNewCount', 'dailyReviewLimit', 'reviewLimitVersion', 'dailyBacklogLimit', 'extraStep', 'examDate', 'learningDeadline', 'examPlanVersion'].includes(path[1])
     : path[0] === 'state' && ['recentReviews', 'progressRecovery', 'recoveryRelease'].includes(path[1]);
@@ -133,13 +181,33 @@ function deriveDaily(bundle) {
 function apply(bundle, event, context = {}) {
   if (!Array.isArray(event.changes) || event.changes.length > 12000) throw new Error('invalid-changes');
   let conflicts = 0;
+  // A queue splice must match its base. Reject the whole task image on a
+  // mismatch, but still retain independent real answers and card changes.
+  const rejectedTasks = new Set();
+  for (const change of event.changes) if (change.splice) {
+    const path = change.path, patch = change.splice;
+    if (!allowed(path) || path.length !== 2 || !taskRoot(path) || path[1] !== 'queue'
+      || !Number.isInteger(patch.start) || !Number.isInteger(patch.remove) || !Number.isInteger(patch.length)
+      || patch.start < 0 || patch.remove < 0 || patch.start + patch.remove > patch.length || !Array.isArray(patch.items) || patch.items.length > 12000
+      || !/^[a-f0-9]{1,8}$/.test(patch.before || '') || !/^[a-f0-9]{1,8}$/.test(patch.after || '')) throw new Error('invalid-queue-patch');
+    const current = bundle[path[0]] && bundle[path[0]].queue;
+    if (!Array.isArray(current) || fingerprint(current) !== patch.after && (current.length !== patch.length || fingerprint(current) !== patch.before)) rejectedTasks.add(path[0]);
+  }
   event.changes.forEach(change => {
     const path = change.path;
     if (!allowed(path)) throw new Error('invalid-path');
-    if (path.length === 1 && context.owner && (context.owner.device !== event.device || context.owner.epoch !== event.epoch)) return;
+    if (taskRoot(path) && (rejectedTasks.has(path[0]) || context.owner && (context.owner.device !== event.device || context.owner.epoch !== event.epoch))) { conflicts++; return; }
     let parent = bundle;
     path.slice(0, -1).forEach(key => { if (!parent[key]) parent[key] = {}; parent = parent[key]; });
     const key = path[path.length - 1], current = parent[key];
+    if (change.splice) {
+      if (fingerprint(current) !== change.splice.after) {
+        const next = current.slice(); next.splice(change.splice.start, change.splice.remove, ...change.splice.items);
+        if (fingerprint(next) !== change.splice.after) throw new Error('queue-patch-checksum');
+        parent[key] = next;
+      }
+      return;
+    }
     if (path[1] === 'recentReviews') {
       if (!Array.isArray(change.append) || change.append.length > 3000) throw new Error('invalid-reviews');
       parent[key] = unionReviews(current || [], change.append);
@@ -153,6 +221,18 @@ function apply(bundle, event, context = {}) {
       && (version.rev || 0) > (event.baseRev || 0)
       && !(version.device === event.device && event.seq > version.seq)) return;
     let value = change.after;
+    if (path[1] === 'daily' && path.length >= 4) {
+      const field = path[3];
+      if (path.length === 6 && value && current) value = value.end > current.end ? value : current;
+      else if (path.length === 5 && ['taskStatus', 'carryTasks'].includes(field) && current && value) {
+        if (current.at > value.at || current.at === value.at && (field === 'taskStatus' ? !current.passed : !current.item)) value = current;
+      } else if (path.length === 5 && ['taskPlan', 'firstAnswers', 'firstOverdue'].includes(field) && (current === 'new' || value === 'new')) value = 'new';
+      else if (field === 'initialEstimate' && current && (!value || current.at < value.at)) value = current;
+      else if ((field === 'time' && path[4] === 'legacySeconds' || field === 'firstAnswerOffset') && value != null) value = Math.max(current || 0, value);
+      else if (!equal(current, change.before) && ['dueDone', 'newDone', 'backlogDone', 'dueGoal', 'newGoal', 'reinforcementDone', 'contextDone', 'contextCorrect', 'sentenceDone', 'sentenceCorrect', 'minutes', 'extraNew'].includes(field)) value = Math.max(current || 0, value || 0);
+      if (value == null) delete parent[key]; else parent[key] = clone(value);
+      return;
+    }
     if (!equal(current, change.before) && !equal(current, value)) {
       conflicts++;
       if (path[1] === 'cards') value = conservativeCard(current, value);
@@ -185,10 +265,18 @@ function overlay(bundle, changes) {
     let parent = bundle;
     change.path.slice(0, -1).forEach(key => { parent = parent[key] || (parent[key] = {}); });
     const key = change.path[change.path.length - 1];
-    if (change.append) parent[key] = unionReviews(parent[key] || [], change.append);
+    if (change.splice) {
+      const patch = change.splice, current = parent[key];
+      if (!Array.isArray(current)) throw new Error('queue-delta-base-mismatch');
+      if (fingerprint(current) === patch.after) return;
+      if (current.length !== patch.length || fingerprint(current) !== patch.before) throw new Error('queue-delta-base-mismatch');
+      const next = current.slice(); next.splice(patch.start, patch.remove, ...patch.items);
+      if (fingerprint(next) !== patch.after) throw new Error('queue-delta-checksum');
+      parent[key] = next;
+    } else if (change.append) parent[key] = unionReviews(parent[key] || [], change.append);
     else if (change.after == null) delete parent[key];
     else parent[key] = clone(change.after);
   });
   return bundle;
 }
-module.exports = { VERSION, clone, equal, valid, learned, diff, apply, attach, overlay };
+module.exports = { VERSION, clone, equal, valid, learned, diff, fineDiff, fineChanges, fingerprint, apply, attach, overlay };

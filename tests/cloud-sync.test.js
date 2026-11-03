@@ -69,8 +69,12 @@ function collection(name, table = rows) {
         return { data: table.has(`${name}/${id}`) ? clone(table.get(`${name}/${id}`)) : null };
       },
       async set({ data }) { databaseOps.writes++; table.set(`${name}/${id}`, clone(data)); return {}; },
+      async remove() { databaseOps.writes++; if (table.delete(`${name}/${id}`)) databaseOps.deletedDocuments++; return {}; },
     }; },
-    where(query) { return { async remove() {
+    where(query) { let max = Infinity; return { limit(value) { max = value; return this; }, field() { return this; }, async get() {
+      databaseOps.reads++;
+      return { data: Array.from(table).filter(([id, data]) => id.startsWith(`${name}/`) && (query.expires ? data.expires < query.expires.lt : data.owner === query.owner && data.day < query.day.lt)).slice(0, max).map(([id]) => ({ _id: id.slice(name.length + 1) })) };
+    }, async remove() {
       databaseOps.removeQueries++;
       for (const [id, data] of table) if (id.startsWith(`${name}/`) && (query.expires ? data.expires < query.expires.lt : data.owner === query.owner && data.day < query.day.lt)) { table.delete(id); databaseOps.deletedDocuments++; }
     } }; },
@@ -293,7 +297,7 @@ async function main() {
   for (let i = 0; i < 160; i++) desktop.store.saveSession({ queue, index: i % 150 });
   desktop.sync.capture(); // Deferred journal: capture at an explicit checkpoint.
   const pendingMeta = desktop.storage.read('lexiloop_cloud_sync_v1');
-  assert.strictEqual(pendingMeta.outbox.flatMap(item => item.changes).filter(item => item.path.length === 1 && item.path[0] === 'session').length, 1);
+  assert.strictEqual(pendingMeta.outbox.flatMap(item => item.changes).filter(item => item.path[0] === 'session' && (item.path.length === 1 || item.path[1] === 'queue')).length, 1);
   desktop.net.online = true;
   while (desktop.sync.status().pending) await desktop.sync.flush();
   assert.strictEqual(desktop.store.getSession().index, 9);
@@ -437,6 +441,21 @@ async function main() {
   const oldReader = client(blank()); oldReader.sync.start(); await tick(); await tick(); await oldReader.sync.enable();
   assert.strictEqual(Object.keys(oldReader.store.getState().cards).length, 1036, 'old clients still receive ordinary JSON chunks from the upgraded server');
   assert.ok(oldReader.net.calls.includes('wire-get'));
+  const firstTask = compressedPhone.store.getSession();
+  firstTask.queue.splice(60, 0, { wordId: 'new-question-a', phase: 'reinforcement' }); firstTask.index++;
+  compressedPhone.store.saveSession(firstTask);
+  compressedPhone.net.hold = true;
+  const taskFlight = compressedPhone.sync.flush(); await tick();
+  assert.ok(compressedPhone.net.release);
+  const secondTask = compressedPhone.store.getSession();
+  secondTask.queue.splice(61, 0, { wordId: 'new-question-b', phase: 'reinforcement' }); secondTask.index++;
+  compressedPhone.store.saveSession(secondTask);
+  compressedPhone.net.release(); await taskFlight;
+  assert.deepStrictEqual(compressedPhone.store.getSession().queue, secondTask.queue, 'queue edits made during a fine delta reply survive pending replay');
+  assert.strictEqual(compressedPhone.store.getSession().index, secondTask.index);
+  while (compressedPhone.sync.status().pending) await compressedPhone.sync.flush();
+  await compressedDesktop.sync.flush();
+  assert.deepStrictEqual(compressedDesktop.store.getSession(), compressedPhone.store.getSession());
   // Resource regression: exercise capture -> upload -> actual handler/database
   // -> response/download. Checking only outer flush frequency misses chunks.
   const timingState = compressedPhone.store.getState();
@@ -451,8 +470,9 @@ async function main() {
   }
   const costBefore = { ...databaseOps }, framesBefore = compressedPhone.net.calls.length;
   await compressedPhone.sync.flush();
+  while (compressedPhone.sync.status().pending) await compressedPhone.sync.flush();
   assert.ok(compressedPhone.net.calls.length - framesBefore <= 2, 'growing daily snapshots need at most two complete round-trip frames in this fixture');
-  assert.ok(databaseOps.reads - costBefore.reads <= 2 && databaseOps.writes - costBefore.writes <= 2, 'full sync must not fan out into hundreds of database operations');
+  assert.ok(databaseOps.reads - costBefore.reads <= 4 && databaseOps.writes - costBefore.writes <= 4, 'full sync including the durable server budget must not fan out into hundreds of database operations');
   assert.strictEqual(databaseOps.removeQueries, costBefore.removeQueries, 'compressed ordinary checkpoints need no temporary transfer cleanup');
   await compressedDesktop.sync.flush();
   assert.strictEqual(Object.keys(compressedDesktop.store.getState().daily['2026-10-27'].time.segments).length, 508, 'resource limits must preserve every timing interval');
@@ -562,6 +582,31 @@ async function main() {
   assert.strictEqual(quotaRestart.sync.status().errorText, '');
   assert.strictEqual(quotaRestart.values.lexiloop_cloud_sync_v1.quotaRetryAt, undefined, 'successful upload clears the durable quota pause');
   quotaRestart.sync.dispose();
+  identity.OPENID = 'legacy-outbox-migration';
+  const migrationDevice = 'migrating-device';
+  const migrationBase = clone(base), migrationPassed = clone(passed);
+  migrationBase.session = migrationPassed.session = { day: '2026-10-27', startedAt: 100, index: 0, queue: [{ wordId: 'c-1-1', phase: 'review' }] };
+  await call('bootstrap', { device: migrationDevice, bundle: migrationBase });
+  const legacyPending = event(migrationBase, migrationPassed, 1, migrationDevice, 1, 1);
+  const migrated = client(migrationPassed, null, { legacyWire: false, values: { lexiloop_cloud_sync_v1: { device: migrationDevice, enabled: true, seq: 1, rev: 1, outbox: [legacyPending], observed: migrationPassed, owner: { device: migrationDevice, epoch: 1 } } } });
+  migrated.sync.start(); await tick(); await migrated.sync.flush();
+  assert.strictEqual(migrated.sync.status().pending, 0, 'an existing legacy outbox drains after field-level migration');
+  assert.strictEqual(migrated.store.getState().recentReviews.length, 1, 'migration preserves the original answer, not a synthetic re-answer');
+  assert.ok(migrated.net.frames.flatMap(f => f.events || []).flatMap(e => e.changes).every(c => c.path[1] !== 'daily' || c.path.length > 3), 'the old daily pre/post image is converted before sending');
+  const corruptBaseline = clone(migrated.values); migrated.sync.dispose();
+  corruptBaseline.lexiloop_cloud_sync_v1.sessionBase.session.queue.pop();
+  const repairOtherDevice = 'repair-other-device';
+  const remoteTaskBefore = await call('claim', { device: repairOtherDevice });
+  const remoteTaskAfter = clone(remoteTaskBefore.bundle); remoteTaskAfter.session.queue.push({ wordId: 'c-1-2', phase: 'review' });
+  await call('sync', { device: repairOtherDevice, events: [{ device: repairOtherDevice, seq: 1, baseRev: remoteTaskBefore.rev, epoch: remoteTaskBefore.owner.epoch, changes: model.fineDiff(remoteTaskBefore.bundle, remoteTaskAfter) }] });
+  const repairing = client(null, null, { legacyWire: false, values: corruptBaseline });
+  repairing.sync.start(); await tick(); await tick();
+  assert.ok(repairing.values.lexiloop_cloud_sync_v1.forceFull, 'a bad queue baseline requests a full authoritative recovery next time');
+  await repairing.sync.flush();
+  assert.strictEqual(repairing.store.getSession().queue.length, 2);
+  assert.strictEqual(repairing.values.lexiloop_cloud_sync_v1.forceFull, undefined);
+  assert.strictEqual(repairing.store.getState().recentReviews.length, 1);
+  repairing.sync.dispose();
   const medium = { action: 'status', note: 'a'.repeat(9000) };
   let mediumCalls = 0;
   await require('../utils/sync-wire').send(async () => { mediumCalls++; return { ok: true }; }, medium);
@@ -585,6 +630,19 @@ async function main() {
   identity = { OPENID:'oversized-history-fixture', APPID:'wxee41f64becac8cf2' };
   longHistory.state.historyFixture = 'x'.repeat(6 * 1024 * 1024 + 1);
   assert.strictEqual((await call('bootstrap', {bundle:longHistory})).ok,false,'retain a bounded archive below the decompression ceiling');
+  identity.OPENID = 'server-budget-test';
+  const protectedFrames = { protocol: model.VERSION, wireVersion: 1, device: 'old-client-budget', action: 'wire-begin', count: 100, length: 400000, checksum: '1' };
+  assert.strictEqual((await server(protectedFrames)).ok, true);
+  assert.strictEqual((await server(protectedFrames)).ok, true);
+  const beforeBlocked = { ...databaseOps };
+  assert.strictEqual((await server(protectedFrames)).code, 'SYNC_DAILY_BUDGET', 'old clients are bounded before another hundred chunks can start');
+  assert.strictEqual(databaseOps.writes, beforeBlocked.writes, 'a denied transfer cannot allocate a header or staging writes');
+  assert.strictEqual((await server({ ...protectedFrames, count: 500, length: 2000000 })).code, 'SYNC_PACKET_BUDGET', 'oversized old-client transfers stop before staging');
+  identity.OPENID = 'bounded-cleanup-test';
+  for (let i = 0; i < 80; i++) rows.set(`lexiloop_transfers/expired-test-${i}`, { expires: Date.now() - 1000, direction: 'upload' });
+  const cleanupBefore = databaseOps.deletedDocuments;
+  assert.strictEqual((await server({ ...protectedFrames, count: 2, length: 8000 })).ok, true);
+  assert.strictEqual(databaseOps.deletedDocuments - cleanupBefore, 20, 'one transfer never deletes an unbounded backlog of expired fragments');
   console.log('Cloud sync passed: protocol merge, delete tombstones, duplicate retry, user/AppID isolation, conservative conflicts, first seed, offline outbox, desktop restore, ownership, in-flight edits and bounded long histories.');
 }
 main().catch(error => { console.error(error); process.exit(1); });

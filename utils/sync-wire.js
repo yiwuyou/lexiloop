@@ -21,6 +21,7 @@ async function parts(count, task) {
   }
 }
 async function send(call, event, options = {}) {
+  const maxFrames = options.maxFrames || 128;
   const text = JSON.stringify(options.compress === false ? event : Object.assign({}, event, { responseEncoding: ENCODING }));
   // Conservative UTF-8 upper bound (surrogate pairs count as six bytes).
   let bytes = text.length;
@@ -35,7 +36,7 @@ async function send(call, event, options = {}) {
     } else {
       const body = useful ? packed.data : text;
       const count = Math.ceil(body.length / SIZE);
-      if (count > 2100) throw new Error('sync-payload-too-large');
+      if (count + 2 > maxFrames) throw Object.assign(new Error('本次同步数据超过传输保护上限，记录已保留'), { code: 'SYNC_PACKET_BUDGET' });
       const metadata = useful ? { encoding: ENCODING, decodedLength: packed.length, decodedChecksum: packed.checksum } : {};
       const head = await call(Object.assign({ action: 'wire-begin', count, length: body.length, checksum: checksum(body) }, metadata));
       await parts(count, index => call({ action: 'wire-put', token: head.token, index, text: body.slice(index * SIZE, (index + 1) * SIZE) }));
@@ -49,6 +50,7 @@ async function send(call, event, options = {}) {
     return result;
   }
   const head = result.transfer;
+  if (head.count > maxFrames) throw Object.assign(new Error('本次同步下载超过传输保护上限，未覆盖本机记录'), { code: 'SYNC_PACKET_BUDGET' });
   if (!Number.isInteger(head.count) || head.count < 1 || head.count > 2100
     || !Number.isInteger(head.length) || head.length < 1 || head.length > MAX
     || head.count !== Math.ceil(head.length / SIZE) || head.encoding && head.encoding !== ENCODING) throw new Error('invalid-transfer');
