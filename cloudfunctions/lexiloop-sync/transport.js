@@ -2,10 +2,21 @@ const crypto = require('crypto');
 const zlib = require('zlib');
 const TABLE = 'lexiloop_transfers';
 const SIZE = 4000, MAX = 8 * 1024 * 1024, LIFE = 86400000;
+const ENCODING = 'gzip-base64';
 function checksum(text) {
   let hash = 2166136261;
   for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
   return (hash >>> 0).toString(16);
+}
+function unpackPacked(value) {
+  if (!value || value.encoding !== ENCODING || !Number.isInteger(value.length) || value.length < 1 || value.length > MAX
+    || typeof value.data !== 'string' || value.data.length > MAX || value.data.length % 4
+    || !/^[A-Za-z0-9+/]+={0,2}$/.test(value.data) || !/^[a-f0-9]{1,8}$/.test(value.checksum || '')) throw new Error('invalid-packed-data');
+  const bytes = zlib.gunzipSync(Buffer.from(value.data, 'base64'), { maxOutputLength: MAX });
+  if (bytes.length !== value.length) throw new Error('packed-length-mismatch');
+  const text = bytes.toString('utf8');
+  if (checksum(text) !== value.checksum) throw new Error('transfer-checksum-mismatch');
+  return text;
 }
 module.exports = function transport({ db, read, appid, identity, handle }) {
   return async event => {
@@ -25,24 +36,42 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
       if (!head || head.owner !== owner || head.direction !== direction || head.expires < now) throw new Error('transfer-expired-or-denied');
       return head;
     }
-    async function output(result) {
+    async function output(result, compact) {
       const text = JSON.stringify(result);
       if (Buffer.byteLength(text) <= 24000) return result;
       if (Buffer.byteLength(text) > MAX) throw new Error('transfer-too-large');
-      const value = token(), count = Math.ceil(text.length / SIZE), expires = now + LIFE;
+      const payload = zlib.gzipSync(Buffer.from(text)).toString('base64');
+      const packed = compact && payload.length < Buffer.byteLength(text)
+        ? { encoding: ENCODING, data: payload, length: Buffer.byteLength(text), checksum: checksum(text) } : null;
+      if (packed && Buffer.byteLength(JSON.stringify({ ok: true, packed })) <= 24000) return { ok: true, packed };
+      const body = packed ? payload : text;
+      const value = token(), count = Math.ceil(body.length / SIZE), expires = now + LIFE;
       // An immutable response snapshot prevents mixing two archive revisions.
-      const head = { owner, expires, direction: 'download', count, length: text.length, checksum: checksum(text), payload: zlib.gzipSync(Buffer.from(text)).toString('base64') };
+      const metadata = packed ? { encoding: ENCODING, decodedLength: packed.length, decodedChecksum: packed.checksum } : {};
+      const head = { owner, expires, direction: 'download', count, length: body.length, checksum: checksum(body), payload, ...metadata };
       await headRef(value).set({ data: head });
-      return { ok: true, transfer: { token: value, count, length: head.length, checksum: head.checksum } };
+      return { ok: true, transfer: { token: value, count, length: head.length, checksum: head.checksum, ...metadata } };
+    }
+    async function inner(text) {
+      const data = JSON.parse(text);
+      if (!['bootstrap', 'attach', 'sync', 'claim', 'status'].includes(data.action)) throw new Error('invalid-transfer-action');
+      return output(await handle({ ...data, device: event.device, protocol: require('./model.generated').VERSION }), data.responseEncoding === ENCODING);
     }
     try {
+      if (event.action === 'wire-packed') {
+        if (!event.packed || typeof event.packed.data !== 'string' || event.packed.data.length > 24000) throw new Error('invalid-packed-data');
+        return await inner(unpackPacked(event.packed));
+      }
       if (event.action === 'wire-begin') {
         if (!Number.isInteger(event.count) || !Number.isInteger(event.length) || event.length <= SIZE || event.length > MAX || event.count !== Math.ceil(event.length / SIZE) || event.count > 2100 || !/^[a-f0-9]{1,8}$/.test(event.checksum || '')) throw new Error('invalid-transfer-size');
         // Expired temporary frames are not archives or backups. A single-field
         // expiry query uses the built-in index; no paid TTL/rollback service.
         await table.where({ expires: db.command.lt(now) }).remove().catch(() => {});
         const value = token();
-        await headRef(value).set({ data: { owner, expires: now + LIFE, direction: 'upload', count: event.count, length: event.length, checksum: event.checksum } });
+        if (event.encoding && (event.encoding !== ENCODING || !Number.isInteger(event.decodedLength) || event.decodedLength < 1 || event.decodedLength > MAX
+          || !/^[a-f0-9]{1,8}$/.test(event.decodedChecksum || ''))) throw new Error('invalid-packed-data');
+        const metadata = event.encoding ? { encoding: ENCODING, decodedLength: event.decodedLength, decodedChecksum: event.decodedChecksum } : {};
+        await headRef(value).set({ data: { owner, expires: now + LIFE, direction: 'upload', count: event.count, length: event.length, checksum: event.checksum, ...metadata } });
         return { ok: true, token: value };
       }
       if (event.action === 'wire-put') {
@@ -61,7 +90,7 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
       if (event.action === 'wire-get') {
         const head = await header(event.token, 'download');
         if (!Number.isInteger(event.index) || event.index < 0 || event.index >= head.count) throw new Error('invalid-transfer-index');
-        const text = zlib.gunzipSync(Buffer.from(head.payload, 'base64'), { maxOutputLength: MAX }).toString();
+        const text = head.encoding ? head.payload : zlib.gunzipSync(Buffer.from(head.payload, 'base64'), { maxOutputLength: MAX }).toString();
         return { ok: true, text: text.slice(event.index * SIZE, (event.index + 1) * SIZE) };
       }
       if (event.action === 'wire-commit') {
@@ -75,12 +104,10 @@ module.exports = function transport({ db, read, appid, identity, handle }) {
           }
         }
         if (text.length !== head.length || Buffer.byteLength(text) > MAX || checksum(text) !== head.checksum) throw new Error('transfer-checksum-mismatch');
-        const inner = JSON.parse(text);
-        if (!['bootstrap', 'attach', 'sync', 'claim', 'status'].includes(inner.action)) throw new Error('invalid-transfer-action');
-        return await output(await handle({ ...inner, device: event.device, protocol: require('./model.generated').VERSION }));
+        return await inner(head.encoding ? unpackPacked({ encoding: head.encoding, data: text, length: head.decodedLength, checksum: head.decodedChecksum }) : text);
       }
       if (event.action.startsWith('wire-')) throw new Error('invalid-transfer-action');
-      return await output(await handle(event));
+      return await output(await handle(event), event.responseEncoding === ENCODING);
     } catch (error) {
       return { ok: false, code: /^[a-zA-Z0-9_.-]{1,100}$/.test(error.message || '') ? error.message : 'TRANSFER_ERROR', message: '分块传输未完成，本机记录已保留' };
     }

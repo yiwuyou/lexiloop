@@ -3,10 +3,12 @@ const model = require('./sync-model');
 const storage = require('./sync-storage');
 const errors = require('./sync-error');
 const wire = require('./sync-wire');
+const outbox = require('./sync-outbox');
 const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
 const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
+const QUOTA_DELAY = 3600000;
 let meta, flight, timer, capturing = false, ready = false, active = true;
 let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
@@ -30,6 +32,11 @@ function load() {
     device: `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`,
     enabled: false, seq: 0, rev: 0, outbox: [], lastSyncedAt: 0, owner: null,
   };
+  if (meta.quotaRetryAt > Date.now()) {
+    retryAt = Math.max(retryAt, meta.quotaRetryAt);
+    lastError = meta.quotaError || lastError;
+    message = '云端额度不足，记录保存在本机';
+  }
   return meta;
 }
 function save() { storage.write(KEY, meta); }
@@ -46,7 +53,19 @@ function emit(text) {
   if (text) message = text;
   listeners.forEach(fn => { try { fn(status()); } catch (error) { /* A UI listener cannot turn a successful upload into a failure. */ } });
 }
-function failed(error, stage, text) { lastError = errors.describe(error, stage); emit(text); }
+function quotaPaused() { return Boolean(meta && meta.quotaRetryAt > Date.now()); }
+function clearBackoff() { retryAt = 0; failures = 0; delete meta.quotaRetryAt; delete meta.quotaError; }
+function failed(error, stage, text) {
+  lastError = errors.describe(error, stage);
+  if (errors.isQuota(error)) {
+    retryAt = Date.now() + QUOTA_DELAY;
+    if (meta) {
+      meta.quotaRetryAt = retryAt; meta.quotaError = lastError;
+      try { save(); } catch (_) { /* Never mask the cloud failure or discard durable learning records. */ }
+    }
+    emit('云端额度不足，记录保存在本机');
+  } else emit(text);
+}
 function subscribe(fn) { listeners.add(fn); fn(status()); return () => listeners.delete(fn); }
 function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.device !== meta.device); }
 function capture() {
@@ -56,19 +75,14 @@ function capture() {
   capturing = true;
   try {
     const current = store.bundle();
-    const changes = model.diff(meta.observed || current, current);
+    let changes = model.diff(meta.observed || current, current);
     if (!changes.length) return;
     meta.seq++;
-    // Keep just the latest unsent task image per ownership epoch. Earlier
-    // events still carry their sequence IDs and answer/card changes. Replace
-    // objects rather than mutate a batch already being sent over the network.
-    changes.filter(change => change.path.length === 1).forEach(change => {
-      const key = change.path[0], epoch = meta.owner && meta.owner.epoch || 0;
-      meta.outbox = meta.outbox.map(event => event.epoch !== epoch ? event : Object.assign({}, event, {
-        changes: event.changes.filter(old => old.path.length !== 1 || old.path[0] !== key),
-      }));
-      change.before = null;
-    });
+    // A growing day's timing/task maps must not be resent for every pending
+    // checkpoint. Preserve the first preimage and last image, plus all event
+    // IDs/answers. The pure helper never mutates an in-flight batch.
+    const compacted = outbox.snapshots(meta.outbox, changes, meta.owner && meta.owner.epoch || 0);
+    meta.outbox = compacted.outbox; changes = compacted.changes;
     meta.outbox.push({ device: meta.device, seq: meta.seq, baseRev: meta.rev, epoch: meta.owner && meta.owner.epoch || 0, changes });
     meta.observed = model.clone(current);
     save();
@@ -121,6 +135,7 @@ function accept(result) {
   if (result.unchanged) {
     meta.owner = result.owner;
     meta.lastSyncedAt = Date.now();
+    clearBackoff();
     save();
     lastError = null;
     emit(meta.outbox.length ? '有记录待同步' : '已同步');
@@ -142,6 +157,7 @@ function accept(result) {
   meta.owner = result.owner;
   meta.enabled = true;
   meta.lastSyncedAt = Date.now();
+  clearBackoff();
   save();
   lastError = null;
   emit(remaining.length ? '有记录待同步' : '已同步');
@@ -159,12 +175,12 @@ async function flush() {
       const result = await request('sync', { events: batch, knownRev: meta.rev });
       if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
       accept(result);
-      failures = 0; retryAt = 0;
+      clearBackoff();
       if (meta.outbox.length) schedule(1000);
       return true;
     } catch (error) {
       failed(error, 'apply', '同步未成功，本地记录已保存');
-      retryAt = Date.now() + Math.min(900000, 60000 * Math.pow(2, Math.min(failures++, 4)));
+      if (!errors.isQuota(error)) retryAt = Date.now() + Math.min(900000, 60000 * Math.pow(2, Math.min(failures++, 4)));
       if (active && meta.outbox.length) schedule(60000);
       throw error;
     } finally { flight = null; }
@@ -219,12 +235,17 @@ async function beginStudy() {
   }
   if (connecting) await connecting;
   if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
+  if (quotaPaused()) {
+    if (blocked()) wx.showToast({ title: '云端额度不足，暂无法接续另一台设备任务', icon: 'none' });
+    return !blocked();
+  }
   try {
     while (meta.outbox.length) await flush();
     const result = await request('claim', { knownRev: meta.rev });
     accept(result);
     return true;
   } catch (error) {
+    failed(error, 'claim', '接续未完成，本地记录已保留');
     if (blocked()) {
       wx.showToast({ title: '需联网接续另一台设备的任务', icon: 'none' });
       return false;
@@ -242,13 +263,13 @@ function start() {
     if (!meta.observed) meta.observed = model.clone(store.bundle());
     save();
     store.onChange(captureSoon);
-    if (meta.enabled) flush().catch(() => {});
-    else {
+    if (meta.enabled) automatic(true);
+    else if (!quotaPaused()) {
       connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
     }
   } catch (error) { ready = false; failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
 }
-function foreground(online) { active = true; if (online) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
+function foreground(online) { active = true; if (online && !quotaPaused()) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
 function background() { active = false; try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); } if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }
 function dispose() { clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
 module.exports = { start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };

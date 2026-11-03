@@ -6,19 +6,24 @@ function safeText(value, limit = 280) {
 function describe(error = {}, fallback = 'local') {
   const raw = String(error.errMsg || error.message || '未提供错误信息');
   const extracted = raw.match(/errCode\s*[:=]\s*(-?\d+)/i);
-  const candidate = error.code != null ? error.code : error.errCode != null ? error.errCode : extracted ? extracted[1] : 'SYNC_UNKNOWN';
+  const outer = error.code != null ? error.code : error.errCode;
+  const candidate = extracted && (outer == null || String(outer) === '-1') ? extracted[1] : outer != null ? outer : 'SYNC_UNKNOWN';
   const code = /^[a-zA-Z0-9_.-]{1,100}$/.test(String(candidate)) ? String(candidate) : 'SYNC_UNKNOWN';
   const stage = error.syncStage || fallback;
   let hint = '本机记录已保留，请把这里的失败步骤和错误码发给开发者；无需清缓存或重新授权。';
-  if (/env not exists|invalid env|非法的\s*env/i.test(raw)) hint = '微信端未识别目标云环境。需核对原生小程序调用链；不要再授权微搭。';
+  if (isQuota(error)) hint = '云端套餐资源或请求额度不足，自动同步已暂缓；额度恢复或处理套餐后可点击立即同步。待上传记录保留在本机，无需清缓存或重新授权。';
+  else if (/env not exists|invalid env|非法的\s*env/i.test(raw)) hint = '微信端未识别目标云环境。需核对原生小程序调用链；不要再授权微搭。';
   else if (/IDENTITY_REQUIRED/.test(code)) hint = '云函数没有取得预期的微信身份，需要检查调用链；不要重置学习进度。';
   else if (/SYNC_TIMEOUT|timeout|超时/i.test(`${code} ${raw}`)) hint = '本次请求超时，记录仍在本机；稍后重试不会覆盖已有云档。';
   else if (/storage|disk|quota|存储|空间/i.test(raw)) hint = '本机写入未完成。请勿清理此小程序缓存，需先处理存储错误。';
   const request = safeText(error.syncRequestId || '', 100).replace(/[^a-zA-Z0-9_.:-]/g, '');
-  return { code, stage, label: LABELS[stage] || stage, detail: safeText(raw), request, hint };
+  return { code, stage, label: LABELS[stage] || stage, detail: isQuota(error) ? '云端请求额度不足，暂时拒绝同步请求。' : safeText(raw), request, hint };
+}
+function isQuota(error = {}) {
+  return /(?:^|\D)-501003(?:\D|$)|\bEXCEED_REQUEST_LIMIT\b/.test(`${error.code || ''} ${error.errCode || ''} ${error.errMsg || ''} ${error.message || ''}`);
 }
 function format(value) {
   if (!value) return '';
   return `失败步骤：${value.label}\n错误码：${value.code}\n具体原因：${value.detail}${value.request ? `\n请求号：${value.request}` : ''}\n${value.hint}`;
 }
-module.exports = { describe, format };
+module.exports = { describe, format, isQuota };

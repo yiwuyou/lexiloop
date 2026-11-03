@@ -1,5 +1,9 @@
 # Content sources and attribution
 
+## fflate 0.8.2
+
+Offline gzip transport uses the pinned browser/CommonJS UMD build from https://github.com/101arrowz/fflate (npm package `fflate@0.8.2`). Its full MIT license is preserved in `vendor/fflate/LICENSE`. No asynchronous worker APIs are used. The package archive was verified against npm's published SHA-512 integrity before copying the build.
+
 The institution vocabulary and meanings were supplied by the project owner. They are not relicensed by this notice. Original supplementary examples are labelled “LexiLoop 编写”. These examples are learning aids, not examination quotations.
 
 As of 0.7.0, all 2522 vocabulary-card examples use the original English II reading-oriented bank in `data/reading-content.js`, authored in `data/reading-examples.tsv`. They are not quotations from past papers or third-party translations. The editorial references and scope are documented in `data/reading-content-notes.md`. Existing user-saved sentence snapshots are not rewritten.

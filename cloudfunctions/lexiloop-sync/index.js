@@ -48,7 +48,7 @@ async function handle(event) {
         await read(transaction.collection(RECORDS).doc('deployment-health-readonly'));
         return true;
       });
-      return { ok: true, protocol: model.VERSION, appid: APPID, name: 'lexiloop-sync', storageReady: true, transactionReady: true };
+      return { ok: true, protocol: model.VERSION, appid: APPID, name: 'lexiloop-sync', storageReady: true, transactionReady: true, wireCompression: 'gzip-base64' };
     } catch (error) {
       return { ok: false, storageReady: step !== 'collections', step, code: String(error.code || error.errCode || error.name || 'UNKNOWN'), detail: String(error.errMsg || error.message || '').replace(/[a-f0-9]{32,}/gi, '[id]').slice(0, 300) };
     }

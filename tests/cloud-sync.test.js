@@ -98,8 +98,8 @@ const call = (action, data = {}) => server({ protocol: model.VERSION, action, de
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
 // Independent module graphs simulate the phone and desktop local storage.
-function client(seed, clock) {
-  const values = {}, cache = new Map();
+function client(seed, clock, options = {}) {
+  const values = options.values ? clone(options.values) : {}, cache = new Map();
   if (seed) {
     values.mem_vocab_state_v1 = clone(seed.state);
     values.mem_vocab_settings_v1 = clone(seed.settings);
@@ -141,7 +141,12 @@ function client(seed, clock) {
     const module = { exports: {} }; cache.set(filename, module);
     const local = name => requireLocal(path.relative(root, path.resolve(path.dirname(filename), name.endsWith('.js') ? name : `${name}.js`)).replace(/^/, './'));
     const fn = vm.runInNewContext(`(function(require,module,exports){${fs.readFileSync(filename, 'utf8')}\n})`, { wx, Date, Math, console, setTimeout, clearTimeout, setInterval, clearInterval, ...clock && clock.api });
-    fn(local, module, module.exports); return module.exports;
+    fn(local, module, module.exports);
+    if (filename === path.join(root, 'utils/sync-wire.js') && options.legacyWire !== false) {
+      const send = module.exports.send;
+      module.exports.send = (call, event) => send(call, event, { compress: false });
+    }
+    return module.exports;
   }
   return { sync: requireLocal('./utils/cloud-sync.js'), store: requireLocal('./utils/store.js'), storage: requireLocal('./utils/sync-storage.js'), values, net };
 }
@@ -414,6 +419,47 @@ async function main() {
   assert.ok(largeDesktop.store.getState().weakBook['c-2521']);
   assert.ok(largePhone.net.maxFrame < 32768 && largeDesktop.net.maxFrame < 32768);
   largePhone.sync.dispose(); largeDesktop.sync.dispose();
+  // New compressed clients and old uncompressed clients use the same protocol
+  // and authoritative archive. Compression changes transport, not learning.
+  identity.OPENID = 'compressed-archive-user';
+  const compressedPhone = client(rich, null, { legacyWire: false });
+  compressedPhone.sync.start(); await tick(); await tick();
+  await compressedPhone.sync.enable();
+  assert.ok(compressedPhone.net.calls.includes('wire-packed') || compressedPhone.net.calls.includes('wire-put'));
+  const compressedDesktop = client(blank(), null, { legacyWire: false });
+  compressedDesktop.sync.start(); await tick(); await tick();
+  await compressedDesktop.sync.enable();
+  assert.strictEqual(Object.keys(compressedDesktop.store.getState().cards).length, 1036);
+  assert.strictEqual(compressedDesktop.store.getState().recentReviews.length, 1000);
+  const oldReader = client(blank()); oldReader.sync.start(); await tick(); await tick(); await oldReader.sync.enable();
+  assert.strictEqual(Object.keys(oldReader.store.getState().cards).length, 1036, 'old clients still receive ordinary JSON chunks from the upgraded server');
+  assert.ok(oldReader.net.calls.includes('wire-get'));
+  const codec = require('../utils/sync-codec');
+  const brokenPacked = codec.pack(JSON.stringify({ action: 'sync', events: [] }));
+  brokenPacked.checksum = '0';
+  const storedBeforeBadPacked = JSON.stringify(Array.from(rows));
+  assert.strictEqual((await call('wire-packed', { wireVersion: 1, packed: brokenPacked })).ok, false);
+  assert.strictEqual(JSON.stringify(Array.from(rows)), storedBeforeBadPacked, 'corrupt compressed data is never applied');
+  brokenPacked.length = codec.MAX + 1;
+  assert.strictEqual((await call('wire-packed', { wireVersion: 1, packed: brokenPacked })).ok, false, 'decompression is bounded before a cloud archive write');
+  // Incompressible history forces the compressed chunk path too.
+  let randomState = 123456789;
+  const noise = Array.from({ length: 180000 }, () => { randomState ^= randomState << 13; randomState ^= randomState >>> 17; randomState ^= randomState << 5; return '0123456789abcdef'[randomState & 15]; }).join('');
+  const noiseKey = 'A saved sentence for bounded transport testing.';
+  const noisy = compressedPhone.store.getState(); noisy.sentenceBook = noisy.sentenceBook || {};
+  noisy.sentenceBook[noiseKey] = { sentence: noiseKey, translation: noise };
+  compressedPhone.store.saveState(noisy);
+  compressedPhone.net.failAction = 'wire-put'; compressedPhone.net.failIndex = 4;
+  await assert.rejects(compressedPhone.sync.flush());
+  assert.ok(compressedPhone.sync.status().pending > 0);
+  assert.strictEqual((await call('status')).bundle.state.sentenceBook && (await call('status')).bundle.state.sentenceBook[noiseKey], undefined, 'a partial compressed upload cannot change the archive');
+  compressedPhone.net.failAction = null; await compressedPhone.sync.flush();
+  const lateReader = client(blank(), null, { legacyWire: false });
+  lateReader.net.failAction = 'wire-get'; lateReader.sync.start(); await tick(); await tick();
+  assert.strictEqual(Object.keys(lateReader.store.getState().cards).length, 0, 'partial compressed download is not applied');
+  lateReader.net.failAction = null; await lateReader.sync.enable();
+  assert.strictEqual(lateReader.store.getState().sentenceBook[noiseKey].translation, noise);
+  [compressedPhone, compressedDesktop, oldReader, lateReader].forEach(c => c.sync.dispose());
   identity.OPENID = 'cost-policy-user';
   const clock = virtualClock(), economical = client(base, clock);
   economical.sync.start(); await tick(); await tick(); await economical.sync.enable();
@@ -466,6 +512,34 @@ async function main() {
   assert.strictEqual(economical.net.calls.length, racedFailureCalls, 'a timer scheduled during an in-flight failure cannot bypass backoff');
   economical.net.holdFailure = null;
   economical.sync.dispose();
+  identity.OPENID = 'quota-persistence-user';
+  const quotaClock = virtualClock(), quotaClient = client(base, quotaClock);
+  quotaClient.sync.start(); await tick(); await tick(); await quotaClient.sync.enable();
+  const quotaState = quotaClient.store.getState(); quotaState.weakBook['quota-kept'] = { addedAt: now };
+  quotaClient.store.saveState(quotaState);
+  const quotaFailure = { errCode: -1, errMsg: 'cloud.callFunction:fail Error: errCode: -501003 exceed request limit | errMsg: Request exceeded the limit' };
+  quotaClient.net.failAction = 'sync'; quotaClient.net.failure = quotaFailure;
+  await quotaClock.advance(60000);
+  assert.ok(quotaClient.sync.status().errorText.includes('-501003'), 'embedded quota code must replace the generic SDK -1');
+  assert.ok(quotaClient.sync.status().errorText.includes('自动同步已暂缓'));
+  const quotaCalls = quotaClient.net.calls.length;
+  for (let i = 0; i < 5; i++) { quotaClient.sync.foreground(true); await quotaClock.advance(60000); }
+  assert.strictEqual(quotaClient.net.calls.length, quotaCalls, 'network changes cannot bypass quota backoff');
+  assert.strictEqual(await quotaClient.sync.beginStudy(), true, 'known local owner continues learning while the cloud quota is exhausted');
+  const quotaStorage = clone(quotaClient.values); quotaClient.sync.dispose();
+  const quotaRestart = client(null, quotaClock, { values: quotaStorage });
+  quotaRestart.net.failAction = 'sync'; quotaRestart.net.failure = quotaFailure;
+  quotaRestart.sync.start(); await tick(); await tick();
+  assert.strictEqual(quotaRestart.net.calls.length, 0, 'restarting the app preserves the quota pause');
+  assert.ok(quotaRestart.sync.status().pending > 0);
+  assert.ok(quotaRestart.store.getState().weakBook['quota-kept']);
+  await assert.rejects(quotaRestart.sync.flush());
+  assert.strictEqual(quotaRestart.net.calls.length, 1, 'an explicit manual retry is allowed once per click');
+  quotaRestart.net.failAction = null; await quotaRestart.sync.flush();
+  assert.strictEqual(quotaRestart.sync.status().pending, 0);
+  assert.strictEqual(quotaRestart.sync.status().errorText, '');
+  assert.strictEqual(quotaRestart.values.lexiloop_cloud_sync_v1.quotaRetryAt, undefined, 'successful upload clears the durable quota pause');
+  quotaRestart.sync.dispose();
   const medium = { action: 'status', note: 'a'.repeat(9000) };
   let mediumCalls = 0;
   await require('../utils/sync-wire').send(async () => { mediumCalls++; return { ok: true }; }, medium);
