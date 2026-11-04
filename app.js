@@ -15,6 +15,9 @@ function prepareAudioWhenOnline() {
 
 App({
   onLaunch() {
+    // Debug mode can persist after a diagnostic preview using the same AppID.
+    // Keep the floating console out of the normal study interface.
+    if (typeof wx.setEnableDebug === 'function') wx.setEnableDebug({ enableDebug: false });
     audioOptions.configure();
     scheduler.prepare().catch(() => {});
     store.resumeCloudApply();
