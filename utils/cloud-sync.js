@@ -151,6 +151,9 @@ function accept(result) {
   // edits before applying its acknowledgement so no recent answer is lost.
   capture();
   if (result.unchanged) {
+    // Even an unchanged revision acknowledges uploads already committed by a
+    // previous attempt. Keep only later local edits captured during the call.
+    meta.outbox = meta.outbox.filter(event => event.seq > (result.ack || 0));
     meta.owner = result.owner;
     meta.lastSyncedAt = Date.now();
     clearBackoff();
@@ -197,7 +200,7 @@ async function flush() {
   flight = (async () => {
     try {
       checkedAt = Date.now();
-      const batch = budget.batch(meta.outbox);
+      const batch = wire.batch(meta.outbox);
       if (batch.length) emit('正在同步');
       const result = await request('sync', { events: batch, knownRev: meta.rev });
       if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');

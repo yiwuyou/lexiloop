@@ -26,6 +26,15 @@ async function measured(event, options) {
   return calls;
 }
 async function main() {
+  const backlog = Array.from({ length: 140 }, (_, index) => ({ device: 'offline-batch-owner', seq: index + 1, epoch: 1, baseRev: 1,
+    changes: [{ path: ['state', 'cards', 'word-' + index], before: { note: 'older-card '.repeat(80) }, after: { note: 'reviewed-card '.repeat(80) } }],
+  }));
+  const selected = wire.batch(backlog);
+  assert.strictEqual(selected.length, 60, 'compressible backlog uses the full contiguous batch instead of an 18KB raw prefix');
+  assert.deepStrictEqual(selected.map(event => event.seq), Array.from({ length: 60 }, (_, i) => i + 1));
+  assert.strictEqual(await measured({ action: 'sync', events: selected }), 1, 'a compressed small batch uses exactly one request without temporary fragments');
+  const beforeSelection = JSON.stringify(backlog); wire.batch(backlog);
+  assert.strictEqual(JSON.stringify(backlog), beforeSelection, 'selection never mutates the durable or in-flight journal');
   const fixture = { action: 'sync', events: Array.from({ length: 8 }, (_, i) => ({
     seq: i + 1, changes: [{ path: ['state', 'daily', '2026-11-03'], after: {
       firstAnswers: Object.fromEntries(Array.from({ length: 150 }, (_, j) => ['synthetic-' + j, 'review'])),

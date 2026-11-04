@@ -630,6 +630,62 @@ async function main() {
   identity = { OPENID:'oversized-history-fixture', APPID:'wxee41f64becac8cf2' };
   longHistory.state.historyFixture = 'x'.repeat(6 * 1024 * 1024 + 1);
   assert.strictEqual((await call('bootstrap', {bundle:longHistory})).ok,false,'retain a bounded archive below the decompression ceiling');
+  // A restored journal may still contain an already committed event while its
+  // revision is current. The unchanged response still carries a durable ack.
+  identity.OPENID = 'restored-ack-user';
+  const ackBase = clone(client(base).store.bundle()), ackPassed = review(ackBase, 'c-1-1', 'good');
+  await call('bootstrap', { bundle: ackBase });
+  const restoredPatch = event(ackBase, ackPassed);
+  const committed = await call('sync', { events: [restoredPatch], knownRev: 1, deltaVersion: 2 });
+  const ackClock = virtualClock();
+  const restored = client(ackPassed, ackClock, { legacyWire: false, values: { lexiloop_cloud_sync_v1: {
+    device: 'device-a', enabled: true, seq: 1, rev: committed.rev, outbox: [restoredPatch], observed: ackPassed,
+    owner: committed.owner, fieldChangesVersion: 1, sessionBase: { session: null, practiceSession: null },
+  } } });
+  restored.net.hold = true;
+  restored.sync.start(); await tick(); await tick();
+  assert.ok(restored.net.release);
+  const addedDuringAck = restored.store.getState(); addedDuringAck.weakBook['after-ack'] = { addedAt: now };
+  restored.store.saveState(addedDuringAck);
+  restored.net.release(); await tick(); await tick();
+  assert.strictEqual(restored.sync.status().pending, 1, 'unchanged ack removes committed sequence but retains the edit made in flight');
+  await ackClock.advance(1000);
+  assert.strictEqual(restored.sync.status().pending, 0, 'restored journal drains without repeating a committed sequence');
+  assert.ok((await call('status')).bundle.state.weakBook['after-ack']);
+  assert.deepStrictEqual(restored.net.frames.flatMap(frame => (frame.events || []).map(e => e.seq)), [1, 2]);
+  const ackCalls = restored.net.frames.length; await ackClock.advance(600000);
+  assert.strictEqual(restored.net.frames.length, ackCalls, 'no idle requests after the acknowledged backlog finishes');
+  restored.sync.dispose();
+  identity.OPENID = 'compressed-backlog-user';
+  const bulkBase = clone(client(rich).store.bundle()), bulkLocal = clone(bulkBase), backlog = [];
+  await call('bootstrap', { device: 'backlog-owner', bundle: bulkBase });
+  for (let i = 0; i < 180; i++) {
+    const wordId = 'c-' + i, before = clone(bulkLocal.state.cards[wordId]);
+    const after = { ...before, reps: before.reps + 1, lastAt: now + 2000 + i };
+    const answer = { id: 'backlog-answer-' + i, wordId, at: now + 2000 + i, day: '2026-10-27', phase: 'review', result: 'good' };
+    bulkLocal.state.cards[wordId] = after; bulkLocal.state.recentReviews.push(answer);
+    backlog.push({ device: 'backlog-owner', seq: i + 1, baseRev: 1, epoch: 1, changes: [
+      { path: ['state', 'cards', wordId], before, after }, { path: ['state', 'recentReviews'], append: [answer] },
+    ] });
+  }
+  const bulkClock = virtualClock(), bulkPhone = client(bulkLocal, bulkClock, { legacyWire: false, values: { lexiloop_cloud_sync_v1: {
+    device: 'backlog-owner', enabled: true, seq: 180, rev: 1, owner: { device: 'backlog-owner', epoch: 1 }, outbox: backlog,
+    observed: bulkLocal, fieldChangesVersion: 1, sessionBase: { session: bulkBase.session, practiceSession: null },
+  } } });
+  const bulkOps = { ...databaseOps };
+  bulkPhone.sync.start(); await tick(); await tick(); await bulkClock.advance(5000);
+  assert.strictEqual(bulkPhone.sync.status().pending, 0);
+  assert.strictEqual(bulkPhone.net.frames.length, 3, '180 retained answers drain in three bounded compressed calls, not tiny raw batches or staging fragments');
+  assert.ok(bulkPhone.net.calls.every(action => action === 'wire-packed'));
+  assert.strictEqual(databaseOps.reads - bulkOps.reads, 6);
+  assert.strictEqual(databaseOps.writes - bulkOps.writes, 6);
+  const bulkRemote = (await call('status')).bundle;
+  for (const answer of bulkLocal.state.recentReviews) assert.ok(bulkRemote.state.recentReviews.some(item => item.id === answer.id), 'all existing and offline answers reach the archive');
+  assert.deepStrictEqual(bulkRemote.state.cards, bulkLocal.state.cards);
+  assert.deepStrictEqual(clone(bulkPhone.store.bundle()), bulkRemote, 'phone and actual server handler converge after draining');
+  await bulkClock.advance(600000);
+  assert.strictEqual(bulkPhone.net.frames.length, 3, 'completed backlog generates no idle follow-up calls');
+  bulkPhone.sync.dispose();
   identity.OPENID = 'server-budget-test';
   const protectedFrames = { protocol: model.VERSION, wireVersion: 1, device: 'old-client-budget', action: 'wire-begin', count: 100, length: 400000, checksum: '1' };
   assert.strictEqual((await server(protectedFrames)).ok, true);

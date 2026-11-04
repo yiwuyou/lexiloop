@@ -4,6 +4,22 @@ const SIZE = 4000;
 const MAX = 8 * 1024 * 1024, ENCODING = 'gzip-base64';
 let codec;
 const compression = () => codec || (codec = require('./sync-codec'));
+function byteLength(text) {
+  let bytes = text.length;
+  for (let i = 0; i < text.length; i++) bytes += text.charCodeAt(i) > 2047 ? 2 : text.charCodeAt(i) > 127 ? 1 : 0;
+  return bytes;
+}
+function batch(events) {
+  const select = require('./sync-budget').batch;
+  // Select a contiguous prefix, preserving the server's 60-event limit. The
+  // raw bound also caps compression/merge work on the phone. Repetitive older
+  // journals often fit one compressed request despite exceeding 18KB of JSON.
+  const candidate = select(events, 180000);
+  const text = JSON.stringify({ action: 'sync', events: candidate, knownRev: Number.MAX_SAFE_INTEGER, deltaVersion: 2, responseEncoding: ENCODING });
+  // Leave room for protocol, device and wire headers added by the caller.
+  if (byteLength(text) <= 23000 || JSON.stringify({ action: 'wire-packed', packed: compression().pack(text) }).length <= 23000) return candidate;
+  return select(events);
+}
 function checksum(text) {
   let hash = 2166136261;
   for (let i = 0; i < text.length; i++) hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
@@ -24,8 +40,7 @@ async function send(call, event, options = {}) {
   const maxFrames = options.maxFrames || 128;
   const text = JSON.stringify(options.compress === false ? event : Object.assign({}, event, { responseEncoding: ENCODING }));
   // Conservative UTF-8 upper bound (surrogate pairs count as six bytes).
-  let bytes = text.length;
-  for (let i = 0; i < text.length; i++) bytes += text.charCodeAt(i) > 2047 ? 2 : text.charCodeAt(i) > 127 ? 1 : 0;
+  const bytes = byteLength(text);
   let result;
   if (bytes <= 24000) result = await call(JSON.parse(text));
   else {
@@ -66,4 +81,4 @@ async function send(call, event, options = {}) {
   if (!result || !result.ok) throw new Error('invalid-transfer-result');
   return result;
 }
-module.exports = { send, checksum };
+module.exports = { send, checksum, batch };
