@@ -79,6 +79,19 @@ function testCorpus() {
   const commend = confusing.shapes.find(item => item.head === 'commend');
   assert.ok(commend && commend.reason === '易混词对照' && commend.note.includes('中间是 e'));
   assert.ok(!confusing.semantic.some(item => item.head === 'commend'), 'same POS and similar spelling must not imply similar meaning');
+  for (const from of ['propel', 'impetus', 'impulse']) {
+    const links = engine.build(idFor(from), relationData, state).semantic;
+    for (const to of ['propel', 'impetus', 'impulse'].filter(head => head !== from)) {
+      const link = links.find(item => item.head === to);
+      assert.ok(link, from + ' / ' + to + ': pushing action and driving force should be discoverable in both directions');
+      assert.ok(link.sense.includes('推动') && link.note.includes('impulse') === [from, to].includes('impulse'));
+    }
+  }
+  const propelLinks = engine.build(idFor('propel'), relationData, state).semantic;
+  assert.ok(propelLinks.find(item => item.head === 'impetus').note.includes('动词'));
+  assert.ok(propelLinks.find(item => item.head === 'impetus').note.includes('名词'), 'cross-POS association must explain why the words are not directly interchangeable');
+  assert.ok(propelLinks.find(item => item.head === 'impulse').note.includes('冲动'));
+  assert.ok(!propelLinks.some(item => ['proper', 'property', 'incentive'].includes(item.head)), 'spelling similarity and indirect group membership cannot invent further semantic edges');
 
   const snapshot = JSON.stringify(state);
   const results = new Map();

@@ -3,12 +3,12 @@
   "heads": 2514,
   "reviewedCommonCount": 60,
   "commonAvailable": 2514,
-  "synonymHeads": 442,
-  "directedSynonymEdges": 836,
+  "synonymHeads": 446,
+  "directedSynonymEdges": 846,
   "automaticUndirectedEdges": 16,
   "families": 68,
   "contrasts": 28,
-  "bytes": 293305,
+  "bytes": 296650,
   "missingCommon": [],
   "spotChecks": {
     "account": {
@@ -1340,6 +1340,69 @@
         }
       ]
     },
+    "impetus": {
+      "common": "名词：动力、推动力、动量",
+      "synonyms": [
+        {
+          "word": "impulse",
+          "sense": "推动行动的动力、刺激（名词义）",
+          "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+          "reviewed": true
+        },
+        {
+          "word": "incentive",
+          "sense": "推动行动的动力、刺激（名词义）",
+          "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+          "reviewed": true
+        },
+        {
+          "word": "propel",
+          "sense": "推动：动作与推动力的对照",
+          "note": "propel 是动词，指推进、推动某人或某物；impetus 是名词，指促使行动或进展的动力。一个侧重推动的动作，一个侧重推动力，句中不能直接互换。",
+          "reviewed": true
+        }
+      ]
+    },
+    "impulse": {
+      "common": "名词：冲动、驱使、刺激、推动、冲力；动词：推动",
+      "synonyms": [
+        {
+          "word": "impetus",
+          "sense": "推动行动的动力、刺激（名词义）",
+          "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+          "reviewed": true
+        },
+        {
+          "word": "incentive",
+          "sense": "推动行动的动力、刺激（名词义）",
+          "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+          "reviewed": true
+        },
+        {
+          "word": "propel",
+          "sense": "推动：动作与推动力的对照",
+          "note": "propel 指向前推进、推动；impulse 在推动义中可指促成行动或运动的力，也常指一时的冲动。这里对照推动这一部分含义，不把冲动当作 propel 的词义，也不表示两词能直接替换。",
+          "reviewed": true
+        }
+      ]
+    },
+    "incentive": {
+      "common": "名词：动机；形容词：激励的",
+      "synonyms": [
+        {
+          "word": "impetus",
+          "sense": "推动行动的动力、刺激（名词义）",
+          "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+          "reviewed": true
+        },
+        {
+          "word": "impulse",
+          "sense": "推动行动的动力、刺激（名词义）",
+          "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+          "reviewed": true
+        }
+      ]
+    },
     "include": {
       "common": "动词：包括、把...算入、包住",
       "synonyms": [
@@ -1929,6 +1992,23 @@
           "word": "pledge",
           "sense": "承诺（动词义）",
           "note": "promise 和 pledge 可指承诺；commit 常见于 commit oneself to，强调使自己承担义务。",
+          "reviewed": true
+        }
+      ]
+    },
+    "propel": {
+      "common": "动词：推进、驱使",
+      "synonyms": [
+        {
+          "word": "impetus",
+          "sense": "推动：动作与推动力的对照",
+          "note": "propel 是动词，指推进、推动某人或某物；impetus 是名词，指促使行动或进展的动力。一个侧重推动的动作，一个侧重推动力，句中不能直接互换。",
+          "reviewed": true
+        },
+        {
+          "word": "impulse",
+          "sense": "推动：动作与推动力的对照",
+          "note": "propel 指向前推进、推动；impulse 在推动义中可指促成行动或运动的力，也常指一时的冲动。这里对照推动这一部分含义，不把冲动当作 propel 的词义，也不表示两词能直接替换。",
           "reviewed": true
         }
       ]
@@ -2817,6 +2897,6 @@
     "automatic/voluntary": false,
     "appoint/nominate": false
   },
-  "reviewedSemanticPairs": 159,
-  "reviewedSemanticGroups": 48
+  "reviewedSemanticPairs": 164,
+  "reviewedSemanticGroups": 49
 }

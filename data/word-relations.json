@@ -1,6 +1,24 @@
 {
   "semanticPairs": [
     {
+      "words": ["propel", "impetus"],
+      "sense": "推动：动作与推动力的对照",
+      "note": "propel 是动词，指推进、推动某人或某物；impetus 是名词，指促使行动或进展的动力。一个侧重推动的动作，一个侧重推动力，句中不能直接互换。",
+      "sources": [
+        "https://www.merriam-webster.com/dictionary/propel",
+        "https://www.merriam-webster.com/dictionary/impetus"
+      ]
+    },
+    {
+      "words": ["propel", "impulse"],
+      "sense": "推动：动作与推动力的对照",
+      "note": "propel 指向前推进、推动；impulse 在推动义中可指促成行动或运动的力，也常指一时的冲动。这里对照推动这一部分含义，不把冲动当作 propel 的词义，也不表示两词能直接替换。",
+      "sources": [
+        "https://www.merriam-webster.com/dictionary/propel",
+        "https://www.merriam-webster.com/dictionary/impulse"
+      ]
+    },
+    {
       "words": [
         "involve",
         "include"
@@ -1626,6 +1644,15 @@
         "https://dictionary.cambridge.org/dictionary/english/emerge",
         "https://dictionary.cambridge.org/dictionary/english/arise",
         "https://dictionary.cambridge.org/dictionary/english/occur"
+      ]
+    },
+    {
+      "sense": "推动行动的动力、刺激（名词义）",
+      "words": ["impetus", "impulse", "incentive"],
+      "note": "impetus 侧重促进行动或进展的动力；impulse 在推动义中指促成行动的力，也常指一时的冲动；incentive 指激励行动的因素，常涉及奖励。只比较推动行动这一侧面，不能在所有句子中互换。",
+      "sources": [
+        "https://www.merriam-webster.com/dictionary/impetus",
+        "https://www.merriam-webster.com/dictionary/impulse"
       ]
     },
     {
