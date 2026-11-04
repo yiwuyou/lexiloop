@@ -1,3 +1,7 @@
+## 0.8.12 补充长词的词族辨析
+
+intellectual／intelligent、distinction／distinguish 加入明确词族和双向辨析，优先展示并说明能力、智力活动以及名词／动词的差异。已校对词族不会因拼写共同部分占比不足而漏掉；不扩展为可任意替换的近义词。
+
 ## 0.8.11 补充推动相关词义关联
 
 补充 propel、impetus、impulse 的双向义项关联及 impetus／impulse／incentive 的动力、激励对照。说明推动动作与名词推动力、冲动及激励因素的区别；保留机构释义，不根据中文重字或间接关系自动扩展近义词。

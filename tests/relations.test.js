@@ -92,6 +92,18 @@ function testCorpus() {
   assert.ok(propelLinks.find(item => item.head === 'impetus').note.includes('名词'), 'cross-POS association must explain why the words are not directly interchangeable');
   assert.ok(propelLinks.find(item => item.head === 'impulse').note.includes('冲动'));
   assert.ok(!propelLinks.some(item => ['proper', 'property', 'incentive'].includes(item.head)), 'spelling similarity and indirect group membership cannot invent further semantic edges');
+  for (const [left, right, shared] of [['intellectual', 'intelligent', 'intell'], ['distinction', 'distinguish', 'distin']]) {
+    for (const [from, to] of [[left, right], [right, left]]) {
+      const result = engine.build(idFor(from), relationData, state);
+      assert.strictEqual(result.shapes[0].head, to, 'reviewed word-family contrast must outrank weaker automatic spelling candidates');
+      const link = result.shapes[0];
+      assert.strictEqual(link.shared, shared, 'a reviewed family remains discoverable below the automatic shared-letter ratio');
+      assert.ok(link.note.includes(left) && link.note.includes(right), 'family links explain both meanings instead of implying interchangeable synonyms');
+      assert.ok(!result.semantic.some(item => item.head === to), 'structural word-family links do not imply direct synonymy');
+    }
+  }
+  assert.ok(engine.build(idFor('intellectual'), relationData, state).shapes[0].note.includes('知识产权'));
+  assert.ok(engine.build(idFor('intelligent'), relationData, state).shapes[0].note.includes('智能系统'));
 
   const snapshot = JSON.stringify(state);
   const results = new Map();

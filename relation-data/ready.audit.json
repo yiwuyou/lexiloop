@@ -6,9 +6,9 @@
   "synonymHeads": 446,
   "directedSynonymEdges": 846,
   "automaticUndirectedEdges": 16,
-  "families": 68,
-  "contrasts": 28,
-  "bytes": 296650,
+  "families": 70,
+  "contrasts": 30,
+  "bytes": 297204,
   "missingCommon": [],
   "spotChecks": {
     "account": {

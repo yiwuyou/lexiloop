@@ -92,6 +92,8 @@
     }
   ],
   "families": [
+    ["intellectual", "intelligent"],
+    ["distinction", "distinguish"],
     [
       "combine",
       "combination"
@@ -724,6 +726,16 @@
     ]
   ],
   "contrasts": [
+    [
+      "intellectual",
+      "intelligent",
+      "intellectual 侧重智力、思考活动，作名词为知识分子；intelligent 侧重有才智、理解判断能力。intellectual property 是知识产权，intelligent systems 是智能系统，这两处不能互换。"
+    ],
+    [
+      "distinction",
+      "distinguish",
+      "distinguish 是动词：区分、辨别；distinction 是名词：区别、区分，也有卓越义。distinguish between A and B：辨别 A 与 B；the distinction between A and B：A 与 B 的区别。"
+    ],
     [
       "command",
       "commend",
