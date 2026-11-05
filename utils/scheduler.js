@@ -1,17 +1,14 @@
 const { DAY_MS, dayKey, startOfDay } = require('./date');
 const GRADE = { AGAIN: 'again', HARD: 'hard', GOOD: 'good', EASY: 'easy' };
-let engine, pending;
-function prepare() {
-  if (engine) return Promise.resolve();
-  if (typeof require.async !== 'function') { engine = require('../scheduler-data/ready'); return Promise.resolve(); }
-  if (!pending) pending = require.async('../scheduler-data/ready.js').then(value => { engine = value; pending = null; }, error => { pending = null; throw error; });
-  return pending;
-}
+let engine;
+// This module ships in the main package, so opening the study page does not
+// wait for a separate download or a desktop runtime's async require callback.
+function loadEngine() { return engine || (engine = require('../scheduler-data/ready')); }
+function prepare() { return Promise.resolve().then(loadEngine); }
 function initialState() { return { seen: false, reps: 0, lapses: 0, interval: 0, ease: 2.4, dueAt: 0, lastAt: 0, lastGrade: '', hardStreak: 0 }; }
 function review(previous, grade, now) {
   if (!Object.values(GRADE).includes(grade)) throw new Error('invalid-grade');
-  if (!engine && typeof require.async !== 'function') engine = require('../scheduler-data/ready');
-  if (!engine) throw new Error('复习算法尚未准备好，请稍后重试');
+  loadEngine();
   const time = now || Date.now(), today = dayKey(time);
   const state = Object.assign(initialState(), previous || {});
   const failed = grade === 'again' || grade === 'hard';

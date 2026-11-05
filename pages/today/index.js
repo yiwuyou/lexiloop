@@ -41,6 +41,8 @@ Page({
     canAdd50: false,
     appVersion,
     syncText: '尚未开启云同步',
+    studyStartLabel: '',
+    studyStartError: '',
   },
 
   onShow() {
@@ -111,27 +113,48 @@ Page({
   },
 
   async startStudy() {
-    try { await require('../../utils/scheduler').prepare(); } catch (error) { wx.showToast({ title: '复习算法准备失败，联网后重试', icon: 'none' }); return; }
-    if (!(await cloudSync.beginStudy())) return;
-    const now = Date.now();
-    const state = store.getState();
-    const settings = store.getSettings();
-    let session = store.getSession();
-    if (require('../../utils/session-rollover').rollover(session, state, settings, now)) store.saveSession(session);
-    if (plan.prepareSession(session, state, settings, now)) store.saveSession(session);
-    if (!session || session.day !== dates.dayKey(now) || session.index >= session.queue.length) {
-      session = plan.buildSession(state, settings, now);
-      if (!session.queue.length) {
-        wx.showToast({ title: '今天没有待学单词', icon: 'none' });
+    if (this.startingStudy) return;
+    this.startingStudy = true;
+    let stage = 'prepare';
+    this.setData({ studyStartLabel: '正在准备学习…', studyStartError: '' });
+    try {
+      await require('../../utils/scheduler').prepare();
+      stage = 'handoff';
+      this.setData({ studyStartLabel: '正在接续学习…' });
+      if (!(await cloudSync.beginStudy())) {
+        this.setData({ studyStartError: '暂无法接续学习，请到「进度」查看同步状态后再试。' });
         return;
       }
+      stage = 'save';
+      const now = Date.now();
+      const state = store.getState();
+      const settings = store.getSettings();
+      let session = store.getSession();
+      require('../../utils/session-rollover').rollover(session, state, settings, now);
+      plan.prepareSession(session, state, settings, now);
+      if (!session || session.day !== dates.dayKey(now) || session.index >= session.queue.length) {
+        session = plan.buildSession(state, settings, now);
+        if (!session.queue.length) {
+          wx.showToast({ title: '今天没有待学单词', icon: 'none' });
+          return;
+        }
+      }
+      metrics.commit(state, session, now);
+      state.daily[session.day].dueGoal = session.dueGoal;
+      state.daily[session.day].newGoal = session.newGoal;
       store.saveSession(session);
+      store.saveState(state);
+      stage = 'open';
+      this.setData({ studyStartLabel: '正在打开学习页…' });
+      await new Promise((resolve, reject) => wx.navigateTo({ url: '/pages/study/index', success: resolve, fail: reject }));
+    } catch (error) {
+      const messages = { prepare: '学习功能准备失败，请重新打开小程序后再试。', handoff: '暂无法接续学习，请到「进度」查看同步状态。',
+        save: '未能准备本机学习任务，请重新打开小程序后再试。', open: '学习页未能打开，任务已保存，请再试一次。' };
+      this.setData({ studyStartError: messages[stage] });
+    } finally {
+      this.startingStudy = false;
+      this.setData({ studyStartLabel: '' });
     }
-    metrics.commit(state, session, now);
-    state.daily[session.day].dueGoal = session.dueGoal;
-    state.daily[session.day].newGoal = session.newGoal;
-    store.saveState(state);
-    wx.navigateTo({ url: '/pages/study/index' });
   },
 
   async startPractice() {

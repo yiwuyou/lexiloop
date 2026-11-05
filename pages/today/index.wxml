@@ -21,8 +21,9 @@
       <text class="review-note">{{task.reviewRemaining ? (task.reviewUnseen ? '评分后计数，强化和例句不重复计数。旧词任务完成后再学新词。' : '旧词已复习一遍，还有 ' + task.reviewPending + ' 词待巩固；完成后再学新词。') : task.reviewGoal ? '旧词复习和巩固已完成，继续学习新词。' : '今天没有安排旧词复习，直接学习新词。'}}</text>
       <view class="time-record"><view><text>今日已用</text><text>{{usedTime}}</text></view><view><text>预计还需</text><text>{{remainingTime}}</text></view><view><text>{{initialLabel}}</text><text>{{initialTime}}（估算）</text></view></view>
 
-      <button class="primary-button" bindtap="startStudy">{{resume ? '继续今日学习' : '开始今日学习'}}</button>
-      <button class="hero-practice secondary-button" bindtap="startPractice">主动复习</button>
+      <button class="primary-button" bindtap="startStudy" disabled="{{!!studyStartLabel}}" loading="{{!!studyStartLabel}}">{{studyStartLabel || (resume ? '继续今日学习' : '开始今日学习')}}</button>
+      <text class="study-start-error" wx:if="{{studyStartError}}">{{studyStartError}}</text>
+      <button class="hero-practice secondary-button" bindtap="startPractice" disabled="{{!!studyStartLabel}}">主动复习</button>
       <text class="review-note">以后分批复习 {{futureReviewCount}} 词，不全加入今天；主动复习单独统计。</text>
       <text class="review-note" wx:if="{{task.legacy}}">旧版已作答 {{todayReviewDone}} 个复习词；完成明细从本次任务接续记录。</text>
     </view>

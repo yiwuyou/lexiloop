@@ -10,9 +10,11 @@ const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
 const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
 const QUOTA_DELAY = 3600000;
+const HANDOFF_TIMEOUT = 20000;
 let meta, flight, timer, capturing = false, ready = false, active = true;
 let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
+let studyFlight = null;
 let captureTimer = null;
 let dirtyAt = 0;
 function captureSoon() {
@@ -116,18 +118,27 @@ function schedule(delay) {
   timer = setTimeout(() => { timer = null; automatic(false); }, Math.max(0, at - Date.now()));
 }
 function automatic(check) {
-  if (!meta || !meta.enabled) return;
+  if (!meta || !meta.enabled || studyFlight) return;
   if (Date.now() < retryAt) { if (meta.outbox.length) schedule(60000); return; }
   if (meta.outbox.length || check && Date.now() - checkedAt >= 60000) flush().catch(() => {});
 }
-async function frame(data) {
+const syncTimeout = () => Object.assign(new Error('网络超时'), { code: 'SYNC_TIMEOUT' });
+function waitBefore(promise, deadline) {
+  let timer;
+  return Promise.race([promise, new Promise((resolve, reject) => {
+    timer = setTimeout(() => reject(syncTimeout()), Math.max(0, deadline - Date.now()));
+  })]).finally(() => clearTimeout(timer));
+}
+async function frame(data, deadline = Infinity) {
   if (!ready) throw new Error('当前微信不支持云同步');
   let timeout;
   try {
+    const timeoutMs = Math.min(15000, deadline - Date.now());
+    if (timeoutMs <= 0) throw syncTimeout();
     budget.reserve(meta, data.action); save();
     const result = await Promise.race([
       wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, wireVersion: 1, device: meta.device }, data) }),
-      new Promise((resolve, reject) => { timeout = setTimeout(() => reject(Object.assign(new Error('网络超时'), { code: 'SYNC_TIMEOUT' })), 15000); }),
+      new Promise((resolve, reject) => { timeout = setTimeout(() => reject(syncTimeout()), timeoutMs); }),
     ]);
     let body = result && result.result;
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (error) { body = null; } }
@@ -142,8 +153,8 @@ async function frame(data) {
     throw error;
   } finally { clearTimeout(timeout); }
 }
-async function request(action, data = {}) {
-  try { return await wire.send(frame, Object.assign({ action, deltaVersion: meta.sessionBase ? 2 : 1 }, data, meta.forceFull ? { knownRev: 0 } : {})); }
+async function request(action, data = {}, deadline) {
+  try { return await wire.send(packet => frame(packet, deadline), Object.assign({ action, deltaVersion: meta.sessionBase ? 2 : 1 }, data, meta.forceFull ? { knownRev: 0 } : {})); }
   catch (error) { if (!error.syncStage) error.syncStage = action; throw error; }
 }
 function accept(result) {
@@ -256,32 +267,52 @@ async function enable() {
   }
   catch (error) { failed(error, 'apply', '未能完成同步，本地记录已保留'); throw error; }
 }
-async function beginStudy() {
+async function handoffStudy() {
   // A known local owner can resume immediately, including offline. Background
   // verification still blocks answers if a different device has taken over.
   if (meta && meta.enabled && meta.owner && meta.owner.device === meta.device) {
     automatic(true);
     return true;
   }
-  if (connecting) await connecting;
-  if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
-  if (quotaPaused()) {
-    if (blocked()) wx.showToast({ title: '同步暂缓，暂无法接续另一台设备任务', icon: 'none' });
-    return !blocked();
-  }
+  const deadline = Date.now() + HANDOFF_TIMEOUT;
   try {
-    while (meta.outbox.length) await flush();
-    const result = await request('claim', { knownRev: meta.rev });
+    if (connecting) await waitBefore(connecting, deadline);
+    if (!meta || !meta.enabled) return true; // Offline local learning remains usable.
+    if (quotaPaused()) {
+      if (blocked()) wx.showToast({ title: '同步暂缓，暂无法接续另一台设备任务', icon: 'none' });
+      return !blocked();
+    }
+    if (flight) await waitBefore(flight, deadline);
+    capture();
+    while (meta.outbox.length) {
+      if (Date.now() >= deadline) throw syncTimeout();
+      const first = meta.outbox[0].seq;
+      await waitBefore(flush(), deadline);
+      if (meta.outbox[0] && meta.outbox[0].seq === first) throw Object.assign(new Error('待传记录未获确认'), { code: 'SYNC_NO_PROGRESS' });
+    }
+    const result = await request('claim', { knownRev: meta.rev }, deadline);
     accept(result);
     return true;
   } catch (error) {
     failed(error, 'claim', '接续未完成，本地记录已保留');
+    if (error.code === 'SYNC_NO_PROGRESS') retryAt = Math.max(retryAt, Date.now() + 60000);
+    if (connecting) {
+      wx.showToast({ title: '学习记录仍在同步，请稍后重试', icon: 'none' });
+      return false;
+    }
     if (blocked()) {
-      wx.showToast({ title: '需联网接续另一台设备的任务', icon: 'none' });
+      wx.showToast({ title: error.code === 'SYNC_TIMEOUT' ? '接续超时，请稍后重试' : '需联网接续另一台设备的任务', icon: 'none' });
       return false;
     }
     return true; // Known local owner can continue offline, then upload its answers.
   }
+}
+function beginStudy() {
+  if (!studyFlight) studyFlight = handoffStudy().finally(() => {
+    studyFlight = null;
+    if (active && meta && meta.outbox.length) schedule(1000);
+  });
+  return studyFlight;
 }
 function start() {
   if (ready) return;
