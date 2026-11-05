@@ -6,6 +6,8 @@ const weakBook = require('./weak-book');
 const carry = require('./task-carry');
 const questionOrder = require('./question-order');
 const studyOrder = require('./study-order');
+const timeLedger = require('./time-ledger');
+const metrics = require('./learning-metrics');
 
 const REVIEW_PLAN_VERSION = 2;
 const CONTEXT_PLAN_VERSION = 3;
@@ -303,6 +305,22 @@ function buildSession(state, settings, now) {
   return session;
 }
 
+function rolloverSession(session, state, settings, now = Date.now()) {
+  const day = timeLedger.dayKey(now);
+  if (!session || !Array.isArray(session.queue) || session.mode === 'practice' || session.day === day) return false;
+  // Preserve completed history and pending questions. Reconcile the remaining
+  // words with today's unchanged limits, rather than grade yesterday again.
+  const tail = session.queue.slice(session.index);
+  const next = buildSession(state, settings, now);
+  carry.attach(next, state, settings, tail, now);
+  delete next.questionOrderVersion;
+  questionOrder.prepare(next, state);
+  studyOrder.reconcile(next, state);
+  Object.assign(session, next);
+  metrics.commit(state, session, now);
+  return true;
+}
+
 function buildExtraSession(state, settings, requested, now) {
   const time = now || Date.now();
   const today = dayKey(time);
@@ -363,6 +381,7 @@ module.exports = {
   buildExtraSession,
   buildSession,
   prepareSession,
+  rolloverSession,
   progressStats,
   queueContextCheck,
   summarize,

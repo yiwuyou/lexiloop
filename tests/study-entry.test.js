@@ -30,6 +30,10 @@ function entry(beginStudy, seed = {}) {
     if (name.endsWith('/scheduler')) return scheduler;
     if (name.endsWith('/store')) return store;
     if (name.endsWith('/cloud-sync')) return cloud;
+    if (name.endsWith('/session-rollover')) return {};
+    if (name.endsWith('/study-plan') && seed.plannerError) {
+      return Object.assign({}, require('../utils/study-plan'), { buildSession() { throw seed.plannerError; } });
+    }
     return require(path.resolve(root, 'pages/today', name));
   };
   const wx = { showToast() {}, setClipboardData({ data }) { calls.clipboard = data; }, navigateTo(options) {
@@ -71,7 +75,8 @@ async function main() {
     daily: { [yesterday]: priorDay }, weakBook: {}, recentReviews: [prior] } };
   const withCarry = Object.assign({}, seed, { session: { day: yesterday, index: 1,
     queue: [{ wordId: word.id, phase: 'review' }, { wordId: word.id, phase: 'sentence', questionId: 'pending-sentence' }] } });
-  for (const input of [seed, withCarry]) {
+  const withoutQueue = Object.assign({}, seed, { session: { day: yesterday, index: 1 } });
+  for (const input of [seed, withCarry, withoutQueue]) {
     const next = entry(async () => true, input);
     await next.page.startStudy();
     assert.deepStrictEqual(next.calls.navigation, ['/pages/study/index']);
@@ -81,8 +86,18 @@ async function main() {
     assert.deepStrictEqual(state.recentReviews, [prior]);
     assert.deepStrictEqual(state.daily[yesterday].time, priorDay.time);
     assert.ok(state.daily[today].initialEstimate.seconds > 0);
-    if (input.session) assert.ok(task.queue.some(item => item.questionId === 'pending-sentence'));
+    if (input === withCarry) assert.ok(task.queue.some(item => item.questionId === 'pending-sentence'));
   }
+
+  const plannerError = new TypeError("Cannot read properties of undefined (reading 'slice')");
+  plannerError.stack = 'TypeError: ' + plannerError.message + '\n    at rollover (appservice.app.js:176:374)\n    at startStudy (chunk_6.appservice.js:123:4283)';
+  const diagnostic = entry(async () => true, { plannerError });
+  await diagnostic.page.startStudy();
+  diagnostic.page.copyStudyDiagnostic();
+  assert.deepStrictEqual(diagnostic.calls.clipboard.split('\n').slice(1), [
+    'buildSession', '本机无任务', plannerError.message, 'appservice.app.js:176:374', 'chunk_6.appservice.js:123:4283',
+  ]);
+  assert.strictEqual(diagnostic.calls.saved, 0);
 
   const blocked = entry(async () => false);
   await blocked.page.startStudy();

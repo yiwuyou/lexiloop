@@ -1,5 +1,5 @@
 const assert=require('assert');
-const {rollover}=require('../utils/session-rollover');
+const {rolloverSession: rollover}=require('../utils/study-plan');
 const {getWords}=require('../utils/words');
 const metrics=require('../utils/learning-metrics');
 const words=getWords(),day='2026-10-31',now=Date.parse(day+'T10:00:00+08:00');

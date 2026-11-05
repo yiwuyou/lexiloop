@@ -8,7 +8,6 @@ const cloudSync = require('../../utils/cloud-sync');
 const metrics = require('../../utils/learning-metrics');
 const timeLedger = require('../../utils/time-ledger');
 const scheduler = require('../../utils/scheduler');
-const { rollover } = require('../../utils/session-rollover');
 
 const START_ERRORS = {
   prepare: ['A1', '学习功能加载失败，请再试一次。'],
@@ -20,14 +19,15 @@ const START_ERRORS = {
   open: ['A7', '学习页未能打开，任务已保存，请再试一次。'],
 };
 
-function startDiagnostic(code, error) {
-  // Copy only a standard error type and a project frame. SDK errors can
-  // contain request or storage contents, so don't include the raw message.
+function startDiagnostic(code, operation, sessionShape, error) {
   const type = ['Error', 'TypeError', 'RangeError', 'ReferenceError', 'SyntaxError'].includes(error && error.name) ? error.name : 'Error';
-  const frame = String(error && error.stack || '').match(/(?:utils\/[a-z-]+|pages\/today\/index|app-service|appservice)\.js:\d+(?::\d+)?/);
-  const message = String(error && error.message || '');
-  const operation = message.match(/Symbol\.iterator|Math\.imul|\b(?:findIndex|flatMap|fromEntries|passedDay|carryTasks|queue)\b/);
-  return ['词序 ' + appVersion, code, type, operation && operation[0], frame && frame[0]].filter(Boolean).join(' · ');
+  const summary = ['词序 ' + appVersion, code, type].join(' · ');
+  const stack = String(error && error.stack || '');
+  const frames = stack.match(/(?:utils\/[a-z-]+|pages\/today\/index|(?:chunk_\d+\.)?appservice(?:\.app)?|app-service)\.js:\d+(?::\d+)?/g) || [];
+  // The user can copy the local planner's exception. Never copy cloud or storage
+  // messages, which can contain request or record contents.
+  const message = code === 'A4' && typeof (error && error.message) === 'string' ? error.message.slice(0, 240) : '';
+  return [summary, operation, sessionShape, message, ...frames.slice(0, 6)].filter(Boolean).join('\n');
 }
 
 function greeting(hour) {
@@ -138,7 +138,7 @@ Page({
   async startStudy() {
     if (this.startingStudy) return;
     this.startingStudy = true;
-    let stage = 'prepare';
+    let stage = 'prepare', operation = '', sessionShape = '';
     this.startDiagnostic = '';
     this.setData({ studyStartLabel: '正在准备学习…', studyStartError: '', studyStartCode: '' });
     try {
@@ -155,9 +155,20 @@ Page({
       const settings = store.getSettings();
       let session = store.getSession();
       stage = 'plan';
-      rollover(session, state, settings, now);
-      plan.prepareSession(session, state, settings, now);
-      if (!session || session.day !== dates.dayKey(now) || session.index >= session.queue.length) {
+      const today = dates.dayKey(now);
+      const hasQueue = Boolean(session && Array.isArray(session.queue));
+      const fromToday = hasQueue && session.day === today;
+      sessionShape = !session ? '本机无任务' : !hasQueue ? '本机任务缺少队列' : (fromToday ? '当日队列 ' : '跨日队列 ') + session.queue.length + ' 项';
+      if (hasQueue && session.day !== timeLedger.dayKey(now) && session.mode !== 'practice') {
+        operation = 'rolloverSession';
+        plan.rolloverSession(session, state, settings, now);
+      }
+      if (hasQueue && session.day === today) {
+        operation = 'prepareSession';
+        plan.prepareSession(session, state, settings, now);
+      }
+      if (!hasQueue || session.day !== today || session.index >= session.queue.length) {
+        operation = 'buildSession';
         session = plan.buildSession(state, settings, now);
         if (!session.queue.length) {
           wx.showToast({ title: '今天没有待学单词', icon: 'none' });
@@ -176,8 +187,8 @@ Page({
       await new Promise((resolve, reject) => wx.navigateTo({ url: '/pages/study/index', success: resolve, fail: reject }));
     } catch (error) {
       const [code, message] = START_ERRORS[stage];
-      this.startDiagnostic = startDiagnostic(code, error);
-      console.warn(this.startDiagnostic);
+      this.startDiagnostic = startDiagnostic(code, operation, sessionShape, error);
+      console.warn('词序 ' + appVersion, code, operation);
       this.setData({ studyStartError: message, studyStartCode: code });
     } finally {
       this.startingStudy = false;
