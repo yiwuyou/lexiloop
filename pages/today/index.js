@@ -24,8 +24,10 @@ function startDiagnostic(code, error) {
   // Copy only a standard error type and a project frame. SDK errors can
   // contain request or storage contents, so don't include the raw message.
   const type = ['Error', 'TypeError', 'RangeError', 'ReferenceError', 'SyntaxError'].includes(error && error.name) ? error.name : 'Error';
-  const frame = String(error && error.stack || '').match(/(?:utils\/[a-z-]+|pages\/today\/index)\.js:\d+(?::\d+)?/);
-  return [`词序 ${appVersion}`, code, type, frame && frame[0]].filter(Boolean).join(' · ');
+  const frame = String(error && error.stack || '').match(/(?:utils\/[a-z-]+|pages\/today\/index|app-service|appservice)\.js:\d+(?::\d+)?/);
+  const message = String(error && error.message || '');
+  const operation = message.match(/Symbol\.iterator|Math\.imul|\b(?:findIndex|flatMap|fromEntries|passedDay|carryTasks|queue)\b/);
+  return ['词序 ' + appVersion, code, type, operation && operation[0], frame && frame[0]].filter(Boolean).join(' · ');
 }
 
 function greeting(hour) {

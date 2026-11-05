@@ -14,12 +14,14 @@ function prepare(session, state) {
   Object.entries(state.cards).forEach(([id, card]) => { if (card.passedDay === session.day) seen.add(id); });
   prefix.forEach((item, index) => { if (isRecall(item)) { seen.add(item.wordId); lastRecall.set(item.wordId, index); } });
   const output = [];
-  for (const kind of ['review', 'new']) {
+  ['review', 'new'].forEach(kind => {
     const group = tail.filter(item => kindOf(item, plan, state) === kind);
     const questions = group.filter(item => isQuestion(item) && !item.answered);
     const work = group.filter(item => !isQuestion(item) || item.answered);
     let distance = 0, threshold = 8;
-    for (const item of work) {
+    // The compiled for-of used the runtime iterator to read an ordinary array.
+    for (let index = 0; index < work.length; index++) {
+      const item = work[index];
       output.push(item);
       if (isRecall(item)) { seen.add(item.wordId); lastRecall.set(item.wordId, prefix.length + output.length - 1); }
       distance++;
@@ -39,7 +41,7 @@ function prepare(session, state) {
       }
       output.push(question);
     });
-  }
+  });
   session.queue = prefix.concat(output);
   session.questionOrderVersion = 1;
   return true;
