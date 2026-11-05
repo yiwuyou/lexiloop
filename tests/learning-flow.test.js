@@ -1,8 +1,8 @@
 const assert=require('assert');
 const values={},clone=x=>JSON.parse(JSON.stringify(x));
-let page,now=Date.parse('2026-10-30T10:00:00+08:00');
+let stateReads=0,page,now=Date.parse('2026-10-30T10:00:00+08:00');
 const originalNow=Date.now;Date.now=()=>now;
-global.wx={getStorageSync:k=>values[k]?clone(values[k]):'',setStorageSync:(k,v)=>{values[k]=clone(v);},removeStorageSync:k=>delete values[k],showToast(){},
+global.wx={getStorageSync:k=>{if(k==='mem_vocab_state_v1')stateReads++;return values[k]?clone(values[k]):'';},setStorageSync:(k,v)=>{values[k]=clone(v);},removeStorageSync:k=>delete values[k],showToast(){},
  createInnerAudioContext:()=>({onPlay(){},onEnded(){},onStop(){},onError(){},stop(){},destroy(){}})};
 global.Page=definition=>{page=definition;};
 const store=require('../utils/store'),words=require('../utils/words').getWords(),scheduler=require('../utils/scheduler');
@@ -17,7 +17,8 @@ try{
  page.data=clone(page.data);page.setData=function(patch,callback){Object.entries(patch).forEach(([key,value])=>{const parts=key.split('.');let target=this.data;for(const p of parts.slice(0,-1))target=target[p];target[parts.at(-1)]=value;});if(callback)callback();};
  page.onLoad({});page.onShow();
  assert.equal(page.data.taskDone,0);assert.equal(page.data.taskTotal,100);
- page.revealAnswer();now+=5000;page.rate({currentTarget:{dataset:{grade:'hard'}}});
+ page.revealAnswer();now+=5000;stateReads=0;page.rate({currentTarget:{dataset:{grade:'hard'}}});
+ assert.ok(stateReads<=2,'a same-day rating reads the record once and only checks its previous storage manifest when writing');
  assert.equal(page.data.taskDone,1,'a reviewed word counts immediately even if later consolidation is needed');assert.equal(page.data.taskTotal,100);
  let steps=0,lastOldFailure=false,oldQuestionFailure=false,newFailure=false;
  while(!page.data.completed&&steps++<400){

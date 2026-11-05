@@ -88,34 +88,44 @@ Page({
       wx.reLaunch({ url: '/pages/today/index' });
       return;
     }
+    const state = store.getState();
     if (!this.data.isPractice) {
-      const state = store.getState();
-      if (studyPlan.prepareSession(this.session, state, store.getSettings(), Date.now())) {
-        store.saveSession(this.session);
+      let sessionChanged = studyPlan.prepareSession(this.session, state, store.getSettings(), Date.now());
+      if (!this.session.masteryVersion) {
+        let cardsChanged = false;
+        this.session.queue.slice(0, this.session.index).forEach(item => {
+          const card = state.cards[item.wordId];
+          if (card && !card.needsRecall && ['again', 'hard'].includes(card.lastGrade)) {
+            card.needsRecall = true;
+            cardsChanged = true;
+          }
+        });
+        this.session.masteryVersion = 1;
+        sessionChanged = true;
+        if (cardsChanged) store.saveState(state);
       }
+      if (sessionChanged) store.saveSession(this.session);
     }
-    if (!this.data.isPractice && !this.session.masteryVersion) {
-      const state = store.getState();
-      this.session.queue.slice(0, this.session.index).forEach(item => {
-        const card = state.cards[item.wordId];
-        if (card && ['again', 'hard'].includes(card.lastGrade)) card.needsRecall = true;
-      });
-      this.session.masteryVersion = 1;
-      store.saveState(state);
-      store.saveSession(this.session);
-    }
-    this.renderCurrent();
+    this.renderCurrent(state);
   },
 
   onShow() {
-    if (this.session && !this.data.isPractice) {
+    this.studyHidden = false;
+    if (this.session && !this.data.completed) {
       const state = store.getState();
-      if (studyPlan.rolloverSession(this.session, state, store.getSettings())) { this.detailReturn = null; store.saveState(state); store.saveSession(this.session); }
+      const now = Date.now();
+      if (!this.data.isPractice && this.session.day !== timeLedger.dayKey(now)
+          && studyPlan.rolloverSession(this.session, state, store.getSettings(), now)) {
+        this.detailReturn = null;
+        store.saveState(state);
+        store.saveSession(this.session);
+      }
+      if (this.detailReturn) {
+        const snapshot = this.detailReturn;
+        this.detailReturn = null;
+        this.setData(Object.assign(snapshot, { isWeakMarked: weakBook.isMarked(state, this.data.word.id), isSentenceSaved: sentenceBook.has(state, this.data.word.example) }));
+      } else this.renderCurrent(state);
     }
-    if (this.detailReturn) {
-      const state = store.getState(), snapshot = this.detailReturn; this.detailReturn = null;
-      this.setData(Object.assign(snapshot, { isWeakMarked: weakBook.isMarked(state, this.data.word.id), isSentenceSaved: sentenceBook.has(state, this.data.word.example) }));
-    } else if (this.session && !this.data.completed) this.renderCurrent();
     if (this.stopSync) this.stopSync();
     if (this.stopClock) this.stopClock();
     this.stopClock = clock.subscribe(time => this.setData({ usedTime: timeLedger.format(time.seconds) }));
@@ -139,10 +149,7 @@ Page({
     this.setData({ audioLoading: false, relationsOpen: false });
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
-    this.captureElapsed(true);
-    clock.pause('study');
-    if (this.stopClock) this.stopClock();
-    if (this.session && !this.data.completed && !cloudSync.blocked()) store.saveSession(this.session);
+    this.pauseStudyPage();
   },
 
   onUnload() {
@@ -151,27 +158,29 @@ Page({
     clearTimeout(this.contentLayoutTimer);
     this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
     this.audioRequest = (this.audioRequest || 0) + 1;
-    this.captureElapsed(true);
-    clock.pause('study');
-    if (this.stopClock) this.stopClock();
-    if (this.session && !this.data.completed && !cloudSync.blocked()) store.saveSession(this.session);
+    this.pauseStudyPage();
     if (this.audio) this.audio.destroy();
     this.audio = null;
   },
 
-  captureElapsed(force) {
-    if (force) { try { clock.capture(); } catch (error) { /* Timing cannot block navigation or grading. */ } }
-    if (this.session) this.session.elapsedSeconds = timeLedger.summary(store.getState().daily[this.session.day] || {}, this.session.day).seconds;
+  pauseStudyPage() {
+    if (this.studyHidden) return;
+    clock.pause('study');
+    if (this.stopClock) this.stopClock();
+    if (this.session && !this.data.completed && !cloudSync.blocked()) {
+      this.captureElapsed(store.getState());
+      store.saveSession(this.session);
+    }
+    this.studyHidden = true;
+  },
+
+  captureElapsed(state) {
+    if (this.session) this.session.elapsedSeconds = timeLedger.summary(state.daily[this.session.day] || {}, this.session.day).seconds;
   },
   onLearningTouch() { const item = this.session && this.currentItem(); if (item && item.phase && !this.data.completed) clock.touch(item.phase); },
 
   writeDailyProgress(state, completedAt) {
     if (this.data.isPractice) return null;
-    const latest = store.getState().daily[this.session.day];
-    if (latest && latest.time) {
-      const local = state.daily[this.session.day] || (state.daily[this.session.day] = {});
-      local.time = timeLedger.merge(local.time, latest.time);
-    }
     metrics.commit(state, this.session);
     const previous = state.daily[this.session.day] || {};
     state.daily[this.session.day] = Object.assign({}, previous, {
@@ -198,9 +207,10 @@ Page({
     return this.session.queue[this.session.index] || null;
   },
   rollToToday() {
-    if (this.data.isPractice) return false;
+    const now = Date.now();
+    if (this.data.isPractice || !this.session || this.session.day === timeLedger.dayKey(now)) return false;
     const state = store.getState();
-    if (!studyPlan.rolloverSession(this.session, state, store.getSettings())) return false;
+    if (!studyPlan.rolloverSession(this.session, state, store.getSettings(), now)) return false;
     store.saveState(state); store.saveSession(this.session); this.renderCurrent(state);
     return true;
   },
@@ -380,23 +390,19 @@ Page({
     this.ratingBusy = true;
     try {
     this.onLearningTouch();
-    if (!this.data.isPractice) {
-      const rolloverState = store.getState();
-      if (studyPlan.rolloverSession(this.session, rolloverState, store.getSettings())) { store.saveState(rolloverState); store.saveSession(this.session); this.renderCurrent(rolloverState); return; }
-    }
+    if (this.rollToToday()) return;
+    const state = store.getState();
     if (this.data.isPractice) {
-      const state = store.getState();
       practice.recordAnswer(state, this.session, grade);
-      this.captureElapsed();
+      this.captureElapsed(state);
       store.saveState(state);
       store.saveSession(this.session);
-      this.renderCurrent();
+      this.renderCurrent(state);
       return;
     }
     const item = this.currentItem();
     const word = getWord(item.wordId);
     const now = Date.now();
-    const state = store.getState();
     const previous = state.cards[word.id];
     state.cards[word.id] = scheduler.review(previous, grade, now);
     if (weakBook.shouldAutoMark(state.cards[word.id], grade)) weakBook.mark(state, word.id, 'formal', now);
@@ -430,7 +436,7 @@ Page({
       }
     }
 
-    this.captureElapsed();
+    this.captureElapsed(state);
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
@@ -480,13 +486,14 @@ Page({
     if (cloudSync.blocked()) return;
     if (this.rollToToday()) return;
     if (this.data.contextAnswered) return;
-    this.onLearningTouch(); this.captureElapsed();
+    this.onLearningTouch();
     const index = Number(event.currentTarget.dataset.index);
     const question = this.data.question;
     const correct = index === question.answer;
     const now = Date.now();
     const item = this.currentItem();
     const state = store.getState();
+    this.captureElapsed(state);
     const card = state.cards[item.wordId];
     if (!correct && card) {
       card.dueAt = Math.min(card.dueAt || now + DAY_MS, startOfDay(now) + DAY_MS);
@@ -538,24 +545,24 @@ Page({
       this.session.contextDone += 1;
       if (this.data.contextCorrect) this.session.contextCorrect += 1;
     }
-    this.captureElapsed();
-    this.session.index += 1;
     const state = store.getState();
+    this.captureElapsed(state);
+    this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
     store.saveState(state);
     store.saveSession(this.session);
-    this.renderCurrent();
+    this.renderCurrent(state);
   },
 
   finishSession() {
     if (cloudSync.blocked()) return;
-    this.captureElapsed(true);
+    clock.pause('study');
     const now = Date.now();
     const state = store.getState();
+    this.captureElapsed(state);
     const time = timeLedger.summary(state.daily[timeLedger.dayKey(now)] || {}, timeLedger.dayKey(now));
     const minutes = Math.floor(time.seconds / 60);
-    clock.pause('study');
     if (this.data.isPractice) {
       store.clearSession('practice');
       this.setData({ completed: true, sessionSummary: {
@@ -576,9 +583,10 @@ Page({
   },
 
   exitStudy() {
-    this.captureElapsed(true);
+    clock.pause('study');
     if (this.session && !this.data.completed && !cloudSync.blocked()) {
       const state = store.getState();
+      this.captureElapsed(state);
       this.writeDailyProgress(state);
       store.saveState(state);
       store.saveSession(this.session);

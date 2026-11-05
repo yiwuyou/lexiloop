@@ -23,7 +23,9 @@ function decorate(word, card, marked) {
       stateLabel = '稳定记得';
     }
   }
-  return Object.assign({}, word, { state, stateLabel, isWeakMarked: Boolean(marked) });
+  const { id, word: name, ipa, meaning, shortPartOfSpeech, sourceLabel, example, translation, audio } = word;
+  return { id, word: name, ipa, meaning, shortPartOfSpeech, sourceLabel, example, translation, audio,
+    state, stateLabel, isWeakMarked: Boolean(marked) };
 }
 
 Page({
@@ -75,7 +77,6 @@ Page({
     });
     this.groups = groups;
     this.setData({ dayOptions: [{ key: 'all', label: '全部天数' }].concat(groups) });
-    this.refresh();
   },
 
   onUnload() {
@@ -101,30 +102,32 @@ Page({
     const state = store.getState();
     const query = this.data.query.trim().toLowerCase();
     const filter = this.data.activeFilter;
-    const filtered = getWords()
-      .map((word) => Object.assign(decorate(word, state.cards[word.id], weakBook.isMarked(state, word.id)), {
-        isSentenceSaved: sentenceBook.has(state, word.example),
-      }))
-      .filter((word) => {
-        const matchesQuery = !query || word.searchText.includes(query);
-        const matchesFilter = filter === 'all'
-          || word.category === filter
-          || (filter === 'weak' && word.state === 'weak');
-        const selected = this.data.dayOptions[this.data.dayIndex];
-        const matchesDay = selected.key === 'all' || (word.category === selected.category && word.day === selected.day);
-        return matchesQuery && matchesFilter && matchesDay;
-      });
-    this.filteredWords = filtered;
-    const dayGroups = this.groups.map((group) => {
-      const members = filtered.filter((word) => word.category === group.category && word.day === group.day);
-      return Object.assign({}, group, { total: members.length, learned: members.filter((word) => word.state !== 'unseen').length,
-        countLabel: filter === 'weak' ? `易忘 ${members.length} 词` : `已学 ${members.filter((word) => word.state !== 'unseen').length} / ${members.length} 词` });
-    }).filter((group) => group.total);
+    const selected = this.data.dayOptions[this.data.dayIndex];
+    const counts = new Map();
+    const filtered = getWords().filter(word => {
+      if (query && !word.searchText.includes(query)) return false;
+      if (selected.key !== 'all' && (word.category !== selected.category || word.day !== selected.day)) return false;
+      const marked = weakBook.isMarked(state, word.id);
+      if (filter !== 'all' && filter !== word.category && !(filter === 'weak' && marked)) return false;
+      const key = word.category + '-' + word.day;
+      const group = counts.get(key) || { total: 0, learned: 0 };
+      group.total++;
+      if (marked || state.cards[word.id] && state.cards[word.id].seen) group.learned++;
+      counts.set(key, group);
+      return true;
+    });
+    const dayGroups = this.groups.filter(group => counts.has(group.key)).map(group => {
+      const count = counts.get(group.key);
+      const countLabel = filter === 'weak' ? '易忘 ' + count.total + ' 词' : '已学 ' + count.learned + ' / ' + count.total + ' 词';
+      return Object.assign({}, group, count, { countLabel });
+    });
     this.setData({
       dayGroups,
       hasMore: filtered.length > this.limit,
       resultCount: filtered.length,
-      visibleWords: filtered.slice(0, this.limit),
+      visibleWords: filtered.slice(0, this.limit).map(word => Object.assign(
+        decorate(word, state.cards[word.id], weakBook.isMarked(state, word.id)),
+        { isSentenceSaved: sentenceBook.has(state, word.example) })),
     });
   },
 

@@ -65,6 +65,7 @@ require('../pages/library/index');
 library.data = clone(library.data);
 library.setData = function (values, callback) { Object.assign(this.data, values); if (callback) callback(); };
 library.onLoad();
+library.onShow();
 assert.strictEqual(library.data.dayGroups.length, 51);
 library.changeDay({ detail: { value: 2 } });
 assert.strictEqual(library.data.resultCount, 50);

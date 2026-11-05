@@ -389,6 +389,7 @@ function testLibraryAndTemplates() {
   library.data = clone(library.data);
   library.setData = function (values, callback) { Object.assign(this.data, values); if (callback) callback(); };
   library.onLoad();
+  library.onShow();
   assert.strictEqual(library.data.viewMode, 'words', 'word list should be the default library view');
   library.openDay({ currentTarget: { dataset: { key: 'core-1' } } });
   assert.notStrictEqual(library.data.dayIndex, 0);

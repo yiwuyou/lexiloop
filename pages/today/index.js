@@ -57,7 +57,6 @@ Page({
     progress: 0,
     sourceTag: '核心 day 1',
     total: 2522,
-    todaySummary: null,
     resume: false,
     canAdd25: false,
     canAdd50: false,
@@ -73,13 +72,19 @@ Page({
     if (tabBar) tabBar.setData({ selected: 0 });
     this.refresh();
     if (this.stopSync) this.stopSync();
+    let revision;
     this.stopSync = cloudSync.subscribe(status => {
-      this.setData({ syncText: status.text });
-      if (status.enabled) this.refresh();
+      if (status.text !== this.data.syncText) this.setData({ syncText: status.text });
+      const dataChanged = revision !== undefined && revision !== status.dataRevision;
+      revision = status.dataRevision;
+      if (dataChanged) this.refresh();
     });
     clearInterval(this.audioTimer);
     this.setData({ audioStatus: audio.getStatus() });
-    this.audioTimer = setInterval(() => this.setData({ audioStatus: audio.getStatus() }), 1000);
+    this.audioTimer = setInterval(() => {
+      const audioStatus = audio.getStatus();
+      if (audioStatus !== this.data.audioStatus) this.setData({ audioStatus });
+    }, 1000);
   },
   onHide() { clearInterval(this.audioTimer); if (this.stopSync) this.stopSync(); },
   onUnload() { clearInterval(this.audioTimer); if (this.stopSync) this.stopSync(); },
@@ -128,7 +133,6 @@ Page({
       progress: Math.round((progress.learned / progress.total) * 100),
       sourceTag: nextWord ? `${nextWord.category === 'core' ? '核心' : '高频'} day ${nextWord.day}` : '首轮已完成',
       total: progress.total,
-      todaySummary: summary,
       resume: Boolean(session && session.day === dates.dayKey(now) && session.index < session.queue.length),
       canAdd25: Boolean(summary && summary.completedAt && remainingCapacity >= 25 && stats.unseen.length),
       canAdd50: Boolean(summary && summary.completedAt && remainingCapacity >= 50 && stats.unseen.length >= 50),

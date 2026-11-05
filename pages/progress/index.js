@@ -50,9 +50,12 @@ Page({
     if (tabBar) tabBar.setData({ selected: 2 });
     this.refresh();
     if (this.stopSync) this.stopSync();
+    let revision;
     this.stopSync = cloudSync.subscribe(sync => {
       this.setData(sync.text === '已同步' ? { sync, syncError: '' } : { sync });
-      if (sync.enabled) this.refresh();
+      const dataChanged = revision !== undefined && revision !== sync.dataRevision;
+      revision = sync.dataRevision;
+      if (dataChanged) this.refresh();
     });
   },
   onHide() { if (this.stopSync) this.stopSync(); },

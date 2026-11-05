@@ -54,45 +54,45 @@ function safeSet(key, value) {
   return value;
 }
 
-function ensureState() {
-  const state = safeGet(STATE_KEY, null);
+function loadState() {
+  let state = safeGet(STATE_KEY, null);
   if (!state) {
-    safeSet(STATE_KEY, defaultState());
+    state = safeSet(STATE_KEY, defaultState());
   } else if (state.schemaVersion !== migrations.CURRENT_STATE_SCHEMA) {
     safeSet(MIGRATION_BACKUP_KEY, state);
     try {
-      safeSet(STATE_KEY, migrations.migrateState(state));
+      state = safeSet(STATE_KEY, migrations.migrateState(state));
     } catch (error) {
-      // Keep the original state untouched. A future/newer schema must never be
-      // silently replaced with an empty learning history.
-      return false;
+      // A failed migration leaves the original records available.
+      return null;
     }
   }
   const settings = safeGet(SETTINGS_KEY, null);
-  if (settings && settings.examPlanVersion !== 1) {
-    const backupKey = 'mem_vocab_before_fsrs_v1';
-    if (!wx.getStorageSync(backupKey)) syncStorage.write(backupKey, { at: Date.now(), state: safeGet(STATE_KEY, null), settings,
-      session: safeGet(SESSION_KEY, null), practiceSession: safeGet(PRACTICE_SESSION_KEY, null) });
-  }
   if (!settings) {
     safeSet(SETTINGS_KEY, defaultSettings());
-  } else if (settings.schemaVersion !== 2 || settings.reviewLimitVersion !== 1) {
-    safeSet(SETTINGS_KEY, Object.assign(defaultSettings(), settings, {
-      schemaVersion: 2, dailyReviewLimit: 100, reviewLimitVersion: 1,
-    }));
+  } else if (!settingsCurrent(settings)) {
+    if (settings.examPlanVersion !== 1 && !wx.getStorageSync('mem_vocab_before_fsrs_v1')) {
+      syncStorage.write('mem_vocab_before_fsrs_v1', { at: Date.now(), state, settings,
+        session: safeGet(SESSION_KEY, null), practiceSession: safeGet(PRACTICE_SESSION_KEY, null) });
+    }
+    const next = Object.assign(defaultSettings(), settings, { schemaVersion: 2, reviewLimitVersion: 1 });
+    if (settings.schemaVersion !== 2 || settings.reviewLimitVersion !== 1) next.dailyReviewLimit = 100;
+    if (settings.examPlanVersion !== 1) Object.assign(next, { examDate: '2026-12-19', learningDeadline: '2026-12-18', examPlanVersion: 1 });
+    safeSet(SETTINGS_KEY, next);
   }
-  const currentSettings = safeGet(SETTINGS_KEY, null);
-  if (currentSettings && settings && settings.examPlanVersion !== 1) {
-    safeSet(SETTINGS_KEY, Object.assign({}, currentSettings, { examDate: '2026-12-19', learningDeadline: '2026-12-18', examPlanVersion: 1 }));
-  }
-  return true;
+  return state;
 }
 
+function settingsCurrent(settings) {
+  return settings && settings.schemaVersion === 2 && settings.reviewLimitVersion === 1 && settings.examPlanVersion === 1;
+}
+
+function ensureState() { return Boolean(loadState()); }
+
 function getState() {
-  const ready = ensureState();
-  const state = safeGet(STATE_KEY, null);
-  if (ready === false) throw new Error('学习记录版本高于当前程序，请升级后重试');
-  return state || defaultState();
+  const state = loadState();
+  if (!state) throw new Error('学习记录版本高于当前程序，请升级后重试');
+  return state;
 }
 
 function saveState(state) {
@@ -102,8 +102,12 @@ function saveState(state) {
 }
 
 function getSettings() {
-  ensureState();
-  return Object.assign(defaultSettings(), safeGet(SETTINGS_KEY, {}));
+  let settings = safeGet(SETTINGS_KEY, null);
+  if (!settingsCurrent(settings)) {
+    ensureState();
+    settings = safeGet(SETTINGS_KEY, null);
+  }
+  return Object.assign(defaultSettings(), settings || {});
 }
 
 function saveSettings(settings) {

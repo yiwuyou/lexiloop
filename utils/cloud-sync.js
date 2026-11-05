@@ -14,6 +14,7 @@ const HANDOFF_TIMEOUT = 20000;
 let meta, flight, timer, capturing = false, ready = false, active = true;
 let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
+let dataRevision = 0;
 let studyFlight = null;
 let captureTimer = null;
 let dirtyAt = 0;
@@ -49,10 +50,10 @@ function load() {
 }
 function save() { storage.write(KEY, meta); }
 function status() {
-  if (!meta) return { text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
+  if (!meta) return { dataRevision, text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
   const date = new Date(meta.lastSyncedAt || 0);
   return {
-    text: message, enabled: meta.enabled, pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
+    dataRevision, text: message, enabled: meta.enabled, pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
     errorText: errors.format(lastError),
     usageText: meta.requestBudget ? `本机今日已发出同步请求 ${meta.requestBudget.day === new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10) ? meta.requestBudget.calls : 0} 次` : '',
     last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
@@ -190,6 +191,7 @@ function accept(result) {
   storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
   try { store.replaceBundle(combined); }
   catch (error) { error.syncStage = 'apply'; throw error; }
+  dataRevision++;
   meta.outbox = remaining;
   meta.observed = model.clone(combined);
   meta.rev = result.rev;

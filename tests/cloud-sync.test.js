@@ -264,12 +264,15 @@ async function main() {
   phone.net.release(); await held;
   const states = [];
   const stopIdle = phone.sync.subscribe(value => states.push(value.text));
+  const idleRevision = phone.sync.status().dataRevision;
   await phone.sync.flush(); stopIdle();
+  assert.strictEqual(phone.sync.status().dataRevision, idleRevision, 'unchanged sync does not invalidate the task or progress screen');
   assert.ok(!states.includes('正在同步'), 'an empty background revision check does not show a pending upload');
   const desktop = client(blank());
   desktop.sync.start(); await tick(); await tick();
   assert.strictEqual(desktop.sync.status().enabled, true);
   assert.ok(desktop.store.getState().cards['c-1-2'], 'new desktop restores phone progress automatically');
+  assert.ok(desktop.sync.status().dataRevision > 0, 'applying remote records invalidates the task and progress screens');
   assert.ok(await desktop.sync.beginStudy());
   await phone.sync.flush();
   assert.strictEqual(phone.sync.blocked(), true);

@@ -141,6 +141,7 @@ require('../pages/library/index');
 page.data = clone(page.data);
 page.setData = data => Object.assign(page.data, data);
 page.onLoad();
+page.onShow();
 assert.strictEqual(page.data.dayGroups.filter(group => group.learned === group.total).length, 18);
 assert.strictEqual(page.data.dayGroups.find(group => group.key === 'high-10').learned, 0);
 const template = fs.readFileSync(path.join(__dirname, '../pages/progress/index.wxml'), 'utf8');
