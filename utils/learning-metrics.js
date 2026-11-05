@@ -1,4 +1,5 @@
 const ledger = require('./time-ledger');
+const carry = require('./task-carry');
 const DEFAULT_SECONDS = { review: 15, new: 32, reinforcement: 16, sentence: 28, context: 28, practice: 15, detail: 20 };
 function planFor(state, session, day) {
   const daily = state.daily[day] || {};
@@ -86,7 +87,7 @@ function commit(state, session, now = Date.now()) {
     const success = passed(state, session, id, day, pendingSet), previous = daily.taskStatus[id];
     if (!previous || previous.passed !== success) daily.taskStatus[id] = { at: now, passed: success };
   });
-  require('./task-carry').complete(state, session, now);
+  carry.complete(state, session, now);
   if (!daily.initialEstimate) {
     daily.initialEstimate = { at: now, seconds: estimate(state, session, { review: 0, new: 0 }, now).seconds, rough: true, resumed: session.index > 0 };
   }

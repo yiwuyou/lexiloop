@@ -273,3 +273,4 @@
 
 .task-followup { display: block; margin-top: 8rpx; color: var(--main-strong); font-size: 23rpx; line-height: 1.4; }
 .study-start-error { display: block; margin: 12rpx 0; color: #8b3d30; font-size: 24rpx; line-height: 1.4; }
+.study-diagnostic { min-height: 80rpx; color: #704532; background: transparent; font-size: 24rpx; }

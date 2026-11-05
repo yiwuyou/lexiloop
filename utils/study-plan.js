@@ -3,6 +3,9 @@ const context = require('./context');
 const { isStable, isRecoveryPending } = require('./scheduler');
 const { getWord, getWords } = require('./words');
 const weakBook = require('./weak-book');
+const carry = require('./task-carry');
+const questionOrder = require('./question-order');
+const studyOrder = require('./study-order');
 
 const REVIEW_PLAN_VERSION = 2;
 const CONTEXT_PLAN_VERSION = 3;
@@ -233,8 +236,8 @@ function prepareSession(session, state, settings, now) {
       });
     changed = true;
   }
-  if (require('./question-order').prepare(session, state)) changed = true;
-  if (require('./study-order').reconcile(session, state)) changed = true;
+  if (questionOrder.prepare(session, state)) changed = true;
+  if (studyOrder.reconcile(session, state)) changed = true;
   return changed;
 }
 
@@ -294,9 +297,9 @@ function buildSession(state, settings, now) {
     batchNewGoal: newWords.length,
     extraNew: daily.extraNew || 0,
   });
-  require('./task-carry').attach(session, state, settings, [], time);
-  require('./question-order').prepare(session, state);
-  require('./study-order').reconcile(session, state);
+  carry.attach(session, state, settings, [], time);
+  questionOrder.prepare(session, state);
+  studyOrder.reconcile(session, state);
   return session;
 }
 

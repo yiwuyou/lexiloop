@@ -7,6 +7,26 @@ const appVersion = require('../../utils/version');
 const cloudSync = require('../../utils/cloud-sync');
 const metrics = require('../../utils/learning-metrics');
 const timeLedger = require('../../utils/time-ledger');
+const scheduler = require('../../utils/scheduler');
+const { rollover } = require('../../utils/session-rollover');
+
+const START_ERRORS = {
+  prepare: ['A1', '学习功能加载失败，请再试一次。'],
+  handoff: ['A2', '暂无法接续学习，请到「进度」查看同步状态。'],
+  read: ['A3', '读取本机学习任务失败。请保留本机记录。'],
+  plan: ['A4', '生成本机学习任务失败。'],
+  record: ['A5', '准备本机学习进度失败。'],
+  save: ['A6', '本机学习任务保存失败。请保留本机记录。'],
+  open: ['A7', '学习页未能打开，任务已保存，请再试一次。'],
+};
+
+function startDiagnostic(code, error) {
+  // Copy only a standard error type and a project frame. SDK errors can
+  // contain request or storage contents, so don't include the raw message.
+  const type = ['Error', 'TypeError', 'RangeError', 'ReferenceError', 'SyntaxError'].includes(error && error.name) ? error.name : 'Error';
+  const frame = String(error && error.stack || '').match(/(?:utils\/[a-z-]+|pages\/today\/index)\.js:\d+(?::\d+)?/);
+  return [`词序 ${appVersion}`, code, type, frame && frame[0]].filter(Boolean).join(' · ');
+}
 
 function greeting(hour) {
   if (hour < 6) return '夜深了';
@@ -43,6 +63,7 @@ Page({
     syncText: '尚未开启云同步',
     studyStartLabel: '',
     studyStartError: '',
+    studyStartCode: '',
   },
 
   onShow() {
@@ -116,21 +137,23 @@ Page({
     if (this.startingStudy) return;
     this.startingStudy = true;
     let stage = 'prepare';
-    this.setData({ studyStartLabel: '正在准备学习…', studyStartError: '' });
+    this.startDiagnostic = '';
+    this.setData({ studyStartLabel: '正在准备学习…', studyStartError: '', studyStartCode: '' });
     try {
-      await require('../../utils/scheduler').prepare();
+      await scheduler.prepare();
       stage = 'handoff';
       this.setData({ studyStartLabel: '正在接续学习…' });
       if (!(await cloudSync.beginStudy())) {
         this.setData({ studyStartError: '暂无法接续学习，请到「进度」查看同步状态后再试。' });
         return;
       }
-      stage = 'save';
+      stage = 'read';
       const now = Date.now();
       const state = store.getState();
       const settings = store.getSettings();
       let session = store.getSession();
-      require('../../utils/session-rollover').rollover(session, state, settings, now);
+      stage = 'plan';
+      rollover(session, state, settings, now);
       plan.prepareSession(session, state, settings, now);
       if (!session || session.day !== dates.dayKey(now) || session.index >= session.queue.length) {
         session = plan.buildSession(state, settings, now);
@@ -139,22 +162,29 @@ Page({
           return;
         }
       }
+      stage = 'record';
       metrics.commit(state, session, now);
       state.daily[session.day].dueGoal = session.dueGoal;
       state.daily[session.day].newGoal = session.newGoal;
+      stage = 'save';
       store.saveSession(session);
       store.saveState(state);
       stage = 'open';
       this.setData({ studyStartLabel: '正在打开学习页…' });
       await new Promise((resolve, reject) => wx.navigateTo({ url: '/pages/study/index', success: resolve, fail: reject }));
     } catch (error) {
-      const messages = { prepare: '学习功能准备失败，请重新打开小程序后再试。', handoff: '暂无法接续学习，请到「进度」查看同步状态。',
-        save: '未能准备本机学习任务，请重新打开小程序后再试。', open: '学习页未能打开，任务已保存，请再试一次。' };
-      this.setData({ studyStartError: messages[stage] });
+      const [code, message] = START_ERRORS[stage];
+      this.startDiagnostic = startDiagnostic(code, error);
+      console.warn(this.startDiagnostic);
+      this.setData({ studyStartError: message, studyStartCode: code });
     } finally {
       this.startingStudy = false;
       this.setData({ studyStartLabel: '' });
     }
+  },
+
+  copyStudyDiagnostic() {
+    if (this.startDiagnostic) wx.setClipboardData({ data: this.startDiagnostic });
   },
 
   async startPractice() {

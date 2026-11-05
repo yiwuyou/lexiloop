@@ -1,4 +1,5 @@
 // Carry unfinished questions without expanding the fixed daily word limits.
+const { isRecoveryPending } = require('./scheduler');
 function key(item) { return [item.wordId, item.phase, item.questionId || ''].join(':'); }
 function attach(session, state, settings, extra = [], now = Date.now()) {
   const queued = new Map();
@@ -17,7 +18,7 @@ function attach(session, state, settings, extra = [], now = Date.now()) {
   const review = [];
   [...new Set(carryReview.concat(session.queue.filter(item => item.phase === 'review').map(item => item.wordId)))].forEach(id => {
     const card = state.cards[id] || {};
-    const overdue = card.dueAt < start && !require('./scheduler').isRecoveryPending(card);
+    const overdue = card.dueAt < start && !isRecoveryPending(card);
     if (review.length >= capacity || overdue && !backlog) return;
     if (overdue) { backlog--; overdueIds.add(id); }
     review.push(id);

@@ -16,6 +16,7 @@ const cloudSync = require('../../utils/cloud-sync');
 const metrics = require('../../utils/learning-metrics');
 const clock = require('../../utils/learning-clock');
 const timeLedger = require('../../utils/time-ledger');
+const { rollover } = require('../../utils/session-rollover');
 
 const PHASE_LABELS = {
   review: '旧词复习',
@@ -110,7 +111,7 @@ Page({
   onShow() {
     if (this.session && !this.data.isPractice) {
       const state = store.getState();
-      if (require('../../utils/session-rollover').rollover(this.session, state, store.getSettings())) { this.detailReturn = null; store.saveState(state); store.saveSession(this.session); }
+      if (rollover(this.session, state, store.getSettings())) { this.detailReturn = null; store.saveState(state); store.saveSession(this.session); }
     }
     if (this.detailReturn) {
       const state = store.getState(), snapshot = this.detailReturn; this.detailReturn = null;
@@ -200,7 +201,7 @@ Page({
   rollToToday() {
     if (this.data.isPractice) return false;
     const state = store.getState();
-    if (!require('../../utils/session-rollover').rollover(this.session, state, store.getSettings())) return false;
+    if (!rollover(this.session, state, store.getSettings())) return false;
     store.saveState(state); store.saveSession(this.session); this.renderCurrent(state);
     return true;
   },
@@ -382,7 +383,7 @@ Page({
     this.onLearningTouch();
     if (!this.data.isPractice) {
       const rolloverState = store.getState();
-      if (require('../../utils/session-rollover').rollover(this.session, rolloverState, store.getSettings())) { store.saveState(rolloverState); store.saveSession(this.session); this.renderCurrent(rolloverState); return; }
+      if (rollover(this.session, rolloverState, store.getSettings())) { store.saveState(rolloverState); store.saveSession(this.session); this.renderCurrent(rolloverState); return; }
     }
     if (this.data.isPractice) {
       const state = store.getState();
