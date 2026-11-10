@@ -14,7 +14,7 @@ const CONTEXT_PLAN_VERSION = 3;
 const DEFAULT_DAILY_REVIEW_LIMIT = 100;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
-const DAILY_SENTENCE_LIMIT = 30;
+const DAILY_SENTENCE_LIMIT = 45;
 const REPEAT_SENTENCE_RESERVE = 6;
 
 // Separate exam coverage from the memory model: spread first checks across

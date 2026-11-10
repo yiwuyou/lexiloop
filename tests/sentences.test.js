@@ -17,11 +17,11 @@ assert.strictEqual(book.list(state).length, 0);
 const session = { queue: [], index: 0 };
 const candidates = getWords().slice(0, 50);
 candidates.forEach(item => plan.queueContextCheck(session, item, 'hard', 123));
-assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 24,
+assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 39,
   'first misses cannot take the six places reserved for repeated misses');
-candidates.slice(24).forEach(item => plan.queueContextCheck(session, item, 'hard', 123, { repeatMiss: true }));
-assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 30,
-  'repeated misses can use the reserved places while the overall limit stays at 30');
+candidates.slice(39).forEach(item => plan.queueContextCheck(session, item, 'hard', 123, { repeatMiss: true }));
+assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 45,
+  'repeated misses can use the reserved places while the overall limit is 45');
 const legacy = { queue: [{ wordId: word.id, phase: 'reinforcement', availableAt: 9999999 }], index: 0 };
 assert.strictEqual(mastery.available(legacy, 1), true, 'old sessions must proceed immediately at the end');
 let page;

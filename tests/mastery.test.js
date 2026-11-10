@@ -61,7 +61,7 @@ try {
 
   const repeated = fresh();
   const difficult = repeated.queue[0].wordId;
-  const earlierExamples = getWords().filter(candidate => candidate.id !== difficult).slice(0, 24)
+  const earlierExamples = getWords().filter(candidate => candidate.id !== difficult).slice(0, 39)
     .map(candidate => ({ wordId: candidate.id, phase: 'sentence', answered: true, correct: true }));
   page.session.queue = earlierExamples.concat(page.session.queue);
   page.session.index = earlierExamples.length;
