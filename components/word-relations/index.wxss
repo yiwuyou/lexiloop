@@ -31,10 +31,11 @@ button::after { border: 0; }
 .section-title .section-name { color: var(--text, #172019); font-size: 29rpx; font-weight: 600; }
 .section-note, .footnote, .empty { display: block; color: var(--muted, #657169); font-size: 23rpx; line-height: 1.6; margin: 12rpx 0 20rpx; }
 .entry { box-sizing: border-box; margin-top: 16rpx; padding: 20rpx 18rpx; border: 1rpx solid rgba(73, 102, 82, .1); border-radius: 18rpx; background: rgba(255, 255, 255, .85); }
+.entry-pressed { background: var(--soft, #edf4ee); }
 .entry-head { display: flex; align-items: center; flex-wrap: wrap; column-gap: 14rpx; row-gap: 8rpx; }
 .entry-word { font: 36rpx/1.3 Georgia, serif; overflow-wrap: anywhere; max-width: 100%; }
 .learned { padding: 3rpx 8rpx; border-radius: 8rpx; background: #f1f4f1; font-size: 20rpx; color: var(--muted, #657169); }
-.explore { display: inline-flex; align-items: center; width: auto; margin-left: auto; min-height: 76rpx; padding: 14rpx 8rpx; }
+.explore { display: inline-flex; align-items: center; box-sizing: border-box; margin-left: auto; min-height: 76rpx; padding: 14rpx 8rpx; color: var(--main-strong, #174f32); font-size: 25rpx; line-height: 1.4; }
 .meaning { display: grid; grid-template-columns: 116rpx minmax(0, 1fr); align-items: start; column-gap: 12rpx; margin-top: 12rpx; color: var(--muted, #657169); font-size: 25rpx; line-height: 1.6; }
 .meaning > text:last-child { min-width: 0; flex: 1; word-break: break-word; }
 .meaning .label { flex: 0 0 128rpx; font-size: 22rpx; }

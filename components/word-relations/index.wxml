@@ -17,8 +17,8 @@
         <view class="relation-group semantic-group">
         <view class="section-title"><text user-select="{{true}}" class="section-name">意思相近</text><text user-select="{{true}}">{{result.semantic.length}} 词</text></view>
         <view class="empty" wx:if="{{!semantic.length}}">暂未收录已核对的近义关联</view>
-        <view class="entry" wx:for="{{semantic}}" wx:key="head">
-          <view class="entry-head" data-id="{{item.id}}" bindtap="openDetail"><text user-select="{{true}}" class="entry-word" data-word="{{item.word}}">{{item.word}}</text><text user-select="{{true}}" class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
+        <view class="entry" wx:for="{{semantic}}" wx:key="head" data-id="{{item.id}}" bindtap="openDetail" hover-class="entry-pressed" role="button" aria-label="查看{{item.word}}详情">
+          <view class="entry-head"><text user-select="{{true}}" class="entry-word" data-word="{{item.word}}">{{item.word}}</text><text user-select="{{true}}" class="learned">{{item.learned ? '已学' : '未学'}}</text><text class="explore">查看详情 ›</text></view>
           <text user-select="{{true}}" class="sense">相近义项：{{item.sense}}</text>
           <text user-select="{{true}}" class="comparison-note" wx:if="{{item.note}}">{{item.note}}</text>
           <view class="meaning exam"><text user-select="{{true}}" class="label">机构释义</text><text user-select="{{true}}">{{item.meaning}}</text></view>
@@ -30,8 +30,8 @@
         <view class="relation-group shape-group">
         <view class="section-title"><text user-select="{{true}}" class="section-name">字形／结构相近</text><text user-select="{{true}}">{{result.shapes.length}} 词</text></view>
         <view class="empty" wx:if="{{!shapes.length}}">词库中暂无近形关联词</view>
-        <view class="entry" wx:for="{{shapes}}" wx:key="head">
-          <view class="entry-head" data-id="{{item.id}}" bindtap="openDetail"><text user-select="{{true}}" class="entry-word" data-word="{{item.word}}"><text user-select="{{true}}" wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text user-select="{{true}}" class="learned">{{item.learned ? '已学' : '未学'}}</text><button class="explore" data-id="{{item.id}}" catchtap="openDetail">查看详情 ›</button></view>
+        <view class="entry" wx:for="{{shapes}}" wx:key="head" data-id="{{item.id}}" bindtap="openDetail" hover-class="entry-pressed" role="button" aria-label="查看{{item.word}}详情">
+          <view class="entry-head"><text user-select="{{true}}" class="entry-word" data-word="{{item.word}}"><text user-select="{{true}}" wx:for="{{item.parts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text></text><text user-select="{{true}}" class="learned">{{item.learned ? '已学' : '未学'}}</text><text class="explore">查看详情 ›</text></view>
           <view class="spelling-compare"><text user-select="{{true}}">{{item.reason}}：<text user-select="{{true}}" wx:for="{{item.targetParts}}" wx:for-item="part" wx:key="key" class="{{part.shared ? 'shared' : ''}}">{{part.text}}</text> ↔ {{item.head}}</text></view>
           <view class="meaning exam"><text user-select="{{true}}" class="label">机构释义</text><text user-select="{{true}}">{{item.meaning}}</text></view>
           <view class="meaning"><text user-select="{{true}}" class="label">日常常用义</text><text user-select="{{true}}">{{item.common}}</text></view>
