@@ -21,8 +21,12 @@
       <view class="rating-area" wx:if="{{revealed}}">
         <view class="rating-header">
           <text user-select="{{true}}" class="rating-label">按回忆情况评分</text>
-          <button class="lookup-action" bindtap="openLibrary" hover-class="lookup-pressed" aria-label="查词库">查词</button>
-          <button class="relation-trigger" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+          <view class="rating-lookup-slot">
+            <button class="lookup-action" bindtap="openLibrary" hover-class="lookup-pressed" aria-label="查词库">查词</button>
+          </view>
+          <view class="rating-relation-slot">
+            <button class="relation-trigger" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+          </view>
         </view>
         <view class="rating-grid">
           <button class="rating again" data-grade="again" bindtap="rate"><view class="rating-copy"><text>没想起</text><text>无法说出正确含义</text></view><view class="rating-depth"></view></button>
