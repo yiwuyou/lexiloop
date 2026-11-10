@@ -15,13 +15,14 @@ assert.deepStrictEqual(book.list(migrations.migrateBackup({ type: 'mem-vocab-bac
 assert.strictEqual(book.toggle(state, entry), false);
 assert.strictEqual(book.list(state).length, 0);
 const session = { queue: [], index: 0 };
-const candidates = getWords().slice(0, 50);
-candidates.forEach(item => plan.queueContextCheck(session, item, 'hard', 123));
-assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 39,
-  'first misses cannot take the six places reserved for repeated misses');
-candidates.slice(39).forEach(item => plan.queueContextCheck(session, item, 'hard', 123, { repeatMiss: true }));
-assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 45,
-  'repeated misses can use the reserved places while the overall limit is 45');
+const candidates = getWords().slice(0, 100);
+candidates.slice(0, 50).forEach(item => assert.ok(plan.queueContextCheck(session, item, 'hard', 123)));
+session.index = session.queue.length - 1;
+candidates.slice(50).forEach(item => assert.ok(plan.queueContextCheck(session, item, 'again', 123, { repeatMiss: true })));
+assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, candidates.length,
+  'first and repeated misses can each add sentence checks past the old cap, including in a resumed queue');
+assert.strictEqual(plan.queueContextCheck(session, candidates[0], 'again', 123, { repeatMiss: true }), false,
+  'a previous sentence check still prevents another check for the same word');
 const legacy = { queue: [{ wordId: word.id, phase: 'reinforcement', availableAt: 9999999 }], index: 0 };
 assert.strictEqual(mastery.available(legacy, 1), true, 'old sessions must proceed immediately at the end');
 let page;
@@ -36,4 +37,4 @@ page.toggleEnglish();
 assert.strictEqual(page.data.hideEnglish, true);
 page.reveal({ currentTarget: { dataset: { index: 0 } } });
 assert.strictEqual(page.data.entries[0].revealed, true);
-console.log('Sentence quota, saved snapshots, backup restore, recitation and countdown removal passed.');
+console.log('Uncapped sentence checks, saved snapshots, backup restore, recitation and countdown removal passed.');

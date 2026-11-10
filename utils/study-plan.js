@@ -14,8 +14,6 @@ const CONTEXT_PLAN_VERSION = 3;
 const DEFAULT_DAILY_REVIEW_LIMIT = 100;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
-const DAILY_SENTENCE_LIMIT = 45;
-const REPEAT_SENTENCE_RESERVE = 6;
 
 // Separate exam coverage from the memory model: spread first checks across
 // 28 days, rather than truncating every long FSRS interval to the last day.
@@ -130,16 +128,15 @@ function summarize(state, settings, now) {
 
 function queueContextCheck(session, word, grade, now, { repeatMiss = false } = {}) {
   if (!session || !Array.isArray(session.queue) || !word || grade === 'easy') return false;
-  const queuedWords = new Set(session.queue
-    .filter((item) => item.phase === 'context' || item.phase === 'sentence')
-    .map((item) => item.wordId));
-  if (queuedWords.has(word.id)) return false;
+  if (session.queue.some((item) => item.wordId === word.id
+    && (item.phase === 'context' || item.phase === 'sentence'))) return false;
   const time = now || Date.now();
   const needsRecall = grade === 'again' || grade === 'hard';
   const phase = needsRecall ? 'sentence' : 'context';
-  const count = new Set(session.queue.filter((item) => item.phase === phase).map((item) => item.wordId)).size;
-  const limit = needsRecall ? DAILY_SENTENCE_LIMIT - (repeatMiss ? 0 : REPEAT_SENTENCE_RESERVE) : DAILY_CONTEXT_LIMIT;
-  if (count >= limit) return false;
+  if (!needsRecall) {
+    const count = new Set(session.queue.filter((item) => item.phase === 'context').map((item) => item.wordId)).size;
+    if (count >= DAILY_CONTEXT_LIMIT) return false;
+  }
   const question = needsRecall
     ? context.getRecallQuestion(word)
     : context.getByWord(word.word, Math.floor(startOfDay(time) / DAY_MS));

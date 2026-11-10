@@ -61,15 +61,21 @@ try {
 
   const repeated = fresh();
   const difficult = repeated.queue[0].wordId;
-  const earlierExamples = getWords().filter(candidate => candidate.id !== difficult).slice(0, 39)
+  const earlierExamples = getWords().filter(candidate => candidate.id !== difficult).slice(0, 45)
     .map(candidate => ({ wordId: candidate.id, phase: 'sentence', answered: true, correct: true }));
   page.session.queue = earlierExamples.concat(page.session.queue);
   page.session.index = earlierExamples.length;
   rate('hard');
-  assert.strictEqual(page.currentItem().phase, 'reinforcement', 'the first miss cannot use a reserved place');
+  assert.strictEqual(page.currentItem().phase, 'sentence', 'a first miss still queues an example after 45 completed examples');
+  const savedAtOldLimit = store.getSession();
+  // An older save kept the failed rating and pending recall but omitted this example.
+  savedAtOldLimit.queue.splice(savedAtOldLimit.index, 1);
+  store.saveSession(savedAtOldLimit);
+  page.onLoad({});
+  assert.strictEqual(page.currentItem().phase, 'reinforcement');
   now += 5000;
   rate('again');
-  assert.strictEqual(page.currentItem().phase, 'sentence', 'a second actual miss can use a reserved place before recall');
+  assert.strictEqual(page.currentItem().phase, 'sentence', 'another actual miss after resuming adds the omitted example before recall');
   assert.strictEqual(page.currentItem().wordId, difficult);
   page.chooseContext({ currentTarget: { dataset: { index: page.data.question.answer } } });
   page.nextContext();
