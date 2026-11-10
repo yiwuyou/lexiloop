@@ -3,12 +3,12 @@
   "heads": 2514,
   "reviewedCommonCount": 60,
   "commonAvailable": 2514,
-  "synonymHeads": 446,
-  "directedSynonymEdges": 846,
+  "synonymHeads": 658,
+  "directedSynonymEdges": 1132,
   "automaticUndirectedEdges": 16,
   "families": 70,
   "contrasts": 30,
-  "bytes": 297204,
+  "bytes": 346178,
   "missingCommon": [],
   "spotChecks": {
     "account": {
@@ -41,6 +41,48 @@
           "word": "precise",
           "sense": "准确、正确（形容词义）",
           "note": "correct 强调没有错误；accurate 强调符合事实；precise 和 exact 强调精确，修饰对象有差别。",
+          "reviewed": true
+        }
+      ]
+    },
+    "achieve": {
+      "common": "动词：完成、达到；动词：如愿以偿",
+      "synonyms": [
+        {
+          "word": "accomplish",
+          "sense": "完成"
+        },
+        {
+          "word": "attain",
+          "sense": "达到",
+          "note": "achieve 强调完成目标或取得成果。attain 较正式，常指达到某种水平、年龄或地位。",
+          "reviewed": true
+        },
+        {
+          "word": "complete",
+          "sense": "完成"
+        },
+        {
+          "word": "fulfill",
+          "sense": "完成"
+        }
+      ]
+    },
+    "acknowledge": {
+      "common": "动词：承认、告知收悉、答谢、报偿",
+      "synonyms": [
+        {
+          "word": "admit",
+          "sense": "承认"
+        },
+        {
+          "word": "concede",
+          "sense": "承认"
+        },
+        {
+          "word": "recognize",
+          "sense": "承认",
+          "note": "acknowledge 常指承认事实或问题的存在。recognize 可指承认某种地位或认可贡献，也常指认出。",
           "reviewed": true
         }
       ]
@@ -104,6 +146,36 @@
         }
       ]
     },
+    "admit": {
+      "common": "动词：承认、接受、允许进入、容许；动词：开向、容许、承认",
+      "synonyms": [
+        {
+          "word": "acknowledge",
+          "sense": "承认"
+        },
+        {
+          "word": "allow",
+          "sense": "准许",
+          "note": "admit 常指准许进入场所或录取。allow 范围更广，常接人和不定式表示允许做某事。",
+          "reviewed": true
+        },
+        {
+          "word": "concede",
+          "sense": "承认"
+        }
+      ]
+    },
+    "advance": {
+      "common": "名词：前进、进展、行过的路程；动词：前进、进展、提高、上涨；动词：使前进、促进、提出、提高、使提前；形容词：前面的、预先的",
+      "synonyms": [
+        {
+          "word": "progress",
+          "sense": "取得进展",
+          "note": "advance 可指向前推进，也可指推动某事。progress 作动词时常指逐步取得进展。",
+          "reviewed": true
+        }
+      ]
+    },
     "advice": {
       "common": "名词：忠告、劝告、意见、报道、通知",
       "synonyms": [
@@ -118,6 +190,40 @@
           "sense": "建议（名词义）",
           "note": "advice 常指忠告；suggestion 指建议；proposal 常指较完整或正式提出的方案。",
           "reviewed": true
+        }
+      ]
+    },
+    "advise": {
+      "common": "动词：劝告、给...出主意、通知、建议；动词：提意见、商量",
+      "synonyms": [
+        {
+          "word": "notify",
+          "sense": "通知（动词义）"
+        },
+        {
+          "word": "suggest",
+          "sense": "建议",
+          "note": "advise 常见于 advise someone to do something。suggest 常接动名词或 that 从句。",
+          "reviewed": true
+        }
+      ]
+    },
+    "affect": {
+      "common": "动词：影响、感动、假装、模仿、爱好；名词：自觉感情",
+      "synonyms": [
+        {
+          "word": "impact",
+          "sense": "影响",
+          "note": "affect 常作及物动词。impact 可作名词或动词，常用于较明显的影响。",
+          "reviewed": true
+        },
+        {
+          "word": "influence",
+          "sense": "影响（动词义）"
+        },
+        {
+          "word": "sway",
+          "sense": "影响（动词义）"
         }
       ]
     },
@@ -150,6 +256,32 @@
         {
           "word": "assist",
           "sense": "帮助、援助（动词义）"
+        }
+      ]
+    },
+    "allow": {
+      "common": "动词：允许、同意给予、承认；动词：容许、猜想",
+      "synonyms": [
+        {
+          "word": "admit",
+          "sense": "准许",
+          "note": "admit 常指准许进入场所或录取。allow 范围更广，常接人和不定式表示允许做某事。",
+          "reviewed": true
+        },
+        {
+          "word": "permit",
+          "sense": "允许"
+        }
+      ]
+    },
+    "amount": {
+      "common": "名词：总数、总额；动词：总计、等同",
+      "synonyms": [
+        {
+          "word": "sum",
+          "sense": "金额",
+          "note": "amount 是数量，涉及钱时指金额。sum 可指一笔钱，也可指相加所得的总数。",
+          "reviewed": true
         }
       ]
     },
@@ -234,6 +366,28 @@
         }
       ]
     },
+    "appraisal": {
+      "common": "名词：评价、估价",
+      "synonyms": [
+        {
+          "word": "estimate",
+          "sense": "估价",
+          "note": "appraisal 常指正式评估价值或表现。estimate 强调在信息有限时给出大致金额或数量。",
+          "reviewed": true
+        }
+      ]
+    },
+    "approve": {
+      "common": "动词：赞同、核准、为...提供证据；动词：赞许",
+      "synonyms": [
+        {
+          "word": "sanction",
+          "sense": "批准",
+          "note": "approve 常指同意计划或请求。sanction 可指正式授权，读到 sanctions 时还要留意制裁义。",
+          "reviewed": true
+        }
+      ]
+    },
     "arise": {
       "common": "动词：站立、出现、起来",
       "synonyms": [
@@ -257,6 +411,84 @@
         }
       ]
     },
+    "assault": {
+      "common": "名词：攻击、袭击；动词：袭击、攻击；动词：发动攻击",
+      "synonyms": [
+        {
+          "word": "attack",
+          "sense": "袭击",
+          "note": "assault 常指暴力袭击，法律报道中也常见。attack 范围更广，还可指言语攻击。",
+          "reviewed": true
+        }
+      ]
+    },
+    "attack": {
+      "common": "名词：攻击、抨击；动词：攻击、抨击、动手干；动词：攻击",
+      "synonyms": [
+        {
+          "word": "assault",
+          "sense": "袭击",
+          "note": "assault 常指暴力袭击，法律报道中也常见。attack 范围更广，还可指言语攻击。",
+          "reviewed": true
+        }
+      ]
+    },
+    "attain": {
+      "common": "动词：达到、获得；动词：达到",
+      "synonyms": [
+        {
+          "word": "achieve",
+          "sense": "达到",
+          "note": "achieve 强调完成目标或取得成果。attain 较正式，常指达到某种水平、年龄或地位。",
+          "reviewed": true
+        },
+        {
+          "word": "acquire",
+          "sense": "获得、取得"
+        },
+        {
+          "word": "gain",
+          "sense": "获得、取得"
+        },
+        {
+          "word": "obtain",
+          "sense": "获得、取得"
+        }
+      ]
+    },
+    "bankrupt": {
+      "common": "名词：破产者；形容词：破产的；动词：使破产",
+      "synonyms": [
+        {
+          "word": "ruin",
+          "sense": "使破产、使陷入财务困境",
+          "note": "bankrupt 指使某人或机构破产。ruin 指彻底毁坏，谈到钱时可指使人倾家荡产。",
+          "reviewed": true
+        }
+      ]
+    },
+    "barely": {
+      "common": "副词：几乎不",
+      "synonyms": [
+        {
+          "word": "scarcely",
+          "sense": "几乎不",
+          "note": "两词都可表示程度很低。barely 还常指刚刚够或勉强做到。",
+          "reviewed": true
+        }
+      ]
+    },
+    "bargain": {
+      "common": "名词：交易、买卖协定、特价商品；动词：讲价、交易",
+      "synonyms": [
+        {
+          "word": "deal",
+          "sense": "交易",
+          "note": "bargain 可指谈成的交易，也常指物美价廉的东西。deal 泛指协议或交易。",
+          "reviewed": true
+        }
+      ]
+    },
     "barrier": {
       "common": "名词：障碍、栅栏",
       "synonyms": [
@@ -270,6 +502,28 @@
           "word": "obstacle",
           "sense": "障碍、阻碍（名词义）",
           "note": "barrier 常指屏障或限制；obstacle 指妨碍前进的因素；handicap 指造成不利的障碍或条件。",
+          "reviewed": true
+        }
+      ]
+    },
+    "basis": {
+      "common": "名词：基础、主要成分",
+      "synonyms": [
+        {
+          "word": "foundation",
+          "sense": "基础",
+          "note": "basis 常指观点、决定或计算所依据的东西。foundation 强调支撑事物的根基。",
+          "reviewed": true
+        }
+      ]
+    },
+    "battle": {
+      "common": "名词：战役；动词：战斗",
+      "synonyms": [
+        {
+          "word": "combat",
+          "sense": "战斗",
+          "note": "battle 通常指一场战斗或长期斗争。combat 偏正式，常指作战活动。",
           "reviewed": true
         }
       ]
@@ -295,6 +549,17 @@
         }
       ]
     },
+    "breach": {
+      "common": "名词：裂口、违背、破坏、违反、突破；动词：攻破、突破；动词：跳出水面",
+      "synonyms": [
+        {
+          "word": "violate",
+          "sense": "违反",
+          "note": "breach 常指违反合同、义务或保密要求。violate 常用于违反法律、规则或侵害权利。",
+          "reviewed": true
+        }
+      ]
+    },
     "cancel": {
       "common": "名词：取消、撤消、盖销(邮票)；动词：取消、删去、抵销、盖销；动词：相互抵销",
       "synonyms": [
@@ -316,6 +581,12 @@
       "common": "名词：小心、照料、忧虑；动词：关心、介意；动词：在意、喜欢",
       "synonyms": [
         {
+          "word": "caution",
+          "sense": "小心、谨慎",
+          "note": "with care 可强调仔细操作。with caution 更强调留意风险。",
+          "reviewed": true
+        },
+        {
           "word": "concern",
           "sense": "关心、关注（名词或动词义项）",
           "note": "care 可指关心和照料；concern 可指关切；regard 在机构资料中也有注意、关心义，固定搭配不同。",
@@ -325,6 +596,133 @@
           "word": "regard",
           "sense": "关心、关注（名词或动词义项）",
           "note": "care 可指关心和照料；concern 可指关切；regard 在机构资料中也有注意、关心义，固定搭配不同。",
+          "reviewed": true
+        }
+      ]
+    },
+    "catastrophe": {
+      "common": "名词：大灾难、大祸",
+      "synonyms": [
+        {
+          "word": "disaster",
+          "sense": "灾难",
+          "note": "catastrophe 往往强调灾难规模或后果极其严重。disaster 范围更宽，也可夸张形容失败。",
+          "reviewed": true
+        }
+      ]
+    },
+    "cause": {
+      "common": "名词：原因、目标；动词：引起、使产生、使遭受",
+      "synonyms": [
+        {
+          "word": "reason",
+          "sense": "原因",
+          "note": "cause 偏重造成结果的直接因素。reason 还可以指个人行动的理由或给出的解释。",
+          "reviewed": true
+        }
+      ]
+    },
+    "caution": {
+      "common": "名词：小心、慎重、警示；动词：警告",
+      "synonyms": [
+        {
+          "word": "care",
+          "sense": "小心、谨慎",
+          "note": "with care 可强调仔细操作。with caution 更强调留意风险。",
+          "reviewed": true
+        }
+      ]
+    },
+    "characteristic": {
+      "common": "名词：特性、特征、特色；形容词：特性的、特有的、有特色的",
+      "synonyms": [
+        {
+          "word": "feature",
+          "sense": "特征",
+          "note": "characteristic 强调能辨认某类人或事物的典型特征。feature 可指任一显著特点，也常指功能。",
+          "reviewed": true
+        }
+      ]
+    },
+    "chart": {
+      "common": "名词：图表、海图；动词：制成图表",
+      "synonyms": [
+        {
+          "word": "graph",
+          "sense": "图表",
+          "note": "chart 范围较广，可用图形或表格组织信息。graph 通常用坐标显示数值或变量的关系。",
+          "reviewed": true
+        }
+      ]
+    },
+    "choice": {
+      "common": "名词：选择、精选品、选择权；形容词：精选的、挑三拣四的、上等的",
+      "synonyms": [
+        {
+          "word": "selection",
+          "sense": "选择",
+          "note": "choice 可指选择的权利或结果。selection 可指挑选的过程或挑出来的一组。",
+          "reviewed": true
+        }
+      ]
+    },
+    "circulate": {
+      "common": "动词：(使)流通、(使)循环、(使)传播",
+      "synonyms": [
+        {
+          "word": "propagate",
+          "sense": "传播",
+          "note": "circulate 常指消息或文件在人群中流传。propagate 可指传播观念，亦可指繁殖或传播波。",
+          "reviewed": true
+        },
+        {
+          "word": "spread",
+          "sense": "传播",
+          "note": "circulate 偏重在人群或渠道中传递。spread 偏重从原有范围向外扩散。",
+          "reviewed": true
+        }
+      ]
+    },
+    "client": {
+      "common": "名词：客户、顾客、委托人",
+      "synonyms": [
+        {
+          "word": "customer",
+          "sense": "客户",
+          "note": "client 常指购买专业服务或长期接受服务的人。customer 常指购买商品或服务的人。",
+          "reviewed": true
+        }
+      ]
+    },
+    "clutch": {
+      "common": "名词：抓紧、掌握、离合器、一窝小鸡；动词：抓住、踩汽车离合器踏板；动词：抓",
+      "synonyms": [
+        {
+          "word": "seize",
+          "sense": "抓住",
+          "note": "clutch 强调紧紧抓着。seize 常指突然抓住，也可指抓住机会。",
+          "reviewed": true
+        }
+      ]
+    },
+    "coach": {
+      "common": "名词：四轮大马车、教练；动词：训练、指导；动词：坐马车旅行、作指导",
+      "synonyms": [
+        {
+          "word": "tutor",
+          "sense": "辅导",
+          "note": "coach 常指通过训练提升表现。tutor 多指就一门学科给个人或小组辅导。",
+          "reviewed": true
+        }
+      ]
+    },
+    "combat": {
+      "common": "名词：争斗、战斗；动词：战斗、争斗；动词：与...战斗、与...斗争",
+      "synonyms": [
+        {
+          "word": "battle",
+          "sense": "战斗",
+          "note": "battle 通常指一场战斗或长期斗争。combat 偏正式，常指作战活动。",
           "reviewed": true
         }
       ]
@@ -353,6 +751,12 @@
           "word": "dictate",
           "sense": "命令、指挥（动词义）",
           "note": "command 常用于指挥或正式命令；dictate 强调发号施令；order 可指具体命令。这里只比较动词义。",
+          "reviewed": true
+        },
+        {
+          "word": "instruction",
+          "sense": "指令",
+          "note": "command 可指权威发出的命令或计算机指令。instruction 也可指操作步骤，复数常指说明。",
           "reviewed": true
         },
         {
@@ -386,6 +790,17 @@
         }
       ]
     },
+    "comment": {
+      "common": "名词：注解、批评、评论、备注；动词：评论、注解",
+      "synonyms": [
+        {
+          "word": "remark",
+          "sense": "评论",
+          "note": "comment 常指对某事发表意见。remark 常指说出的一句评论或观察。",
+          "reviewed": true
+        }
+      ]
+    },
     "commit": {
       "common": "动词：委托(托付)、犯罪、指派...作战、使承担义务",
       "synonyms": [
@@ -399,6 +814,39 @@
           "word": "promise",
           "sense": "承诺（动词义）",
           "note": "promise 和 pledge 可指承诺；commit 常见于 commit oneself to，强调使自己承担义务。",
+          "reviewed": true
+        }
+      ]
+    },
+    "compel": {
+      "common": "动词：强迫、迫使",
+      "synonyms": [
+        {
+          "word": "oblige",
+          "sense": "迫使",
+          "note": "compel 偏重压力强到不得不做。oblige 在 be obliged to 中常指受规则、责任或形势所迫。",
+          "reviewed": true
+        }
+      ]
+    },
+    "compete": {
+      "common": "动词：竞争、对抗",
+      "synonyms": [
+        {
+          "word": "contend",
+          "sense": "竞争",
+          "note": "compete 泛指参与竞争。contend for 常指争取奖项、职位等，contend that 则表示主张。",
+          "reviewed": true
+        }
+      ]
+    },
+    "competition": {
+      "common": "名词：竞争、竞赛",
+      "synonyms": [
+        {
+          "word": "contest",
+          "sense": "比赛",
+          "note": "competition 还可指长期的竞争。contest 常指有特定规则或目标的一场比赛。",
           "reviewed": true
         }
       ]
@@ -424,9 +872,26 @@
         }
       ]
     },
+    "component": {
+      "common": "名词：元件、组件、成分；形容词：组成的、构成的",
+      "synonyms": [
+        {
+          "word": "ingredient",
+          "sense": "成分",
+          "note": "component 是系统或整体中的一个组成部分。ingredient 常指配方或混合物的成分，也可比喻成功的要素。",
+          "reviewed": true
+        }
+      ]
+    },
     "comprise": {
       "common": "动词：包含、构成",
       "synonyms": [
+        {
+          "word": "consist",
+          "sense": "由……组成",
+          "note": "整体可作 comprise 的主语，后面直接跟组成部分。consist of 也用整体作主语，后面跟 of。",
+          "reviewed": true
+        },
         {
           "word": "contain",
           "sense": "整体包含部分（动词义）",
@@ -480,9 +945,51 @@
         }
       ]
     },
+    "confidence": {
+      "common": "名词：信心",
+      "synonyms": [
+        {
+          "word": "assurance",
+          "sense": "信心"
+        },
+        {
+          "word": "faith",
+          "sense": "信心"
+        },
+        {
+          "word": "trust",
+          "sense": "信任",
+          "note": "confidence 常指对能力、判断或结果有信心。trust 常强调相信对方可靠、诚实。",
+          "reviewed": true
+        }
+      ]
+    },
     "confidential": {
       "common": "形容词：机密的、保密的",
       "synonyms": []
+    },
+    "confine": {
+      "common": "动词：限制、使不外出、禁闭；动词：邻接、交界；名词：边缘、范围、区域",
+      "synonyms": [
+        {
+          "word": "constrain",
+          "sense": "限制",
+          "note": "confine 偏重限制在一个范围内。constrain 偏重条件对选择或行动施加约束。",
+          "reviewed": true
+        },
+        {
+          "word": "limit",
+          "sense": "限制",
+          "note": "confine 常说把人或事限在某处或某个范围。limit 常说给数量、程度或范围设上限。",
+          "reviewed": true
+        },
+        {
+          "word": "restrict",
+          "sense": "限制",
+          "note": "confine 强调留在指定范围。restrict 常指借规则或条件限制使用、进入或行动。",
+          "reviewed": true
+        }
+      ]
     },
     "connect": {
       "common": "动词：连接、联合、联系",
@@ -514,6 +1021,77 @@
           "word": "result",
           "sense": "后果、结果（名词义）",
           "note": "result 和 outcome 指结果；consequence 常含后果意味；aftermath 常指坏事之后的影响。",
+          "reviewed": true
+        }
+      ]
+    },
+    "consequently": {
+      "common": "副词：所以",
+      "synonyms": [
+        {
+          "word": "therefore",
+          "sense": "因此",
+          "note": "consequently 常突出前因带来的结果。therefore 也可由论据引出判断。",
+          "reviewed": true
+        }
+      ]
+    },
+    "consider": {
+      "common": "动词：考虑、思考、认为",
+      "synonyms": [
+        {
+          "word": "deliberate",
+          "sense": "仔细考虑（动词义）"
+        },
+        {
+          "word": "ponder",
+          "sense": "仔细考虑（动词义）"
+        },
+        {
+          "word": "reckon",
+          "sense": "认为",
+          "note": "consider 作此义常见于 consider A (to be) B。reckon 表示认为或估计，语气较口语。",
+          "reviewed": true
+        }
+      ]
+    },
+    "consist": {
+      "common": "动词：组成、存在于、一致",
+      "synonyms": [
+        {
+          "word": "comprise",
+          "sense": "由……组成",
+          "note": "整体可作 comprise 的主语，后面直接跟组成部分。consist of 也用整体作主语，后面跟 of。",
+          "reviewed": true
+        }
+      ]
+    },
+    "constrain": {
+      "common": "动词：强迫、限制、关押",
+      "synonyms": [
+        {
+          "word": "confine",
+          "sense": "限制",
+          "note": "confine 偏重限制在一个范围内。constrain 偏重条件对选择或行动施加约束。",
+          "reviewed": true
+        },
+        {
+          "word": "limit",
+          "sense": "限制"
+        },
+        {
+          "word": "restrict",
+          "sense": "限制"
+        }
+      ]
+    },
+    "consume": {
+      "common": "动词：消耗、消费、消灭；动词：耗尽、毁灭",
+      "synonyms": [
+        {
+          "word": "expend",
+          "sense": "消耗",
+          "note": "consume 常接能源、食物或资源。expend 较正式，常接精力、时间或金钱。",
           "reviewed": true
         }
       ]
@@ -552,6 +1130,39 @@
         }
       ]
     },
+    "contend": {
+      "common": "动词：奋斗、斗争、竞争；动词：为...斗争",
+      "synonyms": [
+        {
+          "word": "compete",
+          "sense": "竞争",
+          "note": "compete 泛指参与竞争。contend for 常指争取奖项、职位等，contend that 则表示主张。",
+          "reviewed": true
+        }
+      ]
+    },
+    "contest": {
+      "common": "名词：竞赛、争论；动词：竞争、争取、争辩；动词：竞争",
+      "synonyms": [
+        {
+          "word": "competition",
+          "sense": "比赛",
+          "note": "competition 还可指长期的竞争。contest 常指有特定规则或目标的一场比赛。",
+          "reviewed": true
+        }
+      ]
+    },
+    "contract": {
+      "common": "名词：合约、婚约、契约；动词：使皱缩、使缩短、感染、订约、缔结；动词：皱缩、订约、收缩",
+      "synonyms": [
+        {
+          "word": "shrink",
+          "sense": "收缩",
+          "note": "contract 常指因受冷或肌肉用力而收缩。shrink 常指尺寸、数量或规模变小。",
+          "reviewed": true
+        }
+      ]
+    },
     "contradict": {
       "common": "动词：反驳、与...抵触、与...矛盾；动词：反驳",
       "synonyms": [
@@ -580,6 +1191,39 @@
         }
       ]
     },
+    "convey": {
+      "common": "动词：传达、运输、转让",
+      "synonyms": [
+        {
+          "word": "express",
+          "sense": "表达",
+          "note": "convey 强调把信息、意义或感受传递给对方。express 强调把自己的思想或感情表达出来。",
+          "reviewed": true
+        }
+      ]
+    },
+    "cope": {
+      "common": "动词：竞争、应付；名词：长袍",
+      "synonyms": [
+        {
+          "word": "deal",
+          "sense": "应付、处理",
+          "note": "cope with 强调应付压力或困难。deal with 范围更广，可指处理事务或讨论某个问题。",
+          "reviewed": true
+        }
+      ]
+    },
+    "core": {
+      "common": "名词：核心、中心、果核；形容词：核心的；动词：去掉果核",
+      "synonyms": [
+        {
+          "word": "nucleus",
+          "sense": "核心",
+          "note": "core 可指任何事物的核心部分。nucleus 常指细胞核、原子核，也可指团体的中心。",
+          "reviewed": true
+        }
+      ]
+    },
     "correct": {
       "common": "形容词：正确的、合适的；动词：改正、订正",
       "synonyms": [
@@ -593,6 +1237,12 @@
           "word": "precise",
           "sense": "准确、正确（形容词义）",
           "note": "correct 强调没有错误；accurate 强调符合事实；precise 和 exact 强调精确，修饰对象有差别。",
+          "reviewed": true
+        },
+        {
+          "word": "rectify",
+          "sense": "纠正",
+          "note": "correct 常指改正错误。rectify 较正式，常用于纠正问题、失衡或不良状况。",
           "reviewed": true
         }
       ]
@@ -614,6 +1264,51 @@
         }
       ]
     },
+    "crawl": {
+      "common": "名词：爬行、匍匐而行、养鱼池；动词：爬行",
+      "synonyms": [
+        {
+          "word": "creep",
+          "sense": "缓慢移动",
+          "note": "crawl 通常指爬行，也可指慢得像爬。creep 常指悄悄或一点点移动。",
+          "reviewed": true
+        }
+      ]
+    },
+    "creep": {
+      "common": "名词：爬、徐行、蠕动；动词：爬、蔓延、潜行",
+      "synonyms": [
+        {
+          "word": "crawl",
+          "sense": "缓慢移动",
+          "note": "crawl 通常指爬行，也可指慢得像爬。creep 常指悄悄或一点点移动。",
+          "reviewed": true
+        }
+      ]
+    },
+    "critical": {
+      "common": "形容词：批评的、决定性的、危险的、临界的",
+      "synonyms": [
+        {
+          "word": "crucial",
+          "sense": "至关重要的"
+        },
+        {
+          "word": "decisive",
+          "sense": "关键的",
+          "note": "critical 强调对成败至关重要。decisive 强调足以决定结果。",
+          "reviewed": true
+        },
+        {
+          "word": "essential",
+          "sense": "至关重要的"
+        },
+        {
+          "word": "vital",
+          "sense": "至关重要的"
+        }
+      ]
+    },
     "crucial": {
       "common": "形容词：决定性的、重要的、严厉的",
       "synonyms": [
@@ -628,9 +1323,48 @@
           "reviewed": true
         },
         {
+          "word": "important",
+          "sense": "重要的",
+          "note": "crucial 表示至关重要。important 程度范围更广。",
+          "reviewed": true
+        },
+        {
           "word": "vital",
           "sense": "必要、重要的（形容词义）",
           "note": "necessary 强调必需；essential 指不可或缺；vital、crucial 强调至关重要。",
+          "reviewed": true
+        }
+      ]
+    },
+    "cue": {
+      "common": "名词：提示、线索；动词：给...暗示(或提示)",
+      "synonyms": [
+        {
+          "word": "prompt",
+          "sense": "提示",
+          "note": "cue 是提醒某人何时行动的信号。prompt 可指促使作答或行动的提示，如写作提示或屏幕提示。",
+          "reviewed": true
+        }
+      ]
+    },
+    "curb": {
+      "common": "名词：抑制、勒马绳、边石；动词：抑制、束缚、勒住",
+      "synonyms": [
+        {
+          "word": "restrict",
+          "sense": "限制",
+          "note": "curb 强调遏制势头或把过量活动压下来。restrict 常指用规则或条件限制范围。",
+          "reviewed": true
+        }
+      ]
+    },
+    "customer": {
+      "common": "名词：消费者",
+      "synonyms": [
+        {
+          "word": "client",
+          "sense": "客户",
+          "note": "client 常指购买专业服务或长期接受服务的人。customer 常指购买商品或服务的人。",
           "reviewed": true
         }
       ]
@@ -683,8 +1417,26 @@
           "reviewed": true
         },
         {
+          "word": "bargain",
+          "sense": "交易",
+          "note": "bargain 可指谈成的交易，也常指物美价廉的东西。deal 泛指协议或交易。",
+          "reviewed": true
+        },
+        {
+          "word": "cope",
+          "sense": "应付、处理",
+          "note": "cope with 强调应付压力或困难。deal with 范围更广，可指处理事务或讨论某个问题。",
+          "reviewed": true
+        },
+        {
           "word": "pact",
           "sense": "协议（名词义）"
+        },
+        {
+          "word": "trade",
+          "sense": "交易",
+          "note": "deal 作名词常指谈成的一笔交易或协议。trade 常指贸易或交换。",
+          "reviewed": true
         },
         {
           "word": "treat",
@@ -707,6 +1459,28 @@
           "word": "resolve",
           "sense": "决定（动词义）",
           "note": "decide 指作决定；determine 可指决定或确定；resolve 常强调下决心或正式决定。",
+          "reviewed": true
+        }
+      ]
+    },
+    "decisive": {
+      "common": "形容词：决定性的、坚定的、果断的",
+      "synonyms": [
+        {
+          "word": "critical",
+          "sense": "关键的",
+          "note": "critical 强调对成败至关重要。decisive 强调足以决定结果。",
+          "reviewed": true
+        }
+      ]
+    },
+    "deduct": {
+      "common": "动词：扣除、减去",
+      "synonyms": [
+        {
+          "word": "subtract",
+          "sense": "减去",
+          "note": "deduct 常指从金额、分数或总量中扣除。subtract 常用于数学运算。",
           "reviewed": true
         }
       ]
@@ -831,6 +1605,56 @@
         }
       ]
     },
+    "deny": {
+      "common": "动词：否认、拒绝",
+      "synonyms": [
+        {
+          "word": "refuse",
+          "sense": "拒绝",
+          "note": "deny 常见于 deny someone access，表示不给予。refuse 可接请求或不定式，也可指不愿做某事。",
+          "reviewed": true
+        }
+      ]
+    },
+    "depict": {
+      "common": "动词：描述、描写",
+      "synonyms": [
+        {
+          "word": "describe",
+          "sense": "描绘",
+          "note": "depict 可用画面或文字刻画场景。describe 泛指描述特征、情况或经过。",
+          "reviewed": true
+        },
+        {
+          "word": "portray",
+          "sense": "描绘",
+          "note": "depict 偏重把人或情景描绘出来。portray 常侧重以某种形象或角度呈现。",
+          "reviewed": true
+        }
+      ]
+    },
+    "describe": {
+      "common": "动词：描述、描绘、画",
+      "synonyms": [
+        {
+          "word": "depict",
+          "sense": "描绘",
+          "note": "depict 可用画面或文字刻画场景。describe 泛指描述特征、情况或经过。",
+          "reviewed": true
+        }
+      ]
+    },
+    "deserve": {
+      "common": "动词：该得到、值得；动词：应得报答",
+      "synonyms": [
+        {
+          "word": "merit",
+          "sense": "值得",
+          "note": "deserve 可说某人值得受到某种对待。merit 作动词较正式，常见于某事值得关注或讨论。",
+          "reviewed": true
+        }
+      ]
+    },
     "destroy": {
       "common": "动词：破坏、毁坏、消灭",
       "synonyms": [
@@ -921,6 +1745,50 @@
         }
       ]
     },
+    "direct": {
+      "common": "形容词：直接的、坦白的；动词：指示、指挥、命令、导演；动词：指导、指挥；副词：直接地",
+      "synonyms": [
+        {
+          "word": "straight",
+          "sense": "直接地",
+          "note": "direct 和 straight 都可表示不经中转地去某处。straight 也可指直线前进或立刻行动。",
+          "reviewed": true
+        }
+      ]
+    },
+    "direction": {
+      "common": "名词：方向、指导、趋势",
+      "synonyms": [
+        {
+          "word": "guidance",
+          "sense": "指导",
+          "note": "direction 可指为行动指明方向。guidance 通常指帮助他人作决定或行动的建议。",
+          "reviewed": true
+        }
+      ]
+    },
+    "disaster": {
+      "common": "名词：灾祸、不幸、彻底失败",
+      "synonyms": [
+        {
+          "word": "catastrophe",
+          "sense": "灾难",
+          "note": "catastrophe 往往强调灾难规模或后果极其严重。disaster 范围更宽，也可夸张形容失败。",
+          "reviewed": true
+        }
+      ]
+    },
+    "discharge": {
+      "common": "动词：卸下、放出、解雇、拔染、履行；动词：卸货、流出；名词：卸货、流出、放电",
+      "synonyms": [
+        {
+          "word": "release",
+          "sense": "释放、排出",
+          "note": "discharge 常指排放液体、气体或电荷。release 泛指让人或事物脱离限制。",
+          "reviewed": true
+        }
+      ]
+    },
     "discover": {
       "common": "动词：发现、找到、暴露；动词：发现",
       "synonyms": [
@@ -938,6 +1806,28 @@
         }
       ]
     },
+    "disgust": {
+      "common": "名词：厌恶、嫌恶；动词：令人厌恶；动词：使作呕",
+      "synonyms": [
+        {
+          "word": "dislike",
+          "sense": "厌恶、反感",
+          "note": "disgust 指强烈的厌恶。dislike 程度较轻，常只是“不喜欢”。",
+          "reviewed": true
+        }
+      ]
+    },
+    "dislike": {
+      "common": "名词：嫌恶；动词：讨厌、不喜欢",
+      "synonyms": [
+        {
+          "word": "disgust",
+          "sense": "厌恶、反感",
+          "note": "disgust 指强烈的厌恶。dislike 程度较轻，常只是“不喜欢”。",
+          "reviewed": true
+        }
+      ]
+    },
     "distinction": {
       "common": "名词：区别",
       "synonyms": [
@@ -945,6 +1835,28 @@
           "word": "difference",
           "sense": "区别、差别（名词义）",
           "note": "difference 泛指差异；distinction 常强调可辨认的区别或作出的区分。",
+          "reviewed": true
+        }
+      ]
+    },
+    "disturb": {
+      "common": "动词：扰乱、妨碍、使不安",
+      "synonyms": [
+        {
+          "word": "interrupt",
+          "sense": "打扰",
+          "note": "disturb 指打扰、使不安或扰乱。interrupt 强调使说话或活动暂时中断。",
+          "reviewed": true
+        }
+      ]
+    },
+    "dominant": {
+      "common": "形容词：占优势的、支配的",
+      "synonyms": [
+        {
+          "word": "predominant",
+          "sense": "占优势的",
+          "note": "dominant 可强调控制力或影响力。predominant 常强调在数量、频率或重要性上最突出。",
           "reviewed": true
         }
       ]
@@ -1006,6 +1918,21 @@
         }
       ]
     },
+    "duty": {
+      "common": "名词：责任、关税、职务、尊敬",
+      "synonyms": [
+        {
+          "word": "obligation",
+          "sense": "义务、职责"
+        },
+        {
+          "word": "tariff",
+          "sense": "关税",
+          "note": "duty 是对商品征收的税，如 import duty。tariff 常指进口关税或相关税率。",
+          "reviewed": true
+        }
+      ]
+    },
     "dwell": {
       "common": "动词：居住、居住(于)、存在(于)",
       "synonyms": [
@@ -1019,6 +1946,50 @@
           "word": "settle",
           "sense": "居住、栖身（动词义）",
           "note": "dwell 常与 in 连用；inhabit 直接接居住地，也用于动物栖息；settle 强调迁入并定居。",
+          "reviewed": true
+        }
+      ]
+    },
+    "edition": {
+      "common": "名词：版本、版、翻版",
+      "synonyms": [
+        {
+          "word": "version",
+          "sense": "版本",
+          "note": "edition 常指出版物、节目等的某一版。version 泛指同一事物的不同版本。",
+          "reviewed": true
+        }
+      ]
+    },
+    "effort": {
+      "common": "名词：努力、成就",
+      "synonyms": [
+        {
+          "word": "endeavor",
+          "sense": "努力",
+          "note": "effort 强调投入的精力或一次努力。endeavor 较正式，强调为目标作出的尝试。",
+          "reviewed": true
+        }
+      ]
+    },
+    "electric": {
+      "common": "形容词：电的、导电的、电动的",
+      "synonyms": [
+        {
+          "word": "electrical",
+          "sense": "电的",
+          "note": "electric 常指用电驱动或供电，如 electric cars。electrical 常指与电有关，如 electrical equipment。",
+          "reviewed": true
+        }
+      ]
+    },
+    "electrical": {
+      "common": "形容词：电的、有关电的",
+      "synonyms": [
+        {
+          "word": "electric",
+          "sense": "电的",
+          "note": "electric 常指用电驱动或供电，如 electric cars。electrical 常指与电有关，如 electrical equipment。",
           "reviewed": true
         }
       ]
@@ -1042,6 +2013,17 @@
           "word": "occur",
           "sense": "出现（动词义）",
           "note": "appear 和 emerge 可指出现；arise 常指问题产生；occur 常指发生，不适用于所有相同对象。",
+          "reviewed": true
+        }
+      ]
+    },
+    "emphasis": {
+      "common": "名词：强调、加强、重点、强语气",
+      "synonyms": [
+        {
+          "word": "stress",
+          "sense": "强调",
+          "note": "emphasis 是特别重视或突出的重点。stress 作名词也可表示强调，此外常指压力或重音。",
           "reviewed": true
         }
       ]
@@ -1081,6 +2063,84 @@
         }
       ]
     },
+    "endeavor": {
+      "common": "名词：努力、尽力；动词：努力、尽力",
+      "synonyms": [
+        {
+          "word": "effort",
+          "sense": "努力",
+          "note": "effort 强调投入的精力或一次努力。endeavor 较正式，强调为目标作出的尝试。",
+          "reviewed": true
+        },
+        {
+          "word": "strive",
+          "sense": "努力、奋斗（动词义）"
+        },
+        {
+          "word": "struggle",
+          "sense": "努力、奋斗（动词义）"
+        }
+      ]
+    },
+    "endorse": {
+      "common": "动词：支持、赞同、背书于、签署",
+      "synonyms": [
+        {
+          "word": "support",
+          "sense": "支持",
+          "note": "endorse 常指公开或正式表示认可。support 还可指在行动、资金或资源上提供支持。",
+          "reviewed": true
+        }
+      ]
+    },
+    "enhance": {
+      "common": "动词：提高、加强、增加",
+      "synonyms": [
+        {
+          "word": "heighten",
+          "sense": "提高",
+          "note": "enhance 常指改善质量或增强价值。heighten 偏向提高强度，常接意识、紧张感或风险。",
+          "reviewed": true
+        }
+      ]
+    },
+    "enlarge": {
+      "common": "动词：扩大、增大；动词：扩大、详述",
+      "synonyms": [
+        {
+          "word": "expand",
+          "sense": "扩展、扩大"
+        },
+        {
+          "word": "magnify",
+          "sense": "放大",
+          "note": "enlarge 常指使尺寸变大。magnify 常指光学放大，也可指使问题或影响显得更大。",
+          "reviewed": true
+        }
+      ]
+    },
+    "error": {
+      "common": "名词：错误、过失、失误、误差",
+      "synonyms": [
+        {
+          "word": "mistake",
+          "sense": "错误",
+          "note": "error 常用于技术、计算、判断等语境。mistake 常指做错的事或错误选择。",
+          "reviewed": true
+        }
+      ]
+    },
+    "essence": {
+      "common": "名词：实质、本质、香精",
+      "synonyms": [
+        {
+          "word": "substance",
+          "sense": "本质、实质",
+          "note": "essence 强调使事物成为它本身的核心性质。substance 可指言论或主张的实质内容，也有物质义。",
+          "reviewed": true
+        }
+      ]
+    },
     "essential": {
       "common": "名词：要素、要点、本质；形容词：必要的、重要的、本质的",
       "synonyms": [
@@ -1098,6 +2158,98 @@
           "word": "vital",
           "sense": "必要、重要的（形容词义）",
           "note": "necessary 强调必需；essential 指不可或缺；vital、crucial 强调至关重要。",
+          "reviewed": true
+        }
+      ]
+    },
+    "establish": {
+      "common": "动词：建立、确立、制定；动词：移植生长",
+      "synonyms": [
+        {
+          "word": "found",
+          "sense": "创立",
+          "note": "establish 可指建立机构、规则或关系。found 作动词时常指创立学校、公司等机构。",
+          "reviewed": true
+        },
+        {
+          "word": "institute",
+          "sense": "设立",
+          "note": "establish 常指建立机构或制度。institute 作动词常指开始实施制度、程序或措施。",
+          "reviewed": true
+        }
+      ]
+    },
+    "esteem": {
+      "common": "名词：尊敬、尊重；动词：尊敬、尊重、认为",
+      "synonyms": [
+        {
+          "word": "regard",
+          "sense": "尊重",
+          "note": "esteem 是尊敬或高度评价。regard 可在 hold someone in high regard 中表示对某人的敬重。",
+          "reviewed": true
+        },
+        {
+          "word": "respect",
+          "sense": "尊重",
+          "note": "esteem 偏正式，强调高度评价。respect 用得更广，也可指尊重权利、边界或决定。",
+          "reviewed": true
+        }
+      ]
+    },
+    "estimate": {
+      "common": "名词：估计、判断；动词：估计、评价、判断；动词：估计",
+      "synonyms": [
+        {
+          "word": "appraisal",
+          "sense": "估价",
+          "note": "appraisal 常指正式评估价值或表现。estimate 强调在信息有限时给出大致金额或数量。",
+          "reviewed": true
+        },
+        {
+          "word": "assess",
+          "sense": "评估、估价"
+        },
+        {
+          "word": "evaluate",
+          "sense": "评估、估价"
+        },
+        {
+          "word": "gauge",
+          "sense": "估计",
+          "note": "estimate 常指估算数量、成本或时间。gauge 常指根据迹象判断程度、反应或情绪。",
+          "reviewed": true
+        }
+      ]
+    },
+    "evidence": {
+      "common": "名词：根据、证据、迹象",
+      "synonyms": [
+        {
+          "word": "proof",
+          "sense": "证据",
+          "note": "evidence 可指支持判断的线索或材料。proof 通常指足以确证某事的证据。",
+          "reviewed": true
+        }
+      ]
+    },
+    "excerpt": {
+      "common": "名词：摘录；动词：引用、摘录",
+      "synonyms": [
+        {
+          "word": "extract",
+          "sense": "摘录",
+          "note": "excerpt 多指从文章、作品中选出的一段。extract 作名词也可指节选，另有提取物义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "expend": {
+      "common": "动词：花费、消耗、用光",
+      "synonyms": [
+        {
+          "word": "consume",
+          "sense": "消耗",
+          "note": "consume 常接能源、食物或资源。expend 较正式，常接精力、时间或金钱。",
           "reviewed": true
         }
       ]
@@ -1148,6 +2300,72 @@
         }
       ]
     },
+    "expose": {
+      "common": "动词：使暴露、使曝光、揭穿、陈列",
+      "synonyms": [
+        {
+          "word": "uncover",
+          "sense": "揭露",
+          "note": "expose 常指使不法行为或问题公之于众。uncover 强调把原来隐蔽的事实发现出来。",
+          "reviewed": true
+        }
+      ]
+    },
+    "express": {
+      "common": "名词：快车、快递、专使；形容词：明确的、丝毫不差的、专门的、快的；动词：表达、表示、表露",
+      "synonyms": [
+        {
+          "word": "convey",
+          "sense": "表达",
+          "note": "convey 强调把信息、意义或感受传递给对方。express 强调把自己的思想或感情表达出来。",
+          "reviewed": true
+        }
+      ]
+    },
+    "extract": {
+      "common": "名词：榨出物、精汁、摘录、选段；动词：(费力地)取出、采掘、榨取、摘录、吸取",
+      "synonyms": [
+        {
+          "word": "excerpt",
+          "sense": "摘录",
+          "note": "excerpt 多指从文章、作品中选出的一段。extract 作名词也可指节选，另有提取物义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "feature": {
+      "common": "名词：面孔的一部分(如眼、口等)、特征、容貌、特色、特写；动词：是...的特色、特写、放映；动词：起重要作用",
+      "synonyms": [
+        {
+          "word": "characteristic",
+          "sense": "特征",
+          "note": "characteristic 强调能辨认某类人或事物的典型特征。feature 可指任一显著特点，也常指功能。",
+          "reviewed": true
+        }
+      ]
+    },
+    "financial": {
+      "common": "形容词：财政的、金融的",
+      "synonyms": [
+        {
+          "word": "fiscal",
+          "sense": "财政的",
+          "note": "financial 涉及个人、机构或政府的财务。fiscal 常用于政府财政或会计年度。",
+          "reviewed": true
+        }
+      ]
+    },
+    "fiscal": {
+      "common": "形容词：财政的、国库的",
+      "synonyms": [
+        {
+          "word": "financial",
+          "sense": "财政的",
+          "note": "financial 涉及个人、机构或政府的财务。fiscal 常用于政府财政或会计年度。",
+          "reviewed": true
+        }
+      ]
+    },
     "flaw": {
       "common": "名词：缺点、裂纹、瑕疵、一阵狂风",
       "synonyms": [
@@ -1167,6 +2385,17 @@
           "word": "shortcoming",
           "sense": "缺点、缺陷（名词义）",
           "note": "defect 和 flaw 常指缺陷；shortcoming 指不足；drawback 常指某事带来的不利之处。",
+          "reviewed": true
+        }
+      ]
+    },
+    "forecast": {
+      "common": "名词：预想、预测、预报；动词：预想、预测、预报",
+      "synonyms": [
+        {
+          "word": "predict",
+          "sense": "预测",
+          "note": "forecast 常见于天气、经济或趋势预测。predict 可泛指预测未来事件或结果。",
           "reviewed": true
         }
       ]
@@ -1192,6 +2421,61 @@
         }
       ]
     },
+    "found": {
+      "common": "动词：建立、创立、铸造",
+      "synonyms": [
+        {
+          "word": "establish",
+          "sense": "创立",
+          "note": "establish 可指建立机构、规则或关系。found 作动词时常指创立学校、公司等机构。",
+          "reviewed": true
+        }
+      ]
+    },
+    "foundation": {
+      "common": "名词：基础、根据、建立",
+      "synonyms": [
+        {
+          "word": "basis",
+          "sense": "基础",
+          "note": "basis 常指观点、决定或计算所依据的东西。foundation 强调支撑事物的根基。",
+          "reviewed": true
+        }
+      ]
+    },
+    "function": {
+      "common": "名词：官能、职务、功能、函数；动词：活动、运行、行使职责",
+      "synonyms": [
+        {
+          "word": "role",
+          "sense": "作用",
+          "note": "function 偏重事物实际发挥的功能。role 常指某人在群体或过程中的角色、作用。",
+          "reviewed": true
+        }
+      ]
+    },
+    "fundamental": {
+      "common": "名词：基本原理、原则、基波；形容词：基本的、重要的、原音的",
+      "synonyms": [
+        {
+          "word": "underlying",
+          "sense": "根本的",
+          "note": "fundamental 强调最基本或最重要。underlying 强调表面之下起作用，如 underlying causes。",
+          "reviewed": true
+        }
+      ]
+    },
+    "furnish": {
+      "common": "动词：供给、提供、装设",
+      "synonyms": [
+        {
+          "word": "provide",
+          "sense": "提供",
+          "note": "furnish 较正式，常见于 furnish someone with something。provide 的用法更广。",
+          "reviewed": true
+        }
+      ]
+    },
     "gain": {
       "common": "名词：增益、获得、利润、收获、增加；动词：得到、增进、赚到；动词：获利、增加",
       "synonyms": [
@@ -1210,6 +2494,12 @@
           "reviewed": true
         },
         {
+          "word": "increase",
+          "sense": "增加",
+          "note": "gain 可指某项数值增加，也可指获得某物。increase 常直接说明数量或程度变大。",
+          "reviewed": true
+        },
+        {
           "word": "obtain",
           "sense": "获得、取得"
         },
@@ -1217,6 +2507,39 @@
           "word": "profit",
           "sense": "利润、收益（名词义）",
           "note": "profit 常指利润；benefit 常指益处；gain 可指所得，只在收益这一部分含义对照。",
+          "reviewed": true
+        }
+      ]
+    },
+    "gauge": {
+      "common": "名词：标准度量、计量器；动词：精确计量、估计",
+      "synonyms": [
+        {
+          "word": "estimate",
+          "sense": "估计",
+          "note": "estimate 常指估算数量、成本或时间。gauge 常指根据迹象判断程度、反应或情绪。",
+          "reviewed": true
+        }
+      ]
+    },
+    "gaze": {
+      "common": "名词：注视、凝视；动词：注视、凝视",
+      "synonyms": [
+        {
+          "word": "stare",
+          "sense": "凝视",
+          "note": "gaze 常指持续地看，可以带欣赏或沉思。stare 指定睛盯着，常因惊讶，也可能显得无礼。",
+          "reviewed": true
+        }
+      ]
+    },
+    "general": {
+      "common": "名词：一般、将军、大体；形容词：全面的、大体的、总的、一般的、普遍的；名词：常规",
+      "synonyms": [
+        {
+          "word": "universal",
+          "sense": "普遍的",
+          "note": "general 常指适用于多数情形或整体。universal 强调适用于所有人或所有相关情形。",
           "reviewed": true
         }
       ]
@@ -1260,6 +2583,17 @@
         }
       ]
     },
+    "graph": {
+      "common": "名词：曲线图、图表、图形",
+      "synonyms": [
+        {
+          "word": "chart",
+          "sense": "图表",
+          "note": "chart 范围较广，可用图形或表格组织信息。graph 通常用坐标显示数值或变量的关系。",
+          "reviewed": true
+        }
+      ]
+    },
     "guard": {
       "common": "名词：守卫者、警戒、护卫队、防护装置；动词：保卫、看守、当心；动词：防止、警惕、警卫、看守",
       "synonyms": [
@@ -1289,6 +2623,17 @@
         }
       ]
     },
+    "guidance": {
+      "common": "名词：指导、领导",
+      "synonyms": [
+        {
+          "word": "direction",
+          "sense": "指导",
+          "note": "direction 可指为行动指明方向。guidance 通常指帮助他人作决定或行动的建议。",
+          "reviewed": true
+        }
+      ]
+    },
     "handicap": {
       "common": "名词：障碍、困难、不利条件；动词：加障碍于、妨碍",
       "synonyms": [
@@ -1296,6 +2641,12 @@
           "word": "barrier",
           "sense": "障碍、阻碍（名词义）",
           "note": "barrier 常指屏障或限制；obstacle 指妨碍前进的因素；handicap 指造成不利的障碍或条件。",
+          "reviewed": true
+        },
+        {
+          "word": "hinder",
+          "sense": "阻碍",
+          "note": "handicap 作动词偏重使某人处于不利条件。hinder 强调拖慢或妨碍行动。",
           "reviewed": true
         },
         {
@@ -1326,6 +2677,101 @@
           "sense": "危险、威胁（名词义）",
           "note": "danger 泛指危险；threat 和 menace 常指威胁；hazard 常指潜在危险因素。",
           "reviewed": true
+        }
+      ]
+    },
+    "heighten": {
+      "common": "动词：增高、提高、加强；动词：升高、变大",
+      "synonyms": [
+        {
+          "word": "enhance",
+          "sense": "提高",
+          "note": "enhance 常指改善质量或增强价值。heighten 偏向提高强度，常接意识、紧张感或风险。",
+          "reviewed": true
+        }
+      ]
+    },
+    "hence": {
+      "common": "副词：因此、从此",
+      "synonyms": [
+        {
+          "word": "therefore",
+          "sense": "因此",
+          "note": "hence 较简洁、正式，常用来引出结果。therefore 常用于完整句中引出结论。",
+          "reviewed": true
+        },
+        {
+          "word": "thus",
+          "sense": "因此",
+          "note": "hence 可承接原因引出结果。thus 也可指“以这种方式”，应结合上下文。",
+          "reviewed": true
+        }
+      ]
+    },
+    "hinder": {
+      "common": "形容词：后面的；动词：阻碍、打扰",
+      "synonyms": [
+        {
+          "word": "handicap",
+          "sense": "阻碍",
+          "note": "handicap 作动词偏重使某人处于不利条件。hinder 强调拖慢或妨碍行动。",
+          "reviewed": true
+        },
+        {
+          "word": "obstruct",
+          "sense": "阻碍"
+        }
+      ]
+    },
+    "humanity": {
+      "common": "名词：人性、人类、博爱",
+      "synonyms": [
+        {
+          "word": "mankind",
+          "sense": "人类",
+          "note": "humanity 可指全体人类，也可指人道。mankind 指全体人类，现代写作也常用 humankind。",
+          "reviewed": true
+        }
+      ]
+    },
+    "imitate": {
+      "common": "动词：模仿、效法、冒充、仿造",
+      "synonyms": [
+        {
+          "word": "simulate",
+          "sense": "模仿、模拟",
+          "note": "imitate 常指模仿人的动作、声音或方式。simulate 常指用模型或安排再现某种过程和条件。",
+          "reviewed": true
+        }
+      ]
+    },
+    "immediate": {
+      "common": "形容词：立即的、直接的、接近的",
+      "synonyms": [
+        {
+          "word": "prompt",
+          "sense": "立即的、迅速的",
+          "note": "immediate 强调没有等待。prompt 常指反应或行动及时。",
+          "reviewed": true
+        }
+      ]
+    },
+    "impact": {
+      "common": "名词：冲击、冲突、影响、效果；动词：挤入、撞击、压紧、对...发生影响",
+      "synonyms": [
+        {
+          "word": "affect",
+          "sense": "影响",
+          "note": "affect 常作及物动词。impact 可作名词或动词，常用于较明显的影响。",
+          "reviewed": true
+        },
+        {
+          "word": "effect",
+          "sense": "影响（名词义）"
+        },
+        {
+          "word": "influence",
+          "sense": "影响（名词义）"
         }
       ]
     },
@@ -1363,6 +2809,17 @@
         }
       ]
     },
+    "important": {
+      "common": "形容词：重要的、有地位的、大量的、显要的、自负的",
+      "synonyms": [
+        {
+          "word": "crucial",
+          "sense": "重要的",
+          "note": "crucial 表示至关重要。important 程度范围更广。",
+          "reviewed": true
+        }
+      ]
+    },
     "impulse": {
       "common": "名词：冲动、驱使、刺激、推动、冲力；动词：推动",
       "synonyms": [
@@ -1382,6 +2839,12 @@
           "word": "propel",
           "sense": "推动：动作与推动力的对照",
           "note": "propel 指向前推进、推动；impulse 在推动义中可指促成行动或运动的力，也常指一时的冲动。这里对照推动这一部分含义，不把冲动当作 propel 的词义，也不表示两词能直接替换。",
+          "reviewed": true
+        },
+        {
+          "word": "urge",
+          "sense": "冲动",
+          "note": "impulse 强调突然冒出的念头。urge 指很强的欲望，可能持续一段时间。",
           "reviewed": true
         }
       ]
@@ -1454,6 +2917,28 @@
         }
       ]
     },
+    "increase": {
+      "common": "名词：增加、增进、利益；动词：增加、加大；动词：增加、繁殖",
+      "synonyms": [
+        {
+          "word": "gain",
+          "sense": "增加",
+          "note": "gain 可指某项数值增加，也可指获得某物。increase 常直接说明数量或程度变大。",
+          "reviewed": true
+        }
+      ]
+    },
+    "ingredient": {
+      "common": "名词：成分、因素",
+      "synonyms": [
+        {
+          "word": "component",
+          "sense": "成分",
+          "note": "component 是系统或整体中的一个组成部分。ingredient 常指配方或混合物的成分，也可比喻成功的要素。",
+          "reviewed": true
+        }
+      ]
+    },
     "inhabit": {
       "common": "动词：居住于、占据、栖息",
       "synonyms": [
@@ -1471,6 +2956,61 @@
         }
       ]
     },
+    "inhibit": {
+      "common": "动词：禁止、抑制；动词：起抑制作用",
+      "synonyms": [
+        {
+          "word": "suppress",
+          "sense": "抑制",
+          "note": "inhibit 常指限制活动或阻碍发展。suppress 常指压制反应、信息或活动，使其不显露或不继续。",
+          "reviewed": true
+        }
+      ]
+    },
+    "injure": {
+      "common": "动词：伤害、损害、使受冤屈",
+      "synonyms": [
+        {
+          "word": "wound",
+          "sense": "使受伤",
+          "note": "injure 泛指造成伤害。wound 常指武器造成的伤，也可指伤感情。",
+          "reviewed": true
+        }
+      ]
+    },
+    "instant": {
+      "common": "名词：立即、瞬间；形容词：紧急的、立即的、即时的",
+      "synonyms": [
+        {
+          "word": "moment",
+          "sense": "瞬间",
+          "note": "instant 强调极短的一瞬。moment 也可指某个特定时刻或一小段时间。",
+          "reviewed": true
+        }
+      ]
+    },
+    "institute": {
+      "common": "名词：学会、学院、协会；动词：创立、开始、制定、任命",
+      "synonyms": [
+        {
+          "word": "establish",
+          "sense": "设立",
+          "note": "establish 常指建立机构或制度。institute 作动词常指开始实施制度、程序或措施。",
+          "reviewed": true
+        }
+      ]
+    },
+    "instruction": {
+      "common": "名词：指令、教导、命令",
+      "synonyms": [
+        {
+          "word": "command",
+          "sense": "指令",
+          "note": "command 可指权威发出的命令或计算机指令。instruction 也可指操作步骤，复数常指说明。",
+          "reviewed": true
+        }
+      ]
+    },
     "instrument": {
       "common": "名词：工具、手段、仪器",
       "synonyms": [
@@ -1478,6 +3018,17 @@
           "word": "device",
           "sense": "仪器、装置（名词义）",
           "note": "device 泛指装置；instrument 常指特定用途的仪器；apparatus 常指成套设备。",
+          "reviewed": true
+        }
+      ]
+    },
+    "intensity": {
+      "common": "名词：强烈、紧张、强度",
+      "synonyms": [
+        {
+          "word": "strength",
+          "sense": "强度",
+          "note": "intensity 常指程度有多强，如光、运动或冲突。strength 可指力气、能力，也可指信号等的强度。",
           "reviewed": true
         }
       ]
@@ -1495,6 +3046,17 @@
           "word": "explain",
           "sense": "解释、说明（动词义）",
           "note": "explain 解释原因或内容；interpret 解释含义，也可指口译；account 的说明义常见于 account for。",
+          "reviewed": true
+        }
+      ]
+    },
+    "interrupt": {
+      "common": "动词：中断、妨碍、插嘴；动词：打断；名词：中断",
+      "synonyms": [
+        {
+          "word": "disturb",
+          "sense": "打扰",
+          "note": "disturb 指打扰、使不安或扰乱。interrupt 强调使说话或活动暂时中断。",
           "reviewed": true
         }
       ]
@@ -1528,6 +3090,73 @@
         {
           "word": "release",
           "sense": "释放"
+        }
+      ]
+    },
+    "license": {
+      "common": "名词：执照、许可证、特许；动词：许可、特许",
+      "synonyms": [
+        {
+          "word": "permission",
+          "sense": "许可",
+          "note": "license 常指正式许可或执照。permission 是广义的同意或准许。",
+          "reviewed": true
+        }
+      ]
+    },
+    "limit": {
+      "common": "名词：界限、边界、限度、极限、限制；动词：限制、限定",
+      "synonyms": [
+        {
+          "word": "confine",
+          "sense": "限制",
+          "note": "confine 常说把人或事限在某处或某个范围。limit 常说给数量、程度或范围设上限。",
+          "reviewed": true
+        },
+        {
+          "word": "constrain",
+          "sense": "限制"
+        },
+        {
+          "word": "restrict",
+          "sense": "限制"
+        }
+      ]
+    },
+    "loosen": {
+      "common": "动词：放松、松开、解除；动词：变松、松弛",
+      "synonyms": [
+        {
+          "word": "undo",
+          "sense": "解开",
+          "note": "loosen 常指把紧的东西弄松。undo 可指把扣子、结等彻底解开。",
+          "reviewed": true
+        }
+      ]
+    },
+    "lure": {
+      "common": "名词：饵、诱惑；动词：引诱、诱惑",
+      "synonyms": [
+        {
+          "word": "tempt",
+          "sense": "诱使",
+          "note": "lure 偏重用有吸引力的东西把人引过来。tempt 偏重让人产生想做某事的念头。",
+          "reviewed": true
+        }
+      ]
+    },
+    "magnify": {
+      "common": "动词：放大、扩大、赞美、夸大；动词：有放大能力",
+      "synonyms": [
+        {
+          "word": "amplify",
+          "sense": "放大"
+        },
+        {
+          "word": "enlarge",
+          "sense": "放大",
+          "note": "enlarge 常指使尺寸变大。magnify 常指光学放大，也可指使问题或影响显得更大。",
+          "reviewed": true
         }
       ]
     },
@@ -1592,6 +3221,39 @@
         }
       ]
     },
+    "mankind": {
+      "common": "名词：人类",
+      "synonyms": [
+        {
+          "word": "humanity",
+          "sense": "人类",
+          "note": "humanity 可指全体人类，也可指人道。mankind 指全体人类，现代写作也常用 humankind。",
+          "reviewed": true
+        }
+      ]
+    },
+    "meantime": {
+      "common": "名词：间隔时间、其时；副词：其间",
+      "synonyms": [
+        {
+          "word": "meanwhile",
+          "sense": "与此同时、在此期间",
+          "note": "meanwhile 常放在句首，承接同时发生的事。meantime 常见于 in the meantime，指等候期间或两件事之间的这段时间。",
+          "reviewed": true
+        }
+      ]
+    },
+    "meanwhile": {
+      "common": "名词：其时、其间；副词：同时、于此时",
+      "synonyms": [
+        {
+          "word": "meantime",
+          "sense": "与此同时、在此期间",
+          "note": "meanwhile 常放在句首，承接同时发生的事。meantime 常见于 in the meantime，指等候期间或两件事之间的这段时间。",
+          "reviewed": true
+        }
+      ]
+    },
     "menace": {
       "common": "名词：威胁、胁迫；动词：威吓、胁迫",
       "synonyms": [
@@ -1611,6 +3273,23 @@
           "word": "threat",
           "sense": "危险、威胁（名词义）",
           "note": "danger 泛指危险；threat 和 menace 常指威胁；hazard 常指潜在危险因素。",
+          "reviewed": true
+        },
+        {
+          "word": "threaten",
+          "sense": "威胁",
+          "note": "menace 偏正式，常指构成危险。threaten 可指口头威胁，也可指某事可能造成危害。",
+          "reviewed": true
+        }
+      ]
+    },
+    "mention": {
+      "common": "名词：提到、言及、陈述；动词：提到、提及",
+      "synonyms": [
+        {
+          "word": "refer",
+          "sense": "提及",
+          "note": "mention 常直接接提到的人或事。refer 在这个意思下常用 refer to。",
           "reviewed": true
         }
       ]
@@ -1632,12 +3311,34 @@
         }
       ]
     },
+    "merit": {
+      "common": "名词：优点、功绩、价值、功过、真相；动词：值得；动词：应受",
+      "synonyms": [
+        {
+          "word": "deserve",
+          "sense": "值得",
+          "note": "deserve 可说某人值得受到某种对待。merit 作动词较正式，常见于某事值得关注或讨论。",
+          "reviewed": true
+        }
+      ]
+    },
     "migrate": {
       "common": "动词：迁徙、迁居、迁移",
       "synonyms": [
         {
           "word": "emigrate",
           "sense": "移居（emigrate 专指移居国外）"
+        }
+      ]
+    },
+    "mistake": {
+      "common": "名词：错误、误会；动词：犯错、误认；动词：误解、弄错",
+      "synonyms": [
+        {
+          "word": "error",
+          "sense": "错误",
+          "note": "error 常用于技术、计算、判断等语境。mistake 常指做错的事或错误选择。",
+          "reviewed": true
         }
       ]
     },
@@ -1669,9 +3370,64 @@
         }
       ]
     },
+    "moment": {
+      "common": "名词：片刻、瞬间、重要、阶段、力矩",
+      "synonyms": [
+        {
+          "word": "instant",
+          "sense": "瞬间",
+          "note": "instant 强调极短的一瞬。moment 也可指某个特定时刻或一小段时间。",
+          "reviewed": true
+        }
+      ]
+    },
+    "mood": {
+      "common": "名词：心情、气氛、生气、基调",
+      "synonyms": [
+        {
+          "word": "temper",
+          "sense": "情绪",
+          "note": "mood 通常指一段时间内的心情。temper 常见于坏脾气、发火等语境。",
+          "reviewed": true
+        }
+      ]
+    },
+    "motion": {
+      "common": "名词：移动、手势、动作、意向、请求；动词：打手势",
+      "synonyms": [
+        {
+          "word": "movement",
+          "sense": "运动、动作",
+          "note": "motion 常强调移动状态或轨迹。movement 可指某次动作、一连串移动，也可指社会运动。",
+          "reviewed": true
+        }
+      ]
+    },
+    "movement": {
+      "common": "名词：运动、动作、运转、移动、倾向",
+      "synonyms": [
+        {
+          "word": "motion",
+          "sense": "运动、动作",
+          "note": "motion 常强调移动状态或轨迹。movement 可指某次动作、一连串移动，也可指社会运动。",
+          "reviewed": true
+        }
+      ]
+    },
     "necessary": {
       "common": "形容词：必要的、必然的、必需的",
       "synonyms": []
+    },
+    "nucleus": {
+      "common": "名词：核心、核子、原子核、起点",
+      "synonyms": [
+        {
+          "word": "core",
+          "sense": "核心",
+          "note": "core 可指任何事物的核心部分。nucleus 常指细胞核、原子核，也可指团体的中心。",
+          "reviewed": true
+        }
+      ]
     },
     "object": {
       "common": "名词：物体、目标、目的、对象、宾语；动词：反对、抱反感；动词：提出...来反对",
@@ -1703,6 +3459,17 @@
           "word": "target",
           "sense": "目的、目标（名词义）",
           "note": "aim、goal、objective 常指目标；target 常指明确的目标；purpose 侧重目的或用途。",
+          "reviewed": true
+        }
+      ]
+    },
+    "oblige": {
+      "common": "动词：强制、施恩惠于、使感激；动词：施恩惠、帮忙",
+      "synonyms": [
+        {
+          "word": "compel",
+          "sense": "迫使",
+          "note": "compel 偏重压力强到不得不做。oblige 在 be obliged to 中常指受规则、责任或形势所迫。",
           "reviewed": true
         }
       ]
@@ -1766,6 +3533,32 @@
           "word": "supply",
           "sense": "提供、供应（动词义）",
           "note": "provide 和 supply 常指提供所需物；offer 强调主动提供或提出；render 的提供义较正式，常接 assistance 等词。",
+          "reviewed": true
+        }
+      ]
+    },
+    "omit": {
+      "common": "动词：省略、删除、疏忽、遗漏",
+      "synonyms": [
+        {
+          "word": "neglect",
+          "sense": "疏忽（动词义）"
+        },
+        {
+          "word": "overlook",
+          "sense": "遗漏",
+          "note": "omit 指把某项内容省略或漏掉，可有意也可无意。overlook 作此义指没注意到。",
+          "reviewed": true
+        }
+      ]
+    },
+    "operation": {
+      "common": "名词：操作、动作、手术、运算、作用",
+      "synonyms": [
+        {
+          "word": "procedure",
+          "sense": "手术",
+          "note": "operation 作此义指外科手术。procedure 可指某项医疗操作，范围包括非手术操作。",
           "reviewed": true
         }
       ]
@@ -1843,6 +3636,12 @@
           "reviewed": true
         },
         {
+          "word": "prospect",
+          "sense": "前景",
+          "note": "outlook 常指对总体趋势的判断。prospect 常指某件事发生或成功的前景。",
+          "reviewed": true
+        },
+        {
           "word": "view",
           "sense": "观点、看法（名词义）",
           "note": "view 和 viewpoint 指看法；outlook 可指总体观念；perspective 和 angle 常强调观察问题的角度。",
@@ -1856,6 +3655,36 @@
         }
       ]
     },
+    "output": {
+      "common": "名词：输出、产品、产量",
+      "synonyms": [
+        {
+          "word": "yield",
+          "sense": "产出、产量",
+          "note": "output 常指生产系统的总产出。yield 常用于作物产量，也可指投资收益。",
+          "reviewed": true
+        }
+      ]
+    },
+    "overlook": {
+      "common": "动词：俯瞰、远眺、没注意到；名词：眺望、俯瞰到的景色",
+      "synonyms": [
+        {
+          "word": "ignore",
+          "sense": "忽视、疏忽"
+        },
+        {
+          "word": "neglect",
+          "sense": "忽视、疏忽"
+        },
+        {
+          "word": "omit",
+          "sense": "遗漏",
+          "note": "omit 指把某项内容省略或漏掉，可有意也可无意。overlook 作此义指没注意到。",
+          "reviewed": true
+        }
+      ]
+    },
     "own": {
       "common": "名词：自己的；形容词：自己的、嫡亲的、同胞的；动词：拥有、支配、自认、承认、顺从于；动词：承认、供认",
       "synonyms": [
@@ -1863,6 +3692,100 @@
           "word": "possess",
           "sense": "拥有（动词义）",
           "note": "own 常强调所有权；possess 也可用于拥有技能或品质。只比较拥有义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "packet": {
+      "common": "名词：小包、一批信件、大量、信息包；动词：打包、装进小包",
+      "synonyms": [
+        {
+          "word": "parcel",
+          "sense": "包裹",
+          "note": "packet 常指小包或一包东西。parcel 常指打包后寄送或递交的物件。",
+          "reviewed": true
+        }
+      ]
+    },
+    "parcel": {
+      "common": "名词：包裹、部分、片；动词：分配、打包；形容词：部分的；副词：局部地",
+      "synonyms": [
+        {
+          "word": "packet",
+          "sense": "包裹",
+          "note": "packet 常指小包或一包东西。parcel 常指打包后寄送或递交的物件。",
+          "reviewed": true
+        }
+      ]
+    },
+    "particular": {
+      "common": "名词：一项(或条、点)、个别项目、详细说明；形容词：特别的、独有的、挑剔的、详尽的",
+      "synonyms": [
+        {
+          "word": "special",
+          "sense": "特别的",
+          "note": "particular 常指某一个特定对象。special 常强调不同寻常、专用或格外重要。",
+          "reviewed": true
+        }
+      ]
+    },
+    "pay": {
+      "common": "名词：薪资、付款、补偿；动词：支付、付清、补偿、偿还、对...有利；动词：付款、付出代价、偿还、得到报应、获得好处",
+      "synonyms": [
+        {
+          "word": "salary",
+          "sense": "工资",
+          "note": "pay 泛指工作报酬。salary 常指按年或按月确定的固定薪资。",
+          "reviewed": true
+        },
+        {
+          "word": "wage",
+          "sense": "工资",
+          "note": "pay 泛指工作报酬。wage 常按小时、天或周计算。",
+          "reviewed": true
+        }
+      ]
+    },
+    "penetrate": {
+      "common": "动词：穿透、刺穿、渗透、看穿、洞察；动词：刺入、看穿、渗透、打进",
+      "synonyms": [
+        {
+          "word": "permeate",
+          "sense": "渗透",
+          "note": "penetrate 强调穿过表面进入。permeate 强调渐渐扩散到内部各处。",
+          "reviewed": true
+        }
+      ]
+    },
+    "period": {
+      "common": "名词：时期、节段、节、句点、学时；形容词：当时特有的、过去某段时期的；感叹词：就是这话、就是这么回事",
+      "synonyms": [
+        {
+          "word": "phase",
+          "sense": "时期、阶段",
+          "note": "period 泛指一段时间。phase 指一个过程里有特征的一个阶段。",
+          "reviewed": true
+        }
+      ]
+    },
+    "permeate": {
+      "common": "动词：弥漫、渗透、充满、影响、感染；动词：透入、散布",
+      "synonyms": [
+        {
+          "word": "penetrate",
+          "sense": "渗透",
+          "note": "penetrate 强调穿过表面进入。permeate 强调渐渐扩散到内部各处。",
+          "reviewed": true
+        }
+      ]
+    },
+    "permission": {
+      "common": "名词：许可、允许",
+      "synonyms": [
+        {
+          "word": "license",
+          "sense": "许可",
+          "note": "license 常指正式许可或执照。permission 是广义的同意或准许。",
           "reviewed": true
         }
       ]
@@ -1896,6 +3819,28 @@
         }
       ]
     },
+    "petty": {
+      "common": "形容词：琐碎的、小规模的、小气的、委琐的",
+      "synonyms": [
+        {
+          "word": "trivial",
+          "sense": "琐碎的",
+          "note": "petty 可暗示事情不重要，也可批评人小气。trivial 侧重事情微不足道。",
+          "reviewed": true
+        }
+      ]
+    },
+    "phase": {
+      "common": "名词：时期、局面、方面、位相、相；动词：使调整相位、使定相、使一致、逐步执行、实行",
+      "synonyms": [
+        {
+          "word": "period",
+          "sense": "时期、阶段",
+          "note": "period 泛指一段时间。phase 指一个过程里有特征的一个阶段。",
+          "reviewed": true
+        }
+      ]
+    },
     "pledge": {
       "common": "名词：诺言、保证、誓言、抵押、信物；动词：许诺、保证、使发誓、抵押、典当",
       "synonyms": [
@@ -1909,6 +3854,32 @@
           "word": "promise",
           "sense": "承诺（动词义）",
           "note": "promise 和 pledge 可指承诺；commit 常见于 commit oneself to，强调使自己承担义务。",
+          "reviewed": true
+        }
+      ]
+    },
+    "portray": {
+      "common": "动词：描绘、描写、描绘...的肖像",
+      "synonyms": [
+        {
+          "word": "depict",
+          "sense": "描绘",
+          "note": "depict 偏重把人或情景描绘出来。portray 常侧重以某种形象或角度呈现。",
+          "reviewed": true
+        }
+      ]
+    },
+    "position": {
+      "common": "名词：位置、地位、身分、形势、姿势；动词：安置、决定...的位置",
+      "synonyms": [
+        {
+          "word": "posture",
+          "sense": "姿势（名词义）"
+        },
+        {
+          "word": "status",
+          "sense": "地位",
+          "note": "position 可指人在组织中的职位或位置。status 偏重公认的地位、身份或当前状态。",
           "reviewed": true
         }
       ]
@@ -1962,6 +3933,39 @@
         }
       ]
     },
+    "predict": {
+      "common": "动词：预知、预言、预报",
+      "synonyms": [
+        {
+          "word": "forecast",
+          "sense": "预测",
+          "note": "forecast 常见于天气、经济或趋势预测。predict 可泛指预测未来事件或结果。",
+          "reviewed": true
+        }
+      ]
+    },
+    "predominant": {
+      "common": "形容词：占主导地位的、卓越的",
+      "synonyms": [
+        {
+          "word": "dominant",
+          "sense": "占优势的",
+          "note": "dominant 可强调控制力或影响力。predominant 常强调在数量、频率或重要性上最突出。",
+          "reviewed": true
+        }
+      ]
+    },
+    "procedure": {
+      "common": "名词：程序、过程、手续",
+      "synonyms": [
+        {
+          "word": "operation",
+          "sense": "手术",
+          "note": "operation 作此义指外科手术。procedure 可指某项医疗操作，范围包括非手术操作。",
+          "reviewed": true
+        }
+      ]
+    },
     "profit": {
       "common": "名词：利润、赢利、利益；动词：有益、获利、赚钱；动词：有益于",
       "synonyms": [
@@ -1979,6 +3983,17 @@
         }
       ]
     },
+    "progress": {
+      "common": "名词：进步、发展、前进；动词：进步、进行",
+      "synonyms": [
+        {
+          "word": "advance",
+          "sense": "取得进展",
+          "note": "advance 可指向前推进，也可指推动某事。progress 作动词时常指逐步取得进展。",
+          "reviewed": true
+        }
+      ]
+    },
     "promise": {
       "common": "名词：诺言、约定的事情、有指望；动词：允诺、约定、预示；动词：允诺、有前途、有指望",
       "synonyms": [
@@ -1992,6 +4007,51 @@
           "word": "pledge",
           "sense": "承诺（动词义）",
           "note": "promise 和 pledge 可指承诺；commit 常见于 commit oneself to，强调使自己承担义务。",
+          "reviewed": true
+        }
+      ]
+    },
+    "prompt": {
+      "common": "名词：激励、提示、提醒物、提词、付款期限；形容词：迅速的、敏捷的、立刻的、提词员的；动词：激励、鼓动、提示；副词：准时地",
+      "synonyms": [
+        {
+          "word": "cue",
+          "sense": "提示",
+          "note": "cue 是提醒某人何时行动的信号。prompt 可指促使作答或行动的提示，如写作提示或屏幕提示。",
+          "reviewed": true
+        },
+        {
+          "word": "immediate",
+          "sense": "立即的、迅速的",
+          "note": "immediate 强调没有等待。prompt 常指反应或行动及时。",
+          "reviewed": true
+        }
+      ]
+    },
+    "proof": {
+      "common": "名词：证据、证明、试验、检验、考验；形容词：不能透入的、证明用的、防...的、耐...的；动词：检验、试验、校对、使不被穿透",
+      "synonyms": [
+        {
+          "word": "evidence",
+          "sense": "证据",
+          "note": "evidence 可指支持判断的线索或材料。proof 通常指足以确证某事的证据。",
+          "reviewed": true
+        }
+      ]
+    },
+    "propagate": {
+      "common": "动词：繁殖、传播、传送；动词：繁殖、蔓延",
+      "synonyms": [
+        {
+          "word": "circulate",
+          "sense": "传播",
+          "note": "circulate 常指消息或文件在人群中流传。propagate 可指传播观念，亦可指繁殖或传播波。",
+          "reviewed": true
+        },
+        {
+          "word": "spread",
+          "sense": "传播",
+          "note": "propagate 较正式，可指传播观念或使波传开。spread 强调范围变广，也可指事物自行扩散。",
           "reviewed": true
         }
       ]
@@ -2026,6 +4086,17 @@
           "word": "suggestion",
           "sense": "建议（名词义）",
           "note": "advice 常指忠告；suggestion 指建议；proposal 常指较完整或正式提出的方案。",
+          "reviewed": true
+        }
+      ]
+    },
+    "prospect": {
+      "common": "名词：景色、展望；动词：勘探、勘察；动词：勘探、有前途",
+      "synonyms": [
+        {
+          "word": "outlook",
+          "sense": "前景",
+          "note": "outlook 常指对总体趋势的判断。prospect 常指某件事发生或成功的前景。",
           "reviewed": true
         }
       ]
@@ -2080,6 +4151,12 @@
       "common": "动词：提供、供应、规定、预备；动词：作准备、抚养、规定",
       "synonyms": [
         {
+          "word": "furnish",
+          "sense": "提供",
+          "note": "furnish 较正式，常见于 furnish someone with something。provide 的用法更广。",
+          "reviewed": true
+        },
+        {
           "word": "offer",
           "sense": "提供、供应（动词义）",
           "note": "provide 和 supply 常指提供所需物；offer 强调主动提供或提出；render 的提供义较正式，常接 assistance 等词。",
@@ -2099,6 +4176,17 @@
         }
       ]
     },
+    "publish": {
+      "common": "动词：出版、发行、公开、发表、宣传；动词：出版、发行",
+      "synonyms": [
+        {
+          "word": "release",
+          "sense": "发布",
+          "note": "publish 常指正式公开文字或研究结果。release 还可用于发行影片、软件或对外公布消息。",
+          "reviewed": true
+        }
+      ]
+    },
     "purpose": {
       "common": "名词：目的、意向、决心、用途、效果；动词：意欲、企图、计划",
       "synonyms": [
@@ -2112,6 +4200,61 @@
           "word": "target",
           "sense": "目的、目标（名词义）",
           "note": "aim、goal、objective 常指目标；target 常指明确的目标；purpose 侧重目的或用途。",
+          "reviewed": true
+        }
+      ]
+    },
+    "quit": {
+      "common": "动词：离开、辞职、停止；动词：离开、放弃、使解除、停止；名词：离开",
+      "synonyms": [
+        {
+          "word": "resign",
+          "sense": "辞职",
+          "note": "quit 可泛指离开工作或停止某项活动。resign 常用于正式辞去职位。",
+          "reviewed": true
+        }
+      ]
+    },
+    "rarely": {
+      "common": "副词：很少地、罕有地",
+      "synonyms": [
+        {
+          "word": "seldom",
+          "sense": "很少",
+          "note": "两词都表示发生频率低。seldom 在现代用语中通常更偏书面。",
+          "reviewed": true
+        }
+      ]
+    },
+    "reason": {
+      "common": "名词：理由、原因、理智、道理、前提；动词：说服、推论、辩论；动词：推论、劝说、思考",
+      "synonyms": [
+        {
+          "word": "cause",
+          "sense": "原因",
+          "note": "cause 偏重造成结果的直接因素。reason 还可以指个人行动的理由或给出的解释。",
+          "reviewed": true
+        }
+      ]
+    },
+    "reckon": {
+      "common": "动词：计算、总计、估计、认为、猜想；动词：数、计算、估计、依赖、料想",
+      "synonyms": [
+        {
+          "word": "consider",
+          "sense": "认为",
+          "note": "consider 作此义常见于 consider A (to be) B。reckon 表示认为或估计，语气较口语。",
+          "reviewed": true
+        }
+      ]
+    },
+    "recognize": {
+      "common": "动词：认出、认可、承认、公认、识别；动词：承认、具结",
+      "synonyms": [
+        {
+          "word": "acknowledge",
+          "sense": "承认",
+          "note": "acknowledge 常指承认事实或问题的存在。recognize 可指承认某种地位或认可贡献，也常指认出。",
           "reviewed": true
         }
       ]
@@ -2146,6 +4289,66 @@
         }
       ]
     },
+    "rectify": {
+      "common": "动词：订正、矫正、改正、调正、校正",
+      "synonyms": [
+        {
+          "word": "correct",
+          "sense": "纠正",
+          "note": "correct 常指改正错误。rectify 较正式，常用于纠正问题、失衡或不良状况。",
+          "reviewed": true
+        }
+      ]
+    },
+    "reduce": {
+      "common": "动词：减少、分解、降低、使衰退、把...分解；动词：减少、减肥、缩小",
+      "synonyms": [
+        {
+          "word": "decrease",
+          "sense": "减少"
+        },
+        {
+          "word": "diminish",
+          "sense": "减少"
+        },
+        {
+          "word": "shrink",
+          "sense": "减少",
+          "note": "reduce 常强调使数量、规模或程度降低。shrink 常描述规模变小，也可作及物动词。",
+          "reviewed": true
+        }
+      ]
+    },
+    "refer": {
+      "common": "动词：提交、归诸于、把...提交、使求助于；动词：提到、涉及、查阅、查询、咨询",
+      "synonyms": [
+        {
+          "word": "mention",
+          "sense": "提及",
+          "note": "mention 常直接接提到的人或事。refer 在这个意思下常用 refer to。",
+          "reviewed": true
+        }
+      ]
+    },
+    "refuse": {
+      "common": "动词：拒绝、谢绝；动词：拒绝；名词：废物；形容词：扔掉的、无用的",
+      "synonyms": [
+        {
+          "word": "decline",
+          "sense": "拒绝"
+        },
+        {
+          "word": "deny",
+          "sense": "拒绝",
+          "note": "deny 常见于 deny someone access，表示不给予。refuse 可接请求或不定式，也可指不愿做某事。",
+          "reviewed": true
+        },
+        {
+          "word": "reject",
+          "sense": "拒绝"
+        }
+      ]
+    },
     "regard": {
       "common": "名词：关心、注意、尊敬、关系、问候；动词：视为、注意、考虑、和...有关、看待；动词：注视、注意",
       "synonyms": [
@@ -2159,6 +4362,12 @@
           "word": "concern",
           "sense": "关心、关注（名词或动词义项）",
           "note": "care 可指关心和照料；concern 可指关切；regard 在机构资料中也有注意、关心义，固定搭配不同。",
+          "reviewed": true
+        },
+        {
+          "word": "esteem",
+          "sense": "尊重",
+          "note": "esteem 是尊敬或高度评价。regard 可在 hold someone in high regard 中表示对某人的敬重。",
           "reviewed": true
         }
       ]
@@ -2235,8 +4444,31 @@
       "common": "动词：释放、发布、发行、排放；名词：释放、发布、发行",
       "synonyms": [
         {
+          "word": "discharge",
+          "sense": "释放、排出",
+          "note": "discharge 常指排放液体、气体或电荷。release 泛指让人或事物脱离限制。",
+          "reviewed": true
+        },
+        {
           "word": "liberate",
           "sense": "释放"
+        },
+        {
+          "word": "publish",
+          "sense": "发布",
+          "note": "publish 常指正式公开文字或研究结果。release 还可用于发行影片、软件或对外公布消息。",
+          "reviewed": true
+        }
+      ]
+    },
+    "remark": {
+      "common": "名词：评论、注意；动词：评论、注意；动词：评论、谈论",
+      "synonyms": [
+        {
+          "word": "comment",
+          "sense": "评论",
+          "note": "comment 常指对某事发表意见。remark 常指说出的一句评论或观察。",
+          "reviewed": true
         }
       ]
     },
@@ -2259,6 +4491,17 @@
           "word": "supply",
           "sense": "提供、供应（动词义）",
           "note": "provide 和 supply 常指提供所需物；offer 强调主动提供或提出；render 的提供义较正式，常接 assistance 等词。",
+          "reviewed": true
+        }
+      ]
+    },
+    "reply": {
+      "common": "名词：答复、回答、答辩；动词：答复、回答、回击、反响、答辩；动词：回答",
+      "synonyms": [
+        {
+          "word": "response",
+          "sense": "答复",
+          "note": "reply 常指对话语、邮件或问题的直接答复。response 也包括行为、生理或政策层面的反应。",
           "reviewed": true
         }
       ]
@@ -2307,6 +4550,17 @@
         }
       ]
     },
+    "resign": {
+      "common": "动词：辞职、放弃、使顺从；动词：辞职、屈从",
+      "synonyms": [
+        {
+          "word": "quit",
+          "sense": "辞职",
+          "note": "quit 可泛指离开工作或停止某项活动。resign 常用于正式辞去职位。",
+          "reviewed": true
+        }
+      ]
+    },
     "resolve": {
       "common": "动词：决定、分解、决心；动词：使分解、解析、解决、消除、决心；名词：决定之事、决心、坚决",
       "synonyms": [
@@ -2321,6 +4575,67 @@
           "sense": "决定（动词义）",
           "note": "decide 指作决定；determine 可指决定或确定；resolve 常强调下决心或正式决定。",
           "reviewed": true
+        },
+        {
+          "word": "solve",
+          "sense": "解决",
+          "note": "resolve 常指化解冲突、争议或疑问。solve 常指找出问题或谜题的解法。",
+          "reviewed": true
+        }
+      ]
+    },
+    "respect": {
+      "common": "名词：尊敬、尊重、问候；动词：尊敬、注意、遵守",
+      "synonyms": [
+        {
+          "word": "abide",
+          "sense": "遵守"
+        },
+        {
+          "word": "esteem",
+          "sense": "尊重",
+          "note": "esteem 偏正式，强调高度评价。respect 用得更广，也可指尊重权利、边界或决定。",
+          "reviewed": true
+        },
+        {
+          "word": "observe",
+          "sense": "遵守"
+        }
+      ]
+    },
+    "response": {
+      "common": "名词：反应、回答、响应",
+      "synonyms": [
+        {
+          "word": "reply",
+          "sense": "答复",
+          "note": "reply 常指对话语、邮件或问题的直接答复。response 也包括行为、生理或政策层面的反应。",
+          "reviewed": true
+        }
+      ]
+    },
+    "restrict": {
+      "common": "动词：限制、限定、约束",
+      "synonyms": [
+        {
+          "word": "confine",
+          "sense": "限制",
+          "note": "confine 强调留在指定范围。restrict 常指借规则或条件限制使用、进入或行动。",
+          "reviewed": true
+        },
+        {
+          "word": "constrain",
+          "sense": "限制"
+        },
+        {
+          "word": "curb",
+          "sense": "限制",
+          "note": "curb 强调遏制势头或把过量活动压下来。restrict 常指用规则或条件限制范围。",
+          "reviewed": true
+        },
+        {
+          "word": "limit",
+          "sense": "限制"
         }
       ]
     },
@@ -2375,6 +4690,17 @@
         }
       ]
     },
+    "retrospect": {
+      "common": "名词：回顾、追忆、回溯；动词：回顾、追忆",
+      "synonyms": [
+        {
+          "word": "review",
+          "sense": "回顾",
+          "note": "retrospect 常见于 in retrospect，表示事后回看。review 可指主动回顾或重新审查。",
+          "reviewed": true
+        }
+      ]
+    },
     "revenue": {
       "common": "名词：收入、岁入、税收、税务局",
       "synonyms": [
@@ -2386,9 +4712,70 @@
         }
       ]
     },
+    "review": {
+      "common": "名词：检讨、复习、回顾、检阅、评论；动词：温习、检讨、评论、再检察、复审；动词：复习功课、写评论",
+      "synonyms": [
+        {
+          "word": "retrospect",
+          "sense": "回顾",
+          "note": "retrospect 常见于 in retrospect，表示事后回看。review 可指主动回顾或重新审查。",
+          "reviewed": true
+        }
+      ]
+    },
+    "revolve": {
+      "common": "动词：(使)旋转、反复考虑、循环出现",
+      "synonyms": [
+        {
+          "word": "rotate",
+          "sense": "旋转",
+          "note": "revolve 常说绕另一物体或一点转动。rotate 常说绕自身轴转，也有轮换义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "role": {
+      "common": "名词：角色、职责、任务",
+      "synonyms": [
+        {
+          "word": "function",
+          "sense": "作用",
+          "note": "function 偏重事物实际发挥的功能。role 常指某人在群体或过程中的角色、作用。",
+          "reviewed": true
+        }
+      ]
+    },
+    "rotate": {
+      "common": "形容词：辐状的；动词：使旋转、使转动、使轮流；动词：旋转、循环",
+      "synonyms": [
+        {
+          "word": "revolve",
+          "sense": "旋转",
+          "note": "revolve 常说绕另一物体或一点转动。rotate 常说绕自身轴转，也有轮换义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "rubbish": {
+      "common": "名词：废物、垃圾、胡说",
+      "synonyms": [
+        {
+          "word": "trash",
+          "sense": "垃圾",
+          "note": "rubbish 在英式英语中常见，trash 在美式英语中常见，两者也可指毫无价值的东西。",
+          "reviewed": true
+        }
+      ]
+    },
     "ruin": {
       "common": "名词：毁灭、推翻、废墟；动词：毁灭、衰败、破坏、破产、堕落；动词：使毁灭、毁坏、使破产",
       "synonyms": [
+        {
+          "word": "bankrupt",
+          "sense": "使破产、使陷入财务困境",
+          "note": "bankrupt 指使某人或机构破产。ruin 指彻底毁坏，谈到钱时可指使人倾家荡产。",
+          "reviewed": true
+        },
         {
           "word": "destroy",
           "sense": "摧毁、毁坏（动词义）",
@@ -2432,6 +4819,111 @@
         }
       ]
     },
+    "salary": {
+      "common": "名词：薪水、薪金",
+      "synonyms": [
+        {
+          "word": "pay",
+          "sense": "工资",
+          "note": "pay 泛指工作报酬。salary 常指按年或按月确定的固定薪资。",
+          "reviewed": true
+        },
+        {
+          "word": "wage",
+          "sense": "工资",
+          "note": "salary 通常是按月或按年确定的固定薪资。wage 常与工时或工作天数挂钩。",
+          "reviewed": true
+        }
+      ]
+    },
+    "sanction": {
+      "common": "名词：核准、制裁、处罚、约束力；动词：制定制裁规则、认可、核准、同意",
+      "synonyms": [
+        {
+          "word": "approve",
+          "sense": "批准",
+          "note": "approve 常指同意计划或请求。sanction 可指正式授权，读到 sanctions 时还要留意制裁义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "scarcely": {
+      "common": "副词：简直不、一定不、仅仅",
+      "synonyms": [
+        {
+          "word": "barely",
+          "sense": "几乎不",
+          "note": "两词都可表示程度很低。barely 还常指刚刚够或勉强做到。",
+          "reviewed": true
+        }
+      ]
+    },
+    "section": {
+      "common": "名词：区段、部分、区域、节、截面；动词：把...分段、把...切片；动词：被切成片",
+      "synonyms": [
+        {
+          "word": "segment",
+          "sense": "部分",
+          "note": "section 常指按内容或功能划分的一部分。segment 常指从整体切分的一段或一类。",
+          "reviewed": true
+        }
+      ]
+    },
+    "segment": {
+      "common": "名词：片段、部分、分节、段；动词：分割、分裂",
+      "synonyms": [
+        {
+          "word": "section",
+          "sense": "部分",
+          "note": "section 常指按内容或功能划分的一部分。segment 常指从整体切分的一段或一类。",
+          "reviewed": true
+        }
+      ]
+    },
+    "seize": {
+      "common": "动词：抓住、逮捕、俘获、没收、扣押；动词：突然抓住、利用",
+      "synonyms": [
+        {
+          "word": "clutch",
+          "sense": "抓住",
+          "note": "clutch 强调紧紧抓着。seize 常指突然抓住，也可指抓住机会。",
+          "reviewed": true
+        }
+      ]
+    },
+    "seldom": {
+      "common": "形容词：不常的、稀少的；副词：很少、不常",
+      "synonyms": [
+        {
+          "word": "rarely",
+          "sense": "很少",
+          "note": "两词都表示发生频率低。seldom 在现代用语中通常更偏书面。",
+          "reviewed": true
+        }
+      ]
+    },
+    "selection": {
+      "common": "名词：选择、选文、精选品",
+      "synonyms": [
+        {
+          "word": "choice",
+          "sense": "选择",
+          "note": "choice 可指选择的权利或结果。selection 可指挑选的过程或挑出来的一组。",
+          "reviewed": true
+        }
+      ]
+    },
+    "serial": {
+      "common": "名词：分期连载作品、连载小说；形容词：连续的、一连串的、连载的、分期偿还的",
+      "synonyms": [
+        {
+          "word": "successive",
+          "sense": "连续的",
+          "note": "serial 强调按顺序组成系列。successive 强调一个接着一个出现。",
+          "reviewed": true
+        }
+      ]
+    },
     "settle": {
       "common": "名词：有背长椅；动词：决定、整理、安放、使定居、使平静；动词：停留、下陷、沉淀、澄清、安下心来",
       "synonyms": [
@@ -2445,6 +4937,17 @@
           "word": "inhabit",
           "sense": "居住、栖身（动词义）",
           "note": "dwell 常与 in 连用；inhabit 直接接居住地，也用于动物栖息；settle 强调迁入并定居。",
+          "reviewed": true
+        }
+      ]
+    },
+    "severe": {
+      "common": "形容词：严格的、尖锐的、严肃的、严重的、严厉的",
+      "synonyms": [
+        {
+          "word": "stern",
+          "sense": "严厉",
+          "note": "severe 可形容严厉的批评或处罚，也常指程度严重。stern 常形容人、语气或警告严肃而严厉。",
           "reviewed": true
         }
       ]
@@ -2474,6 +4977,17 @@
           "word": "safeguard",
           "sense": "保护（动词义）",
           "note": "protect 泛指保护；defend 常指抵御攻击；guard 强调看护；shield 强调遮护；safeguard 强调防范风险。",
+          "reviewed": true
+        }
+      ]
+    },
+    "shift": {
+      "common": "名词：变化、移动、轮班、手段、应急办法；动词：替换、转移、改变、推卸、变速；动词：转换、移动、转变、推托、变速",
+      "synonyms": [
+        {
+          "word": "transfer",
+          "sense": "转移",
+          "note": "shift 可指位置、重心或态度发生变化。transfer 常说明事物从一处、一人或一组转到另一处。",
           "reviewed": true
         }
       ]
@@ -2518,6 +5032,78 @@
         }
       ]
     },
+    "shrink": {
+      "common": "名词：收缩、萎缩、回避；动词：收缩、退缩、萎缩、缩小、回避；动词：使收缩、使缩小",
+      "synonyms": [
+        {
+          "word": "contract",
+          "sense": "收缩",
+          "note": "contract 常指因受冷或肌肉用力而收缩。shrink 常指尺寸、数量或规模变小。",
+          "reviewed": true
+        },
+        {
+          "word": "reduce",
+          "sense": "减少",
+          "note": "reduce 常强调使数量、规模或程度降低。shrink 常描述规模变小，也可作及物动词。",
+          "reviewed": true
+        }
+      ]
+    },
+    "sign": {
+      "common": "名词：符号、招牌、征兆、正负号、手势；动词：签名、打手势表达；动词：签名",
+      "synonyms": [
+        {
+          "word": "signal",
+          "sense": "信号",
+          "note": "sign 常指能看出来的迹象或标记。signal 常指主动发出或传递的信号，也可指预示变化的迹象。",
+          "reviewed": true
+        }
+      ]
+    },
+    "signal": {
+      "common": "名词：信号、暗号、近因、导火线；动词：向...作信号、标志、用信号通知；动词：发信号；形容词：作为信号的、显著的",
+      "synonyms": [
+        {
+          "word": "sign",
+          "sense": "信号",
+          "note": "sign 常指能看出来的迹象或标记。signal 常指主动发出或传递的信号，也可指预示变化的迹象。",
+          "reviewed": true
+        }
+      ]
+    },
+    "simulate": {
+      "common": "动词：模拟、假装、模仿",
+      "synonyms": [
+        {
+          "word": "imitate",
+          "sense": "模仿、模拟",
+          "note": "imitate 常指模仿人的动作、声音或方式。simulate 常指用模型或安排再现某种过程和条件。",
+          "reviewed": true
+        }
+      ]
+    },
+    "solve": {
+      "common": "动词：解决、付给、溶解；动词：求解",
+      "synonyms": [
+        {
+          "word": "resolve",
+          "sense": "解决",
+          "note": "resolve 常指化解冲突、争议或疑问。solve 常指找出问题或谜题的解法。",
+          "reviewed": true
+        }
+      ]
+    },
+    "special": {
+      "common": "名词：专辑、专车、号外、特别的东西、负有特别任务的人员；形容词：特别的、专门的、特殊的、额外的、附加的",
+      "synonyms": [
+        {
+          "word": "particular",
+          "sense": "特别的",
+          "note": "particular 常指某一个特定对象。special 常强调不同寻常、专用或格外重要。",
+          "reviewed": true
+        }
+      ]
+    },
     "specific": {
       "common": "名词：特效药、特性；形容词：特殊的、明确的、具有特效的、特定地、具体地",
       "synonyms": [
@@ -2546,6 +5132,45 @@
         }
       ]
     },
+    "spread": {
+      "common": "名词：传播、散布、伸展；形容词：双唇展开的、伸展的；动词：展开、铺开、传播、推广、伸出；动词：展开、扩大、传开、延伸",
+      "synonyms": [
+        {
+          "word": "circulate",
+          "sense": "传播",
+          "note": "circulate 偏重在人群或渠道中传递。spread 偏重从原有范围向外扩散。",
+          "reviewed": true
+        },
+        {
+          "word": "propagate",
+          "sense": "传播",
+          "note": "propagate 较正式，可指传播观念或使波传开。spread 强调范围变广，也可指事物自行扩散。",
+          "reviewed": true
+        }
+      ]
+    },
+    "stare": {
+      "common": "动词：注视、凝视、瞪视、显眼；动词：盯；名词：凝视",
+      "synonyms": [
+        {
+          "word": "gaze",
+          "sense": "凝视",
+          "note": "gaze 常指持续地看，可以带欣赏或沉思。stare 指定睛盯着，常因惊讶，也可能显得无礼。",
+          "reviewed": true
+        }
+      ]
+    },
+    "status": {
+      "common": "名词：状态、情形、地位、要人身份",
+      "synonyms": [
+        {
+          "word": "position",
+          "sense": "地位",
+          "note": "position 可指人在组织中的职位或位置。status 偏重公认的地位、身份或当前状态。",
+          "reviewed": true
+        }
+      ]
+    },
     "steer": {
       "common": "动词：引导、驾驶、航行、控制；动词：驾驶、掌舵、行驶；名词：驾驶指示、劝告",
       "synonyms": [
@@ -2569,6 +5194,140 @@
         }
       ]
     },
+    "stern": {
+      "common": "名词：尾部、船尾、臀；形容词：严厉的、严格的、坚定的、坚决的",
+      "synonyms": [
+        {
+          "word": "rigorous",
+          "sense": "严厉、严格的"
+        },
+        {
+          "word": "severe",
+          "sense": "严厉",
+          "note": "severe 可形容严厉的批评或处罚，也常指程度严重。stern 常形容人、语气或警告严肃而严厉。",
+          "reviewed": true
+        },
+        {
+          "word": "strict",
+          "sense": "严厉、严格的"
+        }
+      ]
+    },
+    "straight": {
+      "common": "名词：直线、直；形容词：直的、笔直的、正直的、直接的、连续的；副词：直接地、立即、不断地",
+      "synonyms": [
+        {
+          "word": "direct",
+          "sense": "直接地",
+          "note": "direct 和 straight 都可表示不经中转地去某处。straight 也可指直线前进或立刻行动。",
+          "reviewed": true
+        }
+      ]
+    },
+    "strength": {
+      "common": "名词：力量、实力、强度、浓度、人数",
+      "synonyms": [
+        {
+          "word": "intensity",
+          "sense": "强度",
+          "note": "intensity 常指程度有多强，如光、运动或冲突。strength 可指力气、能力，也可指信号等的强度。",
+          "reviewed": true
+        }
+      ]
+    },
+    "stress": {
+      "common": "名词：压力、紧迫、强调、重音、重点；动词：加压力于、着重、重读",
+      "synonyms": [
+        {
+          "word": "emphasis",
+          "sense": "强调",
+          "note": "emphasis 是特别重视或突出的重点。stress 作名词也可表示强调，此外常指压力或重音。",
+          "reviewed": true
+        },
+        {
+          "word": "highlight",
+          "sense": "强调"
+        },
+        {
+          "word": "underline",
+          "sense": "强调"
+        }
+      ]
+    },
+    "subject": {
+      "common": "名词：科目、主题、臣民、主语、题目；形容词：服从的、易患...的、隶属的、受支配的；副词：在...条件下；动词：使隶属、使受到",
+      "synonyms": [
+        {
+          "word": "theme",
+          "sense": "主题",
+          "note": "subject 指所讨论或研究的对象。theme 常指贯穿文章、作品或活动的主题。",
+          "reviewed": true
+        }
+      ]
+    },
+    "substance": {
+      "common": "名词：物质、实质、主旨、资产、本质",
+      "synonyms": [
+        {
+          "word": "essence",
+          "sense": "本质、实质",
+          "note": "essence 强调使事物成为它本身的核心性质。substance 可指言论或主张的实质内容，也有物质义。",
+          "reviewed": true
+        }
+      ]
+    },
+    "subtract": {
+      "common": "动词：减去、扣掉、减少；动词：做减法",
+      "synonyms": [
+        {
+          "word": "deduct",
+          "sense": "减去",
+          "note": "deduct 常指从金额、分数或总量中扣除。subtract 常用于数学运算。",
+          "reviewed": true
+        }
+      ]
+    },
+    "success": {
+      "common": "名词：成功、成就、胜利",
+      "synonyms": [
+        {
+          "word": "victory",
+          "sense": "成功、胜利",
+          "note": "success 指达到预期目标。victory 强调在较量中获胜。",
+          "reviewed": true
+        }
+      ]
+    },
+    "successive": {
+      "common": "形容词：继承的、连续的",
+      "synonyms": [
+        {
+          "word": "serial",
+          "sense": "连续的",
+          "note": "serial 强调按顺序组成系列。successive 强调一个接着一个出现。",
+          "reviewed": true
+        }
+      ]
+    },
+    "suggest": {
+      "common": "动词：提议、建议、促成、暗示、启发",
+      "synonyms": [
+        {
+          "word": "advise",
+          "sense": "建议",
+          "note": "advise 常见于 advise someone to do something。suggest 常接动名词或 that 从句。",
+          "reviewed": true
+        },
+        {
+          "word": "propose",
+          "sense": "建议"
+        },
+        {
+          "word": "recommend",
+          "sense": "建议"
+        }
+      ]
+    },
     "suggestion": {
       "common": "名词：提议、意见",
       "synonyms": [
@@ -2582,6 +5341,17 @@
           "word": "proposal",
           "sense": "建议（名词义）",
           "note": "advice 常指忠告；suggestion 指建议；proposal 常指较完整或正式提出的方案。",
+          "reviewed": true
+        }
+      ]
+    },
+    "sum": {
+      "common": "名词：总数、总和、金额、概要、顶点；动词：总计、概括；动词：合计",
+      "synonyms": [
+        {
+          "word": "amount",
+          "sense": "金额",
+          "note": "amount 是数量，涉及钱时指金额。sum 可指一笔钱，也可指相加所得的总数。",
           "reviewed": true
         }
       ]
@@ -2609,6 +5379,66 @@
         }
       ]
     },
+    "support": {
+      "common": "名词：支持、支撑、援助、供养、支撑物；动词：支援、支撑、帮助、支持、忍受",
+      "synonyms": [
+        {
+          "word": "endorse",
+          "sense": "支持",
+          "note": "endorse 常指公开或正式表示认可。support 还可指在行动、资金或资源上提供支持。",
+          "reviewed": true
+        },
+        {
+          "word": "sustain",
+          "sense": "支持、支撑（动词义）"
+        },
+        {
+          "word": "uphold",
+          "sense": "支持、支撑（动词义）"
+        }
+      ]
+    },
+    "suppress": {
+      "common": "动词：镇压、使止住、禁止、抑制、查禁",
+      "synonyms": [
+        {
+          "word": "inhibit",
+          "sense": "抑制",
+          "note": "inhibit 常指限制活动或阻碍发展。suppress 常指压制反应、信息或活动，使其不显露或不继续。",
+          "reviewed": true
+        }
+      ]
+    },
+    "sway": {
+      "common": "名词：摇摆、影响力、支配；动词：摇动、支配、弄歪、使倾斜、使动摇；动词：摇动、摇摆、倾斜、动摇、统治",
+      "synonyms": [
+        {
+          "word": "affect",
+          "sense": "影响（动词义）"
+        },
+        {
+          "word": "influence",
+          "sense": "影响（动词义）"
+        },
+        {
+          "word": "swing",
+          "sense": "摇摆",
+          "note": "sway 常指轻柔的左右摇晃。swing 常指绕支点摆动或来回摆动。",
+          "reviewed": true
+        }
+      ]
+    },
+    "swing": {
+      "common": "名词：摇摆、振幅、音律、节奏、涨落；动词：摇摆、悬挂、旋转、大摇大摆地走、转向；动词：挥舞、使旋转、使转向、悬挂、吊运；形容词：旋转的、悬挂的、强节奏爵士音乐的",
+      "synonyms": [
+        {
+          "word": "sway",
+          "sense": "摇摆",
+          "note": "sway 常指轻柔的左右摇晃。swing 常指绕支点摆动或来回摆动。",
+          "reviewed": true
+        }
+      ]
+    },
     "target": {
       "common": "名词：目标、靶子、指标；动词：对准、订指标",
       "synonyms": [
@@ -2626,6 +5456,28 @@
         }
       ]
     },
+    "tariff": {
+      "common": "名词：关税、关税表、价格表、收费表；动词：课以关税",
+      "synonyms": [
+        {
+          "word": "duty",
+          "sense": "关税",
+          "note": "duty 是对商品征收的税，如 import duty。tariff 常指进口关税或相关税率。",
+          "reviewed": true
+        }
+      ]
+    },
+    "temper": {
+      "common": "名词：(钢等的)硬度、脾气、心情、中和剂、倾向；动词：使回火、锻炼、调和、使缓和；动词：回火",
+      "synonyms": [
+        {
+          "word": "mood",
+          "sense": "情绪",
+          "note": "mood 通常指一段时间内的心情。temper 常见于坏脾气、发火等语境。",
+          "reviewed": true
+        }
+      ]
+    },
     "temporary": {
       "common": "形容词：暂时的、临时的；名词：临时工、临时雇员",
       "synonyms": [
@@ -2633,6 +5485,51 @@
           "word": "transient",
           "sense": "临时、暂时的（形容词义）",
           "note": "temporary 指暂时；transient 强调短暂；provisional 强调暂定，等待正式安排。",
+          "reviewed": true
+        }
+      ]
+    },
+    "tempt": {
+      "common": "动词：诱惑、引诱、引起...的兴趣、吸引、冒...风险",
+      "synonyms": [
+        {
+          "word": "lure",
+          "sense": "诱使",
+          "note": "lure 偏重用有吸引力的东西把人引过来。tempt 偏重让人产生想做某事的念头。",
+          "reviewed": true
+        }
+      ]
+    },
+    "theme": {
+      "common": "名词：主题、话题、题目",
+      "synonyms": [
+        {
+          "word": "subject",
+          "sense": "主题",
+          "note": "subject 指所讨论或研究的对象。theme 常指贯穿文章、作品或活动的主题。",
+          "reviewed": true
+        }
+      ]
+    },
+    "therefore": {
+      "common": "副词：因此、所以",
+      "synonyms": [
+        {
+          "word": "consequently",
+          "sense": "因此",
+          "note": "consequently 常突出前因带来的结果。therefore 也可由论据引出判断。",
+          "reviewed": true
+        },
+        {
+          "word": "hence",
+          "sense": "因此",
+          "note": "hence 较简洁、正式，常用来引出结果。therefore 常用于完整句中引出结论。",
+          "reviewed": true
+        },
+        {
+          "word": "thus",
+          "sense": "因此",
+          "note": "therefore 常引出结论。thus 既可引出结果，也可表示“以这种方式”。",
           "reviewed": true
         }
       ]
@@ -2660,6 +5557,78 @@
         }
       ]
     },
+    "threaten": {
+      "common": "动词：恐吓、威胁、预示...的凶兆；动词：威胁、恫吓、可能来临",
+      "synonyms": [
+        {
+          "word": "menace",
+          "sense": "威胁",
+          "note": "menace 偏正式，常指构成危险。threaten 可指口头威胁，也可指某事可能造成危害。",
+          "reviewed": true
+        }
+      ]
+    },
+    "thus": {
+      "common": "副词：如此、因此、到如此程度",
+      "synonyms": [
+        {
+          "word": "hence",
+          "sense": "因此",
+          "note": "hence 可承接原因引出结果。thus 也可指“以这种方式”，应结合上下文。",
+          "reviewed": true
+        },
+        {
+          "word": "therefore",
+          "sense": "因此",
+          "note": "therefore 常引出结论。thus 既可引出结果，也可表示“以这种方式”。",
+          "reviewed": true
+        }
+      ]
+    },
+    "track": {
+      "common": "名词：轨迹、足迹、径迹、小道、轨道；动词：循路而行、追踪、通过、用纤拉；动词：追踪、留下足迹、沿轨道运行",
+      "synonyms": [
+        {
+          "word": "trail",
+          "sense": "追踪",
+          "note": "track 可指追踪位置或持续监测进展。trail 作动词可指尾随。",
+          "reviewed": true
+        }
+      ]
+    },
+    "trade": {
+      "common": "名词：贸易、商业、交易、生意、职业；动词：进行交易、做买卖、经商、对换、购物；动词：用...进行交换",
+      "synonyms": [
+        {
+          "word": "deal",
+          "sense": "交易",
+          "note": "deal 作名词常指谈成的一笔交易或协议。trade 常指贸易或交换。",
+          "reviewed": true
+        }
+      ]
+    },
+    "trail": {
+      "common": "名词：踪迹、痕迹、一串、尾部、小径；动词：拖、尾随、追踪、落后于、开出路；动词：拖曳、垂下、落后、飘出、蔓生",
+      "synonyms": [
+        {
+          "word": "track",
+          "sense": "追踪",
+          "note": "track 可指追踪位置或持续监测进展。trail 作动词可指尾随。",
+          "reviewed": true
+        }
+      ]
+    },
+    "transfer": {
+      "common": "名词：迁移、移动、传递、转让、转移；动词：使转移、调转、调任、改变、传递；动词：转移、转学、转职、换车",
+      "synonyms": [
+        {
+          "word": "shift",
+          "sense": "转移",
+          "note": "shift 可指位置、重心或态度发生变化。transfer 常说明事物从一处、一人或一组转到另一处。",
+          "reviewed": true
+        }
+      ]
+    },
     "transient": {
       "common": "名词：瞬、短期居留者、过境鸟、瞬变现象；形容词：短暂的、易变的、瞬变的、路过的",
       "synonyms": [
@@ -2667,6 +5636,17 @@
           "word": "temporary",
           "sense": "临时、暂时的（形容词义）",
           "note": "temporary 指暂时；transient 强调短暂；provisional 强调暂定，等待正式安排。",
+          "reviewed": true
+        }
+      ]
+    },
+    "trash": {
+      "common": "名词：垃圾、废物；动词：丢弃",
+      "synonyms": [
+        {
+          "word": "rubbish",
+          "sense": "垃圾",
+          "note": "rubbish 在英式英语中常见，trash 在美式英语中常见，两者也可指毫无价值的东西。",
           "reviewed": true
         }
       ]
@@ -2688,6 +5668,88 @@
         }
       ]
     },
+    "triumph": {
+      "common": "名词：凯旋、胜利、欢欣；动词：得胜、成功",
+      "synonyms": [
+        {
+          "word": "victory",
+          "sense": "胜利",
+          "note": "triumph 常带有重大成功或克服困难的意味。victory 常指比赛、选举或战斗中的胜利。",
+          "reviewed": true
+        }
+      ]
+    },
+    "trivial": {
+      "common": "形容词：琐碎的、不重要的、轻微的、平常的",
+      "synonyms": [
+        {
+          "word": "petty",
+          "sense": "琐碎的",
+          "note": "petty 可暗示事情不重要，也可批评人小气。trivial 侧重事情微不足道。",
+          "reviewed": true
+        }
+      ]
+    },
+    "trust": {
+      "common": "名词：信任、信赖、相信、受托、职责；形容词：信托的、托拉斯的；动词：信赖、信任、相信、盼望、赊卖给；动词：相信、信赖、依靠",
+      "synonyms": [
+        {
+          "word": "believe",
+          "sense": "信任（动词义）"
+        },
+        {
+          "word": "confidence",
+          "sense": "信任",
+          "note": "confidence 常指对能力、判断或结果有信心。trust 常强调相信对方可靠、诚实。",
+          "reviewed": true
+        },
+        {
+          "word": "rely",
+          "sense": "信任（动词义）"
+        }
+      ]
+    },
+    "tutor": {
+      "common": "名词：家庭教师、导师、助教、监护人；动词：当...的教师、教、指导、约束、克制；动词：当家庭教师、受家庭教师的指导",
+      "synonyms": [
+        {
+          "word": "coach",
+          "sense": "辅导",
+          "note": "coach 常指通过训练提升表现。tutor 多指就一门学科给个人或小组辅导。",
+          "reviewed": true
+        }
+      ]
+    },
+    "uncover": {
+      "common": "动词：揭露、揭开、暴露、脱帽致敬；动词：脱帽致敬、揭去盖子",
+      "synonyms": [
+        {
+          "word": "disclose",
+          "sense": "显示、揭示"
+        },
+        {
+          "word": "expose",
+          "sense": "揭露",
+          "note": "expose 常指使不法行为或问题公之于众。uncover 强调把原来隐蔽的事实发现出来。",
+          "reviewed": true
+        },
+        {
+          "word": "reveal",
+          "sense": "显示、揭示"
+        }
+      ]
+    },
+    "underlying": {
+      "common": "形容词：潜在的、根本的、表面下的",
+      "synonyms": [
+        {
+          "word": "fundamental",
+          "sense": "根本的",
+          "note": "fundamental 强调最基本或最重要。underlying 强调表面之下起作用，如 underlying causes。",
+          "reviewed": true
+        }
+      ]
+    },
     "undo": {
       "common": "动词：解开、取消、破坏、毁灭、扰乱；动词：松开",
       "synonyms": [
@@ -2698,9 +5760,59 @@
           "reviewed": true
         },
         {
+          "word": "loosen",
+          "sense": "解开",
+          "note": "loosen 常指把紧的东西弄松。undo 可指把扣子、结等彻底解开。",
+          "reviewed": true
+        },
+        {
           "word": "withdraw",
           "sense": "取消、撤销（动词义）",
           "note": "cancel 取消安排；withdraw 撤回或撤销原有决定；undo 取消先前操作或效果，使用对象不同。",
+          "reviewed": true
+        }
+      ]
+    },
+    "unify": {
+      "common": "动词：统一、使成一体",
+      "synonyms": [
+        {
+          "word": "unite",
+          "sense": "统一、联合",
+          "note": "unify 强调整合成一个整体或统一规则。unite 常指人或群体团结起来。",
+          "reviewed": true
+        }
+      ]
+    },
+    "unite": {
+      "common": "动词：联合、接合、混合；动词：使联合、统一、使粘合、使结合",
+      "synonyms": [
+        {
+          "word": "unify",
+          "sense": "统一、联合",
+          "note": "unify 强调整合成一个整体或统一规则。unite 常指人或群体团结起来。",
+          "reviewed": true
+        }
+      ]
+    },
+    "universal": {
+      "common": "形容词：全世界的、普遍的、宇宙的、通用的；名词：一般概念",
+      "synonyms": [
+        {
+          "word": "general",
+          "sense": "普遍的",
+          "note": "general 常指适用于多数情形或整体。universal 强调适用于所有人或所有相关情形。",
+          "reviewed": true
+        }
+      ]
+    },
+    "urge": {
+      "common": "名词：冲动、推动力、迫切的要求；动词：驱策、力劝、竭力主张、推动；动词：强烈要求",
+      "synonyms": [
+        {
+          "word": "impulse",
+          "sense": "冲动",
+          "note": "impulse 强调突然冒出的念头。urge 指很强的欲望，可能持续一段时间。",
           "reviewed": true
         }
       ]
@@ -2730,6 +5842,34 @@
           "word": "manipulate",
           "sense": "使用、利用（动词义）",
           "note": "utilize 和 employ 可指使用；apply 常指应用方法；exploit 可指利用资源，也可指剥削；manipulate 可指操作或操纵。",
+          "reviewed": true
+        }
+      ]
+    },
+    "version": {
+      "common": "名词：一种描述、版本、译文",
+      "synonyms": [
+        {
+          "word": "edition",
+          "sense": "版本",
+          "note": "edition 常指出版物、节目等的某一版。version 泛指同一事物的不同版本。",
+          "reviewed": true
+        }
+      ]
+    },
+    "victory": {
+      "common": "名词：胜利、战胜、克服",
+      "synonyms": [
+        {
+          "word": "success",
+          "sense": "成功、胜利",
+          "note": "success 指达到预期目标。victory 强调在较量中获胜。",
+          "reviewed": true
+        },
+        {
+          "word": "triumph",
+          "sense": "胜利",
+          "note": "triumph 常带有重大成功或克服困难的意味。victory 常指比赛、选举或战斗中的胜利。",
           "reviewed": true
         }
       ]
@@ -2808,6 +5948,17 @@
         }
       ]
     },
+    "violate": {
+      "common": "动词：违犯、亵渎、违反、侵犯、妨碍",
+      "synonyms": [
+        {
+          "word": "breach",
+          "sense": "违反",
+          "note": "breach 常指违反合同、义务或保密要求。violate 常用于违反法律、规则或侵害权利。",
+          "reviewed": true
+        }
+      ]
+    },
     "vital": {
       "common": "形容词：生命的、重要的、充满活力的、生死攸关的、致命的",
       "synonyms": [
@@ -2825,6 +5976,23 @@
           "word": "essential",
           "sense": "必要、重要的（形容词义）",
           "note": "necessary 强调必需；essential 指不可或缺；vital、crucial 强调至关重要。",
+          "reviewed": true
+        }
+      ]
+    },
+    "wage": {
+      "common": "名词：工资、报应、报偿；动词：开展、进行；动词：进行",
+      "synonyms": [
+        {
+          "word": "pay",
+          "sense": "工资",
+          "note": "pay 泛指工作报酬。wage 常按小时、天或周计算。",
+          "reviewed": true
+        },
+        {
+          "word": "salary",
+          "sense": "工资",
+          "note": "salary 通常是按月或按年确定的固定薪资。wage 常与工时或工作天数挂钩。",
           "reviewed": true
         }
       ]
@@ -2857,6 +6025,17 @@
         }
       ]
     },
+    "wound": {
+      "common": "名词：创伤、伤口、伤疤、伤害、痛苦；动词：伤害、损害、使受伤；动词：打伤、伤害",
+      "synonyms": [
+        {
+          "word": "injure",
+          "sense": "使受伤",
+          "note": "injure 泛指造成伤害。wound 常指武器造成的伤，也可指伤感情。",
+          "reviewed": true
+        }
+      ]
+    },
     "wreck": {
       "common": "名词：失事、残骸、破坏；动词：使失事、拆毁、破坏；动词：(船)失事、营救失事船只",
       "synonyms": [
@@ -2871,6 +6050,25 @@
           "sense": "摧毁、毁坏（动词义）",
           "note": "destroy 强调摧毁；ruin 强调毁坏价值或前途；wreck 常指严重破坏。",
           "reviewed": true
+        }
+      ]
+    },
+    "yield": {
+      "common": "名词：生产量、投资收益；动词：出产、给予、让出、放弃、使屈服；动词：出产、屈服、投降、倒塌",
+      "synonyms": [
+        {
+          "word": "output",
+          "sense": "产出、产量",
+          "note": "output 常指生产系统的总产出。yield 常用于作物产量，也可指投资收益。",
+          "reviewed": true
+        },
+        {
+          "word": "submit",
+          "sense": "放弃抵抗、屈服"
+        },
+        {
+          "word": "surrender",
+          "sense": "放弃抵抗、屈服"
         }
       ]
     }
@@ -2897,6 +6095,6 @@
     "automatic/voluntary": false,
     "appoint/nominate": false
   },
-  "reviewedSemanticPairs": 164,
+  "reviewedSemanticPairs": 307,
   "reviewedSemanticGroups": 49
 }

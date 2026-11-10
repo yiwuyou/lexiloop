@@ -402,7 +402,7 @@ function testLibraryAndTemplates() {
   const libraryTemplate = source('pages/library/index.wxml');
   assert.ok(libraryTemplate.indexOf('bindtap="showWords"') < libraryTemplate.indexOf('bindtap="showDays"'), 'word list button must precede low-frequency day view');
   const studyTemplate = source('pages/study/index.wxml') + source('components/word-card/index.wxml');
-  assert.ok(/wx:if="\{\{(?:showRelations && )?revealed\}\}"[^>]*bindtap="openRelations"|bindtap="openRelations"[^>]*wx:if="\{\{(?:showRelations && )?revealed\}\}"/.test(studyTemplate), 'word relations must not leak the answer before recall is revealed');
+  assert.ok(/class="rating-area" wx:if="\{\{revealed\}\}"[^>]*>[\s\S]*?bindtap="openRelations"[\s\S]*?class="rating-grid"/.test(studyTemplate), 'word relations must stay inside the revealed rating area');
   assert.ok(/wx:if="\{\{contextAnswered\}\}"[^>]*bindtap="openRelations"|bindtap="openRelations"[^>]*wx:if="\{\{contextAnswered\}\}"/.test(studyTemplate), 'context questions must be answered before relation meanings appear');
   const componentTemplate = source('components/word-relations/index.wxml');
   assert.ok(componentTemplate.indexOf('机构释义') < componentTemplate.indexOf('日常常用义'), 'institution meaning must come before everyday senses');

@@ -1,6 +1,1584 @@
 {
   "semanticPairs": [
     {
+      "words": [
+        "meanwhile",
+        "meantime"
+      ],
+      "sense": "与此同时、在此期间",
+      "note": "meanwhile 常放在句首，承接同时发生的事。meantime 常见于 in the meantime，指等候期间或两件事之间的这段时间。",
+      "sources": [
+        "https://dictionary.cambridge.org/us/dictionary/english/meanwhile",
+        "https://dictionary.cambridge.org/us/dictionary/english/meantime"
+      ]
+    },
+    {
+      "words": [
+        "acknowledge",
+        "recognize"
+      ],
+      "sense": "承认",
+      "note": "acknowledge 常指承认事实或问题的存在。recognize 可指承认某种地位或认可贡献，也常指认出。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "advance",
+        "progress"
+      ],
+      "sense": "取得进展",
+      "note": "advance 可指向前推进，也可指推动某事。progress 作动词时常指逐步取得进展。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "assault",
+        "attack"
+      ],
+      "sense": "袭击",
+      "note": "assault 常指暴力袭击，法律报道中也常见。attack 范围更广，还可指言语攻击。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "deserve",
+        "merit"
+      ],
+      "sense": "值得",
+      "note": "deserve 可说某人值得受到某种对待。merit 作动词较正式，常见于某事值得关注或讨论。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "license",
+        "permission"
+      ],
+      "sense": "许可",
+      "note": "license 常指正式许可或执照。permission 是广义的同意或准许。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "sign",
+        "signal"
+      ],
+      "sense": "信号",
+      "note": "sign 常指能看出来的迹象或标记。signal 常指主动发出或传递的信号，也可指预示变化的迹象。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "shift",
+        "transfer"
+      ],
+      "sense": "转移",
+      "note": "shift 可指位置、重心或态度发生变化。transfer 常说明事物从一处、一人或一组转到另一处。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "amount",
+        "sum"
+      ],
+      "sense": "金额",
+      "note": "amount 是数量，涉及钱时指金额。sum 可指一笔钱，也可指相加所得的总数。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "characteristic",
+        "feature"
+      ],
+      "sense": "特征",
+      "note": "characteristic 强调能辨认某类人或事物的典型特征。feature 可指任一显著特点，也常指功能。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "choice",
+        "selection"
+      ],
+      "sense": "选择",
+      "note": "choice 可指选择的权利或结果。selection 可指挑选的过程或挑出来的一组。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "competition",
+        "contest"
+      ],
+      "sense": "比赛",
+      "note": "competition 还可指长期的竞争。contest 常指有特定规则或目标的一场比赛。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "correct",
+        "rectify"
+      ],
+      "sense": "纠正",
+      "note": "correct 常指改正错误。rectify 较正式，常用于纠正问题、失衡或不良状况。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "direct",
+        "straight"
+      ],
+      "sense": "直接地",
+      "note": "direct 和 straight 都可表示不经中转地去某处。straight 也可指直线前进或立刻行动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "emphasis",
+        "stress"
+      ],
+      "sense": "强调",
+      "note": "emphasis 是特别重视或突出的重点。stress 作名词也可表示强调，此外常指压力或重音。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "enhance",
+        "heighten"
+      ],
+      "sense": "提高",
+      "note": "enhance 常指改善质量或增强价值。heighten 偏向提高强度，常接意识、紧张感或风险。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "essence",
+        "substance"
+      ],
+      "sense": "本质、实质",
+      "note": "essence 强调使事物成为它本身的核心性质。substance 可指言论或主张的实质内容，也有物质义。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "esteem",
+        "respect"
+      ],
+      "sense": "尊重",
+      "note": "esteem 偏正式，强调高度评价。respect 用得更广，也可指尊重权利、边界或决定。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "gain",
+        "increase"
+      ],
+      "sense": "增加",
+      "note": "gain 可指某项数值增加，也可指获得某物。increase 常直接说明数量或程度变大。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "gaze",
+        "stare"
+      ],
+      "sense": "凝视",
+      "note": "gaze 常指持续地看，可以带欣赏或沉思。stare 指定睛盯着，常因惊讶，也可能显得无礼。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "impulse",
+        "urge"
+      ],
+      "sense": "冲动",
+      "note": "impulse 强调突然冒出的念头。urge 指很强的欲望，可能持续一段时间。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "inhibit",
+        "suppress"
+      ],
+      "sense": "抑制",
+      "note": "inhibit 常指限制活动或阻碍发展。suppress 常指压制反应、信息或活动，使其不显露或不继续。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "injure",
+        "wound"
+      ],
+      "sense": "使受伤",
+      "note": "injure 泛指造成伤害。wound 常指武器造成的伤，也可指伤感情。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "lure",
+        "tempt"
+      ],
+      "sense": "诱使",
+      "note": "lure 偏重用有吸引力的东西把人引过来。tempt 偏重让人产生想做某事的念头。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "motion",
+        "movement"
+      ],
+      "sense": "运动、动作",
+      "note": "motion 常强调移动状态或轨迹。movement 可指某次动作、一连串移动，也可指社会运动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "quit",
+        "resign"
+      ],
+      "sense": "辞职",
+      "note": "quit 可泛指离开工作或停止某项活动。resign 常用于正式辞去职位。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "rubbish",
+        "trash"
+      ],
+      "sense": "垃圾",
+      "note": "rubbish 在英式英语中常见，trash 在美式英语中常见，两者也可指毫无价值的东西。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "severe",
+        "stern"
+      ],
+      "sense": "严厉",
+      "note": "severe 可形容严厉的批评或处罚，也常指程度严重。stern 常形容人、语气或警告严肃而严厉。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "subject",
+        "theme"
+      ],
+      "sense": "主题",
+      "note": "subject 指所讨论或研究的对象。theme 常指贯穿文章、作品或活动的主题。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "appraisal",
+        "estimate"
+      ],
+      "sense": "估价",
+      "note": "appraisal 常指正式评估价值或表现。estimate 强调在信息有限时给出大致金额或数量。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "approve",
+        "sanction"
+      ],
+      "sense": "批准",
+      "note": "approve 常指同意计划或请求。sanction 可指正式授权，读到 sanctions 时还要留意制裁义。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "bankrupt",
+        "ruin"
+      ],
+      "sense": "使破产、使陷入财务困境",
+      "note": "bankrupt 指使某人或机构破产。ruin 指彻底毁坏，谈到钱时可指使人倾家荡产。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "bargain",
+        "deal"
+      ],
+      "sense": "交易",
+      "note": "bargain 可指谈成的交易，也常指物美价廉的东西。deal 泛指协议或交易。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "basis",
+        "foundation"
+      ],
+      "sense": "基础",
+      "note": "basis 常指观点、决定或计算所依据的东西。foundation 强调支撑事物的根基。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "battle",
+        "combat"
+      ],
+      "sense": "战斗",
+      "note": "battle 通常指一场战斗或长期斗争。combat 偏正式，常指作战活动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "breach",
+        "violate"
+      ],
+      "sense": "违反",
+      "note": "breach 常指违反合同、义务或保密要求。violate 常用于违反法律、规则或侵害权利。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "care",
+        "caution"
+      ],
+      "sense": "小心、谨慎",
+      "note": "with care 可强调仔细操作。with caution 更强调留意风险。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "cause",
+        "reason"
+      ],
+      "sense": "原因",
+      "note": "cause 偏重造成结果的直接因素。reason 还可以指个人行动的理由或给出的解释。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "chart",
+        "graph"
+      ],
+      "sense": "图表",
+      "note": "chart 范围较广，可用图形或表格组织信息。graph 通常用坐标显示数值或变量的关系。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "circulate",
+        "propagate"
+      ],
+      "sense": "传播",
+      "note": "circulate 常指消息或文件在人群中流传。propagate 可指传播观念，亦可指繁殖或传播波。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "circulate",
+        "spread"
+      ],
+      "sense": "传播",
+      "note": "circulate 偏重在人群或渠道中传递。spread 偏重从原有范围向外扩散。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "clutch",
+        "seize"
+      ],
+      "sense": "抓住",
+      "note": "clutch 强调紧紧抓着。seize 常指突然抓住，也可指抓住机会。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "coach",
+        "tutor"
+      ],
+      "sense": "辅导",
+      "note": "coach 常指通过训练提升表现。tutor 多指就一门学科给个人或小组辅导。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "command",
+        "instruction"
+      ],
+      "sense": "指令",
+      "note": "command 可指权威发出的命令或计算机指令。instruction 也可指操作步骤，复数常指说明。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "comment",
+        "remark"
+      ],
+      "sense": "评论",
+      "note": "comment 常指对某事发表意见。remark 常指说出的一句评论或观察。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "compete",
+        "contend"
+      ],
+      "sense": "竞争",
+      "note": "compete 泛指参与竞争。contend for 常指争取奖项、职位等，contend that 则表示主张。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "component",
+        "ingredient"
+      ],
+      "sense": "成分",
+      "note": "component 是系统或整体中的一个组成部分。ingredient 常指配方或混合物的成分，也可比喻成功的要素。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "confine",
+        "constrain"
+      ],
+      "sense": "限制",
+      "note": "confine 偏重限制在一个范围内。constrain 偏重条件对选择或行动施加约束。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "confine",
+        "limit"
+      ],
+      "sense": "限制",
+      "note": "confine 常说把人或事限在某处或某个范围。limit 常说给数量、程度或范围设上限。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "confine",
+        "restrict"
+      ],
+      "sense": "限制",
+      "note": "confine 强调留在指定范围。restrict 常指借规则或条件限制使用、进入或行动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "consequently",
+        "therefore"
+      ],
+      "sense": "因此",
+      "note": "consequently 常突出前因带来的结果。therefore 也可由论据引出判断。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "hence",
+        "therefore"
+      ],
+      "sense": "因此",
+      "note": "hence 较简洁、正式，常用来引出结果。therefore 常用于完整句中引出结论。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "hence",
+        "thus"
+      ],
+      "sense": "因此",
+      "note": "hence 可承接原因引出结果。thus 也可指“以这种方式”，应结合上下文。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "consider",
+        "reckon"
+      ],
+      "sense": "认为",
+      "note": "consider 作此义常见于 consider A (to be) B。reckon 表示认为或估计，语气较口语。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "consume",
+        "expend"
+      ],
+      "sense": "消耗",
+      "note": "consume 常接能源、食物或资源。expend 较正式，常接精力、时间或金钱。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "contract",
+        "shrink"
+      ],
+      "sense": "收缩",
+      "note": "contract 常指因受冷或肌肉用力而收缩。shrink 常指尺寸、数量或规模变小。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "cope",
+        "deal"
+      ],
+      "sense": "应付、处理",
+      "note": "cope with 强调应付压力或困难。deal with 范围更广，可指处理事务或讨论某个问题。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "core",
+        "nucleus"
+      ],
+      "sense": "核心",
+      "note": "core 可指任何事物的核心部分。nucleus 常指细胞核、原子核，也可指团体的中心。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "critical",
+        "decisive"
+      ],
+      "sense": "关键的",
+      "note": "critical 强调对成败至关重要。decisive 强调足以决定结果。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "crucial",
+        "important"
+      ],
+      "sense": "重要的",
+      "note": "crucial 表示至关重要。important 程度范围更广。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "cue",
+        "prompt"
+      ],
+      "sense": "提示",
+      "note": "cue 是提醒某人何时行动的信号。prompt 可指促使作答或行动的提示，如写作提示或屏幕提示。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "deal",
+        "trade"
+      ],
+      "sense": "交易",
+      "note": "deal 作名词常指谈成的一笔交易或协议。trade 常指贸易或交换。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "deduct",
+        "subtract"
+      ],
+      "sense": "减去",
+      "note": "deduct 常指从金额、分数或总量中扣除。subtract 常用于数学运算。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "deny",
+        "refuse"
+      ],
+      "sense": "拒绝",
+      "note": "deny 常见于 deny someone access，表示不给予。refuse 可接请求或不定式，也可指不愿做某事。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "depict",
+        "describe"
+      ],
+      "sense": "描绘",
+      "note": "depict 可用画面或文字刻画场景。describe 泛指描述特征、情况或经过。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "depict",
+        "portray"
+      ],
+      "sense": "描绘",
+      "note": "depict 偏重把人或情景描绘出来。portray 常侧重以某种形象或角度呈现。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "direction",
+        "guidance"
+      ],
+      "sense": "指导",
+      "note": "direction 可指为行动指明方向。guidance 通常指帮助他人作决定或行动的建议。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "disturb",
+        "interrupt"
+      ],
+      "sense": "打扰",
+      "note": "disturb 指打扰、使不安或扰乱。interrupt 强调使说话或活动暂时中断。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "duty",
+        "tariff"
+      ],
+      "sense": "关税",
+      "note": "duty 是对商品征收的税，如 import duty。tariff 常指进口关税或相关税率。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "edition",
+        "version"
+      ],
+      "sense": "版本",
+      "note": "edition 常指出版物、节目等的某一版。version 泛指同一事物的不同版本。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "effort",
+        "endeavor"
+      ],
+      "sense": "努力",
+      "note": "effort 强调投入的精力或一次努力。endeavor 较正式，强调为目标作出的尝试。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "electric",
+        "electrical"
+      ],
+      "sense": "电的",
+      "note": "electric 常指用电驱动或供电，如 electric cars。electrical 常指与电有关，如 electrical equipment。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "endorse",
+        "support"
+      ],
+      "sense": "支持",
+      "note": "endorse 常指公开或正式表示认可。support 还可指在行动、资金或资源上提供支持。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "error",
+        "mistake"
+      ],
+      "sense": "错误",
+      "note": "error 常用于技术、计算、判断等语境。mistake 常指做错的事或错误选择。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "establish",
+        "found"
+      ],
+      "sense": "创立",
+      "note": "establish 可指建立机构、规则或关系。found 作动词时常指创立学校、公司等机构。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "establish",
+        "institute"
+      ],
+      "sense": "设立",
+      "note": "establish 常指建立机构或制度。institute 作动词常指开始实施制度、程序或措施。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "esteem",
+        "regard"
+      ],
+      "sense": "尊重",
+      "note": "esteem 是尊敬或高度评价。regard 可在 hold someone in high regard 中表示对某人的敬重。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "estimate",
+        "gauge"
+      ],
+      "sense": "估计",
+      "note": "estimate 常指估算数量、成本或时间。gauge 常指根据迹象判断程度、反应或情绪。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "excerpt",
+        "extract"
+      ],
+      "sense": "摘录",
+      "note": "excerpt 多指从文章、作品中选出的一段。extract 作名词也可指节选，另有提取物义。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "financial",
+        "fiscal"
+      ],
+      "sense": "财政的",
+      "note": "financial 涉及个人、机构或政府的财务。fiscal 常用于政府财政或会计年度。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "forecast",
+        "predict"
+      ],
+      "sense": "预测",
+      "note": "forecast 常见于天气、经济或趋势预测。predict 可泛指预测未来事件或结果。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "furnish",
+        "provide"
+      ],
+      "sense": "提供",
+      "note": "furnish 较正式，常见于 furnish someone with something。provide 的用法更广。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "general",
+        "universal"
+      ],
+      "sense": "普遍的",
+      "note": "general 常指适用于多数情形或整体。universal 强调适用于所有人或所有相关情形。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "humanity",
+        "mankind"
+      ],
+      "sense": "人类",
+      "note": "humanity 可指全体人类，也可指人道。mankind 指全体人类，现代写作也常用 humankind。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "imitate",
+        "simulate"
+      ],
+      "sense": "模仿、模拟",
+      "note": "imitate 常指模仿人的动作、声音或方式。simulate 常指用模型或安排再现某种过程和条件。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "instant",
+        "moment"
+      ],
+      "sense": "瞬间",
+      "note": "instant 强调极短的一瞬。moment 也可指某个特定时刻或一小段时间。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "intensity",
+        "strength"
+      ],
+      "sense": "强度",
+      "note": "intensity 常指程度有多强，如光、运动或冲突。strength 可指力气、能力，也可指信号等的强度。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "loosen",
+        "undo"
+      ],
+      "sense": "解开",
+      "note": "loosen 常指把紧的东西弄松。undo 可指把扣子、结等彻底解开。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "menace",
+        "threaten"
+      ],
+      "sense": "威胁",
+      "note": "menace 偏正式，常指构成危险。threaten 可指口头威胁，也可指某事可能造成危害。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "mention",
+        "refer"
+      ],
+      "sense": "提及",
+      "note": "mention 常直接接提到的人或事。refer 在这个意思下常用 refer to。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "mood",
+        "temper"
+      ],
+      "sense": "情绪",
+      "note": "mood 通常指一段时间内的心情。temper 常见于坏脾气、发火等语境。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "outlook",
+        "prospect"
+      ],
+      "sense": "前景",
+      "note": "outlook 常指对总体趋势的判断。prospect 常指某件事发生或成功的前景。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "packet",
+        "parcel"
+      ],
+      "sense": "包裹",
+      "note": "packet 常指小包或一包东西。parcel 常指打包后寄送或递交的物件。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "particular",
+        "special"
+      ],
+      "sense": "特别的",
+      "note": "particular 常指某一个特定对象。special 常强调不同寻常、专用或格外重要。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "penetrate",
+        "permeate"
+      ],
+      "sense": "渗透",
+      "note": "penetrate 强调穿过表面进入。permeate 强调渐渐扩散到内部各处。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "petty",
+        "trivial"
+      ],
+      "sense": "琐碎的",
+      "note": "petty 可暗示事情不重要，也可批评人小气。trivial 侧重事情微不足道。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "position",
+        "status"
+      ],
+      "sense": "地位",
+      "note": "position 可指人在组织中的职位或位置。status 偏重公认的地位、身份或当前状态。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "propagate",
+        "spread"
+      ],
+      "sense": "传播",
+      "note": "propagate 较正式，可指传播观念或使波传开。spread 强调范围变广，也可指事物自行扩散。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "publish",
+        "release"
+      ],
+      "sense": "发布",
+      "note": "publish 常指正式公开文字或研究结果。release 还可用于发行影片、软件或对外公布消息。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "reduce",
+        "shrink"
+      ],
+      "sense": "减少",
+      "note": "reduce 常强调使数量、规模或程度降低。shrink 常描述规模变小，也可作及物动词。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "reply",
+        "response"
+      ],
+      "sense": "答复",
+      "note": "reply 常指对话语、邮件或问题的直接答复。response 也包括行为、生理或政策层面的反应。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "resolve",
+        "solve"
+      ],
+      "sense": "解决",
+      "note": "resolve 常指化解冲突、争议或疑问。solve 常指找出问题或谜题的解法。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "retrospect",
+        "review"
+      ],
+      "sense": "回顾",
+      "note": "retrospect 常见于 in retrospect，表示事后回看。review 可指主动回顾或重新审查。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "revolve",
+        "rotate"
+      ],
+      "sense": "旋转",
+      "note": "revolve 常说绕另一物体或一点转动。rotate 常说绕自身轴转，也有轮换义。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "section",
+        "segment"
+      ],
+      "sense": "部分",
+      "note": "section 常指按内容或功能划分的一部分。segment 常指从整体切分的一段或一类。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "serial",
+        "successive"
+      ],
+      "sense": "连续的",
+      "note": "serial 强调按顺序组成系列。successive 强调一个接着一个出现。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "sway",
+        "swing"
+      ],
+      "sense": "摇摆",
+      "note": "sway 常指轻柔的左右摇晃。swing 常指绕支点摆动或来回摆动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "therefore",
+        "thus"
+      ],
+      "sense": "因此",
+      "note": "therefore 常引出结论。thus 既可引出结果，也可表示“以这种方式”。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "track",
+        "trail"
+      ],
+      "sense": "追踪",
+      "note": "track 可指追踪位置或持续监测进展。trail 作动词可指尾随。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "triumph",
+        "victory"
+      ],
+      "sense": "胜利",
+      "note": "triumph 常带有重大成功或克服困难的意味。victory 常指比赛、选举或战斗中的胜利。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "unify",
+        "unite"
+      ],
+      "sense": "统一、联合",
+      "note": "unify 强调整合成一个整体或统一规则。unite 常指人或群体团结起来。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "barely",
+        "scarcely"
+      ],
+      "sense": "几乎不",
+      "note": "两词都可表示程度很低。barely 还常指刚刚够或勉强做到。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "catastrophe",
+        "disaster"
+      ],
+      "sense": "灾难",
+      "note": "catastrophe 往往强调灾难规模或后果极其严重。disaster 范围更宽，也可夸张形容失败。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "client",
+        "customer"
+      ],
+      "sense": "客户",
+      "note": "client 常指购买专业服务或长期接受服务的人。customer 常指购买商品或服务的人。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "compel",
+        "oblige"
+      ],
+      "sense": "迫使",
+      "note": "compel 偏重压力强到不得不做。oblige 在 be obliged to 中常指受规则、责任或形势所迫。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "comprise",
+        "consist"
+      ],
+      "sense": "由……组成",
+      "note": "整体可作 comprise 的主语，后面直接跟组成部分。consist of 也用整体作主语，后面跟 of。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "convey",
+        "express"
+      ],
+      "sense": "表达",
+      "note": "convey 强调把信息、意义或感受传递给对方。express 强调把自己的思想或感情表达出来。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "crawl",
+        "creep"
+      ],
+      "sense": "缓慢移动",
+      "note": "crawl 通常指爬行，也可指慢得像爬。creep 常指悄悄或一点点移动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "curb",
+        "restrict"
+      ],
+      "sense": "限制",
+      "note": "curb 强调遏制势头或把过量活动压下来。restrict 常指用规则或条件限制范围。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "discharge",
+        "release"
+      ],
+      "sense": "释放、排出",
+      "note": "discharge 常指排放液体、气体或电荷。release 泛指让人或事物脱离限制。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "dominant",
+        "predominant"
+      ],
+      "sense": "占优势的",
+      "note": "dominant 可强调控制力或影响力。predominant 常强调在数量、频率或重要性上最突出。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "expose",
+        "uncover"
+      ],
+      "sense": "揭露",
+      "note": "expose 常指使不法行为或问题公之于众。uncover 强调把原来隐蔽的事实发现出来。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "function",
+        "role"
+      ],
+      "sense": "作用",
+      "note": "function 偏重事物实际发挥的功能。role 常指某人在群体或过程中的角色、作用。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "fundamental",
+        "underlying"
+      ],
+      "sense": "根本的",
+      "note": "fundamental 强调最基本或最重要。underlying 强调表面之下起作用，如 underlying causes。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "immediate",
+        "prompt"
+      ],
+      "sense": "立即的、迅速的",
+      "note": "immediate 强调没有等待。prompt 常指反应或行动及时。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "operation",
+        "procedure"
+      ],
+      "sense": "手术",
+      "note": "operation 作此义指外科手术。procedure 可指某项医疗操作，范围包括非手术操作。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "output",
+        "yield"
+      ],
+      "sense": "产出、产量",
+      "note": "output 常指生产系统的总产出。yield 常用于作物产量，也可指投资收益。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "pay",
+        "salary"
+      ],
+      "sense": "工资",
+      "note": "pay 泛指工作报酬。salary 常指按年或按月确定的固定薪资。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "pay",
+        "wage"
+      ],
+      "sense": "工资",
+      "note": "pay 泛指工作报酬。wage 常按小时、天或周计算。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "salary",
+        "wage"
+      ],
+      "sense": "工资",
+      "note": "salary 通常是按月或按年确定的固定薪资。wage 常与工时或工作天数挂钩。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "rarely",
+        "seldom"
+      ],
+      "sense": "很少",
+      "note": "两词都表示发生频率低。seldom 在现代用语中通常更偏书面。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "admit",
+        "allow"
+      ],
+      "sense": "准许",
+      "note": "admit 常指准许进入场所或录取。allow 范围更广，常接人和不定式表示允许做某事。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "achieve",
+        "attain"
+      ],
+      "sense": "达到",
+      "note": "achieve 强调完成目标或取得成果。attain 较正式，常指达到某种水平、年龄或地位。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "advise",
+        "suggest"
+      ],
+      "sense": "建议",
+      "note": "advise 常见于 advise someone to do something。suggest 常接动名词或 that 从句。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "affect",
+        "impact"
+      ],
+      "sense": "影响",
+      "note": "affect 常作及物动词。impact 可作名词或动词，常用于较明显的影响。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "confidence",
+        "trust"
+      ],
+      "sense": "信任",
+      "note": "confidence 常指对能力、判断或结果有信心。trust 常强调相信对方可靠、诚实。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "enlarge",
+        "magnify"
+      ],
+      "sense": "放大",
+      "note": "enlarge 常指使尺寸变大。magnify 常指光学放大，也可指使问题或影响显得更大。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "handicap",
+        "hinder"
+      ],
+      "sense": "阻碍",
+      "note": "handicap 作动词偏重使某人处于不利条件。hinder 强调拖慢或妨碍行动。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "omit",
+        "overlook"
+      ],
+      "sense": "遗漏",
+      "note": "omit 指把某项内容省略或漏掉，可有意也可无意。overlook 作此义指没注意到。",
+      "sources": [
+        "https://en-word.net/downloads"
+      ]
+    },
+    {
+      "words": [
+        "evidence",
+        "proof"
+      ],
+      "sense": "证据",
+      "note": "evidence 可指支持判断的线索或材料。proof 通常指足以确证某事的证据。",
+      "sources": [
+        "https://dictionary.cambridge.org/us/dictionary/english/evidence",
+        "https://dictionary.cambridge.org/us/dictionary/english/proof"
+      ]
+    },
+    {
+      "words": [
+        "disgust",
+        "dislike"
+      ],
+      "sense": "厌恶、反感",
+      "note": "disgust 指强烈的厌恶。dislike 程度较轻，常只是“不喜欢”。",
+      "sources": [
+        "https://dictionary.cambridge.org/us/dictionary/english/disgust",
+        "https://dictionary.cambridge.org/us/dictionary/english/dislike"
+      ]
+    },
+    {
+      "words": [
+        "period",
+        "phase"
+      ],
+      "sense": "时期、阶段",
+      "note": "period 泛指一段时间。phase 指一个过程里有特征的一个阶段。",
+      "sources": [
+        "https://dictionary.cambridge.org/us/dictionary/english/period",
+        "https://dictionary.cambridge.org/us/dictionary/english/phase"
+      ]
+    },
+    {
+      "words": [
+        "success",
+        "victory"
+      ],
+      "sense": "成功、胜利",
+      "note": "success 指达到预期目标。victory 强调在较量中获胜。",
+      "sources": [
+        "https://dictionary.cambridge.org/us/dictionary/english/success",
+        "https://dictionary.cambridge.org/us/dictionary/english/victory"
+      ]
+    },
+    {
       "words": ["propel", "impetus"],
       "sense": "推动：动作与推动力的对照",
       "note": "propel 是动词，指推进、推动某人或某物；impetus 是名词，指促使行动或进展的动力。一个侧重推动的动作，一个侧重推动力，句中不能直接互换。",

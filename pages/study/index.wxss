@@ -75,10 +75,6 @@
   transition: width .2s ease;
 }
 
-.stage-tools { display: flex; align-items: center; gap: 10rpx; flex-shrink: 0; white-space: nowrap; }
-.lookup-trigger { min-height: 72rpx; margin: 0; padding: 0 10rpx; line-height: 72rpx; color: var(--main-strong); background: transparent; font-size: 25rpx; }
-.lookup-trigger::after { border: 0; }
-
 .word-card,
 .context-card {
   min-height: 0;
@@ -552,6 +548,14 @@
 .is-recall .word { font-size: 86rpx; margin-bottom: 18rpx; }
 .is-recall .pronunciation { margin-bottom: 34rpx; padding: 10rpx 18rpx 10rpx 10rpx; }
 .recall-reveal { width: 100%; flex-shrink: 0; }
+.recall-actions.with-lookup { display: grid; grid-template-columns: 52px minmax(0, 1fr) 52px; align-items: center; column-gap: 6rpx; }
+.with-lookup .recall-reveal { grid-column: 2; justify-self: center; max-width: 340rpx; min-width: 0; margin: 0; padding: 0 12rpx; }
+.lookup-action { display: inline-flex; align-items: center; justify-content: center; width: auto; min-width: 48px; min-height: 44px; margin: 0; padding: 0 12rpx; border-radius: 12rpx; background: transparent; color: var(--main-strong); font-size: 25rpx; line-height: 1.35; white-space: nowrap; }
+.with-lookup .lookup-action { grid-column: 3; grid-row: 1; justify-self: end; }
+.lookup-pressed { background: var(--soft); }
+.study-tools, .context-tools { display: flex; align-items: center; gap: 8rpx; }
+.study-tools { flex-shrink: 0; }
+.context-tools { justify-content: space-between; }
 
 /* Three readable learning sections; ratings follow short cards without a filler gap. */
 .is-answer .understanding-panel { padding: 0 4rpx; margin: 10rpx 0; }
@@ -587,7 +591,8 @@
 .choice-list { gap: 10rpx; }
 .choice { min-height: 88rpx; padding: 12rpx 20rpx; }
 .stage-status { display: flex; align-items: center; justify-content: space-between; gap: 6rpx 12rpx; font-size: 22rpx; color: var(--muted); margin: -4rpx 4rpx 14rpx; flex-shrink: 0; }
-.stage-status > text { flex: 1; min-width: 0; }
+.stage-status > text:first-child { flex: 1; min-width: 0; }
+.stage-time { flex-shrink: 0; white-space: nowrap; }
 .context-feedback { flex-shrink: 0; margin-top: 10rpx; padding: 0 18rpx 14rpx; border-radius: 20rpx; }
 .feedback-head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12rpx; }
 .feedback-head .result-title { margin: 0; font-size: 26rpx; }

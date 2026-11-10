@@ -32,5 +32,8 @@
             </view>
           </view>
         </view>
-        <button class="primary-button recall-reveal" wx:if="{{!revealed}}" bindtap="revealAnswer">显示答案</button>
+        <view class="recall-actions {{lookupAvailable ? 'with-lookup' : ''}}" wx:if="{{!revealed}}">
+          <button class="primary-button recall-reveal" bindtap="revealAnswer">显示答案</button>
+          <button class="lookup-action" wx:if="{{lookupAvailable}}" bindtap="openLookup" hover-class="lookup-pressed" aria-label="查词库">查词</button>
+        </view>
       </view>

@@ -12,16 +12,16 @@
     <view class="study-progress"><view style="width: {{progress}}%"></view></view>
     <text user-select="{{true}}" class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
 
-    <view class="stage-status"><text user-select="{{true}}">{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><view class="stage-tools"><text user-select="{{true}}">已用 {{usedTime}}</text><button class="lookup-trigger" wx:if="{{word}}" bindtap="openLibrary" aria-label="查词库">词库 ›</button></view></view>
+    <view class="stage-status"><text user-select="{{true}}">{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><text class="stage-time" user-select="{{true}}">已用 {{usedTime}}</text></view>
     <block wx:if="{{!waiting && !isContext}}">
       <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
-      <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" />
+      <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" lookup-available="{{true}}" bindlookup="openLibrary" />
       </scroll-view>
 
       <view class="rating-area" wx:if="{{revealed}}">
         <view class="rating-header">
-          <text user-select="{{true}}" class="rating-label">选择最符合刚才回忆的情况</text>
-          <button class="relation-trigger" wx:if="{{revealed}}" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+          <text user-select="{{true}}" class="rating-label">按回忆情况评分</text>
+          <view class="study-tools"><button class="lookup-action" bindtap="openLibrary" hover-class="lookup-pressed" aria-label="查词库">查词</button><button class="relation-trigger" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button></view>
         </view>
         <view class="rating-grid">
           <button class="rating again" data-grade="again" bindtap="rate"><view class="rating-copy"><text>没想起</text><text>无法说出正确含义</text></view><view class="rating-depth"></view></button>
@@ -41,7 +41,10 @@
         </view>
         <view class="word-heading context-heading"><text user-select="{{true}}" class="context-word" data-word="{{word.word}}">{{word.word}}</text></view>
         <text user-select="{{true}}" class="sentence">{{question.sentence}}</text>
-        <button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
+        <view class="context-tools">
+          <button class="sentence-save" bindtouchstart="sentenceTouchStart" bindtouchmove="sentenceTouchMove" bindtouchend="sentenceTouchEnd" bindtouchcancel="sentenceTouchCancel" catchtap="tapSentence">{{isSentenceSaved ? '★ 已收藏例句' : '☆ 收藏例句'}}</button>
+          <button class="lookup-action" bindtap="openLibrary" hover-class="lookup-pressed" aria-label="查词库">查词</button>
+        </view>
         <text user-select="{{true}}" class="context-prompt">{{questionPrompt}}</text>
         <view class="choice-list">
           <button
