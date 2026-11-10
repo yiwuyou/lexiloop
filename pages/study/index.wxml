@@ -24,8 +24,10 @@
           <view class="rating-lookup-slot">
             <button class="lookup-action" bindtap="openLibrary" hover-class="lookup-pressed" aria-label="查词库">查词</button>
           </view>
-          <view class="rating-relation-slot">
-            <button class="relation-trigger" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+          <view class="rating-relation-side">
+            <view class="rating-relation-slot">
+              <button class="relation-trigger" bindtap="openRelations" aria-label="查看{{word.word}}的关联词"><text class="relation-trigger-label">关联词 ›</text></button>
+            </view>
           </view>
         </view>
         <view class="rating-grid">
