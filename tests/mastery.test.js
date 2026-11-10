@@ -59,6 +59,29 @@ try {
   assert.strictEqual(scheduler.review(passed, 'easy', now + 1000).dueAt, passed.dueAt);
   assert.ok(plan.summarize(store.getState(), { dailyNewCount: 1 }, startOfDay(now) + DAY_MS + 3600000).due.some(word => word.id === id));
 
+  const repeated = fresh();
+  const difficult = repeated.queue[0].wordId;
+  const earlierExamples = getWords().filter(candidate => candidate.id !== difficult).slice(0, 24)
+    .map(candidate => ({ wordId: candidate.id, phase: 'sentence', answered: true, correct: true }));
+  page.session.queue = earlierExamples.concat(page.session.queue);
+  page.session.index = earlierExamples.length;
+  rate('hard');
+  assert.strictEqual(page.currentItem().phase, 'reinforcement', 'the first miss cannot use a reserved place');
+  now += 5000;
+  rate('again');
+  assert.strictEqual(page.currentItem().phase, 'sentence', 'a second actual miss can use a reserved place before recall');
+  assert.strictEqual(page.currentItem().wordId, difficult);
+  page.chooseContext({ currentTarget: { dataset: { index: page.data.question.answer } } });
+  page.nextContext();
+  assert.strictEqual(page.currentItem().phase, 'reinforcement');
+  assert.ok(store.getState().cards[difficult].needsRecall, 'a correct example does not count as independent recall');
+  now += 5000;
+  rate('hard');
+  assert.strictEqual(page.session.queue.filter(item => item.phase === 'sentence' && item.wordId === difficult).length, 1,
+    'another miss does not generate a second example for the same word');
+  rate('good');
+  assert.strictEqual(page.data.completed, true);
+
   // Pending failures must survive a date change and a backup round trip.
   const failed = scheduler.review(passed, 'hard', now);
   const persisted = { schemaVersion: 3, cards: { [id]: failed }, daily: {}, weakBook: {}, recentReviews: [] };

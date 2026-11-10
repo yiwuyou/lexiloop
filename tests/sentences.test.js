@@ -15,9 +15,13 @@ assert.deepStrictEqual(book.list(migrations.migrateBackup({ type: 'mem-vocab-bac
 assert.strictEqual(book.toggle(state, entry), false);
 assert.strictEqual(book.list(state).length, 0);
 const session = { queue: [], index: 0 };
-getWords().slice(0, 50).forEach(item => plan.queueContextCheck(session, item, 'hard', 123));
+const candidates = getWords().slice(0, 50);
+candidates.forEach(item => plan.queueContextCheck(session, item, 'hard', 123));
+assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 24,
+  'first misses cannot take the six places reserved for repeated misses');
+candidates.slice(24).forEach(item => plan.queueContextCheck(session, item, 'hard', 123, { repeatMiss: true }));
 assert.strictEqual(session.queue.filter(item => item.phase === 'sentence').length, 30,
-  'sentence consolidation should cover 30 words independently of disambiguation');
+  'repeated misses can use the reserved places while the overall limit stays at 30');
 const legacy = { queue: [{ wordId: word.id, phase: 'reinforcement', availableAt: 9999999 }], index: 0 };
 assert.strictEqual(mastery.available(legacy, 1), true, 'old sessions must proceed immediately at the end');
 let page;

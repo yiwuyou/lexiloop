@@ -433,6 +433,11 @@ Page({
     const item = this.currentItem();
     const word = getWord(item.wordId);
     const now = Date.now();
+    const missed = grade === 'again' || grade === 'hard';
+    const repeatMiss = item.phase === 'reinforcement' && missed && (state.recentReviews || []).some(answer =>
+      answer.day === this.session.day && answer.wordId === word.id
+      && ['new', 'review', 'reinforcement'].includes(answer.phase)
+      && (answer.result === 'again' || answer.result === 'hard'));
     const previous = state.cards[word.id];
     state.cards[word.id] = scheduler.review(previous, grade, now);
     if (weakBook.shouldAutoMark(state.cards[word.id], grade)) weakBook.mark(state, word.id, 'formal', now);
@@ -457,13 +462,14 @@ Page({
       studyPlan.queueContextCheck(this.session, word, grade, now);
     }
 
-    if (grade === 'again' || grade === 'hard') {
+    if (missed) {
       const alreadyQueued = this.session.queue
         .slice(this.session.index + 1)
         .some((candidate) => candidate.wordId === word.id && candidate.phase === 'reinforcement');
       if (!alreadyQueued) {
         mastery.retry(this.session, item, now);
       }
+      if (repeatMiss) studyPlan.queueContextCheck(this.session, word, grade, now, { repeatMiss: true });
     }
 
     this.captureElapsed(state);

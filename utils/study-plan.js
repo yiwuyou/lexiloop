@@ -15,6 +15,7 @@ const DEFAULT_DAILY_REVIEW_LIMIT = 100;
 const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
 const DAILY_CONTEXT_LIMIT = 12;
 const DAILY_SENTENCE_LIMIT = 30;
+const REPEAT_SENTENCE_RESERVE = 6;
 
 // Separate exam coverage from the memory model: spread first checks across
 // 28 days, rather than truncating every long FSRS interval to the last day.
@@ -127,7 +128,7 @@ function summarize(state, settings, now) {
   };
 }
 
-function queueContextCheck(session, word, grade, now) {
+function queueContextCheck(session, word, grade, now, { repeatMiss = false } = {}) {
   if (!session || !Array.isArray(session.queue) || !word || grade === 'easy') return false;
   const queuedWords = new Set(session.queue
     .filter((item) => item.phase === 'context' || item.phase === 'sentence')
@@ -137,14 +138,23 @@ function queueContextCheck(session, word, grade, now) {
   const needsRecall = grade === 'again' || grade === 'hard';
   const phase = needsRecall ? 'sentence' : 'context';
   const count = new Set(session.queue.filter((item) => item.phase === phase).map((item) => item.wordId)).size;
-  if (count >= (needsRecall ? DAILY_SENTENCE_LIMIT : DAILY_CONTEXT_LIMIT)) return false;
+  const limit = needsRecall ? DAILY_SENTENCE_LIMIT - (repeatMiss ? 0 : REPEAT_SENTENCE_RESERVE) : DAILY_CONTEXT_LIMIT;
+  if (count >= limit) return false;
   const question = needsRecall
     ? context.getRecallQuestion(word)
     : context.getByWord(word.word, Math.floor(startOfDay(time) / DAY_MS));
   if (!question) return false;
-  session.queue.splice(Math.min(session.queue.length, (session.index || 0) + 9), 0, {
+  const index = session.index || 0;
+  let insertAt = Math.min(session.queue.length, index + 9);
+  if (repeatMiss && needsRecall) {
+    const nextRecall = session.queue.findIndex((item, position) =>
+      position > index && item.wordId === word.id && item.phase === 'reinforcement');
+    // Put the example before the next free recall, with other words between when possible.
+    if (nextRecall > index) insertAt = Math.max(index + 1, Math.min(insertAt, nextRecall - 4));
+  }
+  session.queue.splice(insertAt, 0, {
     wordId: word.id,
-    phase: needsRecall ? 'sentence' : 'context',
+    phase,
     questionId: question.id,
     reinforced: true,
     availableAt: 0,
