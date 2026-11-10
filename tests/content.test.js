@@ -57,11 +57,27 @@ function hasRealTarget(word) {
   });
 }
 assert.strictEqual(words.length, 2522);
+const ipaField = /^(?:(?:名形|[名动形英美]) )?\/[a-zɡæɑɒɔəɜɛɪʊʌŋʃʒθðˈˌː ]+\/(?: · (?:(?:名形|[名动形英美]) )?\/[a-zɡæɑɒɔəɜɛɪʊʌŋʃʒθðˈˌː ]+\/)*$/;
+assert.strictEqual(getWord('h-20-9').ipa, '/ˈlɪbəti/', 'liberty ends in /ti/');
+const phoneticSamples = {
+  electric: '/ɪˈlektrɪk/',
+  shut: '/ʃʌt/',
+  empathy: '/ˈempəθi/',
+  record: '名 /ˈrekɔːd/ · 动 /rɪˈkɔːd/',
+  polish: '/ˈpɑːlɪʃ/',
+};
+Object.keys(phoneticSamples).forEach((head) => {
+  const matching = words.filter((word) => word.spokenWord === head);
+  assert.ok(matching.length, head);
+  matching.forEach((word) => assert.strictEqual(word.ipa, phoneticSamples[head], word.id));
+});
+assert.strictEqual(getWord('c-3-5').ipa, '/ˈdiːfekt/', 'noun-only defect card');
 words.forEach((word, index) => {
   const row = source[index];
   assert.strictEqual(word.id, row.slice(0, 3).join('-'));
   assert.strictEqual(word.word, row[3]);
   assert.strictEqual(word.position, index);
+  assert.ok(ipaField.test(word.ipa), 'Invalid IPA for ' + word.id + ': ' + word.ipa);
   assert.ok(word.enhanced && word.partOfSpeech && word.cue, word.id);
   assert.ok(word.example && word.translation && word.exampleSourceDetail, word.id);
   assert.ok(word.core || word.meaning, 'understanding content missing: ' + word.id);

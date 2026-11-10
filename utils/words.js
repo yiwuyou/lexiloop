@@ -2,9 +2,24 @@ const tuples = require('../data/vocabulary');
 const enrichment = require('../data/enrichment');
 const learningContent = require('../data/learning-content');
 const readingContent = require('../data/reading-content');
+const reviewedPronunciations = require('../data/reviewed-pronunciations');
 
 let cache;
 let mapCache;
+
+function normalizeLegacyIpa(ipa) {
+  // ECDICT's older transcription uses ASCII stress and length, Cyrillic
+  // lookalikes, and i/u for short vowels. Keep already modern notation intact.
+  if (!ipa || (/[ˈˌː]/.test(ipa) && !/[':әє]/.test(ipa))) return ipa;
+  return ipa
+    .replace(/ә/g, 'ə').replace(/є/g, 'e').replace(/g/g, 'ɡ')
+    .replace(/'/g, 'ˈ').replace(/[.,]/g, 'ˌ').replace(/:/g, 'ː')
+    .replace(/əː/g, 'ɜː').replace(/ɒː/g, 'ɔː')
+    .replace(/ɒi|ɔi/g, 'ɔɪ').replace(/([ae])i/g, '$1ɪ')
+    .replace(/([aoə])u/g, '$1ʊ')
+    .replace(/i(?=[bdfhjklmnprstvwzɡŋʃʒθð])/g, 'ɪ')
+    .replace(/u(?=[bdfhjklmnprstvwzɡŋʃʒθð])/g, 'ʊ');
+}
 
 function inflate(tuple, position) {
   const category = tuple[0] === 'c' ? 'core' : 'high';
@@ -22,6 +37,7 @@ function inflate(tuple, position) {
     searchText: `${tuple[3]} ${tuple[4]}`.toLowerCase(),
     enhanced: true, family: '', phrase: '', contrast: '', cue: '', wordForms: [],
   }, learningContent[id] || {}, extra, enrichment[id] ? { cueLabel: '这样关联' } : {});
+  word.ipa = reviewedPronunciations[id] || reviewedPronunciations[word.spokenWord] || normalizeLegacyIpa(word.ipa);
   const reading = readingContent.sentences[readingContent.words[id]];
   word.example = reading[0];
   word.translation = reading[1];

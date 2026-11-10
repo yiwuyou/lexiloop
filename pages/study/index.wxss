@@ -121,6 +121,8 @@
 
 .pronunciation {
   display: inline-flex;
+  max-width: 100%;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
   gap: 14rpx;
@@ -131,11 +133,13 @@
 }
 
 .ipa {
+  min-width: 0;
   color: var(--muted);
   font-family: Arial, sans-serif;
   font-size: 28rpx;
-  line-height: 52rpx;
-  white-space: nowrap;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .audio-button {
