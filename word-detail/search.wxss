@@ -1,0 +1,12 @@
+.lookup-page { box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; padding: 24rpx 28rpx calc(16rpx + env(safe-area-inset-bottom)); background: var(--surface); }
+.lookup-input { box-sizing: border-box; flex: 0 0 88rpx; padding: 0 24rpx; border: 1rpx solid var(--line); border-radius: 20rpx; background: var(--card); font-size: 30rpx; }
+.lookup-results { flex: 1; height: 0; min-height: 0; margin: 12rpx 0; }
+.lookup-note { display: block; padding: 16rpx 4rpx; color: var(--muted); font-size: 24rpx; }
+.lookup-row { display: flex; align-items: center; gap: 16rpx; min-height: 96rpx; padding: 14rpx 18rpx; margin-bottom: 10rpx; border: 1rpx solid var(--line); border-radius: 18rpx; background: var(--card); }
+.lookup-pressed { background: var(--soft); }
+.lookup-entry { flex: 1; min-width: 0; }
+.lookup-word { display: block; font: 32rpx/1.3 Georgia, serif; overflow-wrap: anywhere; }
+.lookup-meaning { display: block; margin-top: 5rpx; color: var(--muted); font-size: 24rpx; line-height: 1.4; }
+.lookup-chevron { color: var(--main-strong); font-size: 32rpx; }
+.lookup-more, .lookup-return { text-align: center; }
+.lookup-return { flex: 0 0 auto; line-height: 82rpx; }

@@ -95,7 +95,10 @@ Page({
     const state = store.getState();
     const settings = store.getSettings();
     const session = store.getSession();
-    if (plan.prepareSession(session, state, settings, now)) store.saveSession(session);
+    const repaired = !cloudSync.blocked() && plan.repairSessionPlan(session, state, settings, now);
+    const prepared = plan.prepareSession(session, state, settings, now);
+    if (repaired) store.saveState(state);
+    if (repaired || prepared) store.saveSession(session);
     const stats = plan.summarize(state, settings, now);
     const progress = plan.progressStats(state);
     const summary = store.getTodaySummary(state, now);
@@ -169,6 +172,7 @@ Page({
       }
       if (hasQueue && session.day === today) {
         operation = 'prepareSession';
+        plan.repairSessionPlan(session, state, settings, now);
         plan.prepareSession(session, state, settings, now);
       }
       if (!hasQueue || session.day !== today || session.index >= session.queue.length) {

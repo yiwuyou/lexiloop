@@ -48,7 +48,7 @@
     {"name":"speech12","root":"speech12","pages":["index"]},
     {"name":"phrase-data","root":"phrase-data","pages":["index"]},
     {"name":"relation-data","root":"relation-data","pages":["index"]},
-    {"name":"word-detail","root":"word-detail","pages":["index"]}
+    {"name":"word-detail","root":"word-detail","pages":["index","search"]}
   ],
   "style": "v2",
   "sitemapLocation": "sitemap.json",

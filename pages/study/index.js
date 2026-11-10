@@ -90,26 +90,28 @@ Page({
     }
     const state = store.getState();
     if (!this.data.isPractice) {
-      let sessionChanged = studyPlan.prepareSession(this.session, state, store.getSettings(), Date.now());
+      const settings = store.getSettings(), now = Date.now();
+      let stateChanged = !cloudSync.blocked() && studyPlan.repairSessionPlan(this.session, state, settings, now);
+      let sessionChanged = studyPlan.prepareSession(this.session, state, settings, now) || stateChanged;
       if (!this.session.masteryVersion) {
-        let cardsChanged = false;
         this.session.queue.slice(0, this.session.index).forEach(item => {
           const card = state.cards[item.wordId];
           if (card && !card.needsRecall && ['again', 'hard'].includes(card.lastGrade)) {
             card.needsRecall = true;
-            cardsChanged = true;
+            stateChanged = true;
           }
         });
         this.session.masteryVersion = 1;
         sessionChanged = true;
-        if (cardsChanged) store.saveState(state);
       }
+      if (stateChanged) store.saveState(state);
       if (sessionChanged) store.saveSession(this.session);
     }
     this.renderCurrent(state);
   },
 
   onShow() {
+    this.libraryOpening = false;
     this.studyHidden = false;
     if (this.session && !this.data.completed) {
       const state = store.getState();
@@ -138,7 +140,16 @@ Page({
     this.session = store.getSession(this.data.isPractice ? 'practice' : undefined);
     if (!this.session) { wx.reLaunch({ url: '/pages/today/index' }); return; }
     this.setData({ syncBlocked: false, completed: false });
-    this.renderCurrent();
+    const state = store.getState();
+    if (!this.data.isPractice) {
+      const settings = store.getSettings(), now = Date.now();
+      if (studyPlan.repairSessionPlan(this.session, state, settings, now)) {
+        studyPlan.prepareSession(this.session, state, settings, now);
+        store.saveState(state);
+        store.saveSession(this.session);
+      }
+    }
+    this.renderCurrent(state);
   },
 
   onHide() {
@@ -213,6 +224,25 @@ Page({
     if (!studyPlan.rolloverSession(this.session, state, store.getSettings(), now)) return false;
     store.saveState(state); store.saveSession(this.session); this.renderCurrent(state);
     return true;
+  },
+
+  openLibrary() {
+    if (this.libraryOpening || this.data.completed || !this.data.word) return;
+    this.libraryOpening = true;
+    this.detailReturn = {
+      relationsOpen: false,
+      revealed: this.data.revealed,
+      contextAnswered: this.data.contextAnswered,
+      contentScrollTop: this.data.contentScrollTop,
+    };
+    wx.navigateTo({
+      url: '/word-detail/search',
+      fail: () => {
+        this.libraryOpening = false;
+        this.detailReturn = null;
+        wx.showToast({ title: '暂时无法打开词库，请重试', icon: 'none' });
+      },
+    });
   },
 
   openRelations() {

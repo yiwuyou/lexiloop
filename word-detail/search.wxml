@@ -1,0 +1,19 @@
+<view class="lookup-page">
+  <input class="lookup-input" type="text" value="{{query}}" focus="{{focus}}" placeholder="搜索英文或中文释义" confirm-type="search" bindinput="search" />
+  <scroll-view class="lookup-results" scroll-y="{{true}}" scroll-top="{{scrollTop}}">
+    <text class="lookup-note" wx:if="{{!query}}">输入单词或释义，点结果看详情。</text>
+    <text class="lookup-note" wx:elif="{{!total}}">没有找到匹配的单词</text>
+    <view wx:else>
+      <text class="lookup-note">共 {{total}} 条</text>
+      <view class="lookup-row" wx:for="{{rows}}" wx:key="id" data-id="{{item.id}}" bindtap="openDetail" hover-class="lookup-pressed" role="button" aria-label="查看{{item.word}}详情">
+        <view class="lookup-entry">
+          <text class="lookup-word">{{item.word}}</text>
+          <text class="lookup-meaning">{{item.shortPartOfSpeech}} · {{item.meaning}}</text>
+        </view>
+        <text class="lookup-chevron">›</text>
+      </view>
+      <button class="secondary-button lookup-more" wx:if="{{hasMore}}" bindtap="loadMore">继续显示</button>
+    </view>
+  </scroll-view>
+  <navigator class="secondary-button lookup-return" open-type="navigateBack" delta="{{1}}">返回学习</navigator>
+</view>

@@ -12,7 +12,7 @@
     <view class="study-progress"><view style="width: {{progress}}%"></view></view>
     <text user-select="{{true}}" class="practice-note" wx:if="{{isPractice}}">自由练习 · 原定复习时间不变</text>
 
-    <view class="stage-status"><text user-select="{{true}}">{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><text user-select="{{true}}">已用 {{usedTime}}</text></view>
+    <view class="stage-status"><text user-select="{{true}}">{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><view class="stage-tools"><text user-select="{{true}}">已用 {{usedTime}}</text><button class="lookup-trigger" wx:if="{{word}}" bindtap="openLibrary" aria-label="查词库">词库 ›</button></view></view>
     <block wx:if="{{!waiting && !isContext}}">
       <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
       <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" />

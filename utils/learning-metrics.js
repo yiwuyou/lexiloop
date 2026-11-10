@@ -4,12 +4,19 @@ const DEFAULT_SECONDS = { review: 15, new: 32, reinforcement: 16, sentence: 28, 
 function planFor(state, session, day) {
   const daily = state.daily[day] || {};
   const plan = Object.assign({}, daily.taskPlan || {});
+  const correction = daily.taskPlanCorrection || {};
+  const excluded = correction.excluded || {};
+  Object.keys(excluded).forEach(id => {
+    delete plan[id];
+    if (daily.firstAnswers && daily.firstAnswers[id]) plan[id] = daily.firstAnswers[id];
+  });
   (state.recentReviews || []).filter(r => r.day === day && ['review', 'new'].includes(r.phase))
     .forEach(r => { if (!plan[r.wordId]) plan[r.wordId] = r.phase; });
   if (session && session.day === day && session.mode !== 'practice') {
-    Object.entries(session.taskPlan || {}).forEach(([id, kind]) => { if (!plan[id]) plan[id] = kind; });
+    Object.entries(session.taskPlan || {}).forEach(([id, kind]) => { if (!plan[id] && !excluded[id]) plan[id] = kind; });
     session.queue.filter(r => ['review', 'new'].includes(r.phase)).forEach(r => { if (!plan[r.wordId]) plan[r.wordId] = r.phase; });
   }
+  Object.keys(correction.review || {}).forEach(id => { if (plan[id]) plan[id] = 'review'; });
   return plan;
 }
 function pending(session, id) {
@@ -61,11 +68,19 @@ function estimate(state, session, goals, now) {
   } else if (!session) seconds = goals.review * (speed.review + 14) + goals.new * (speed.new + 22);
   return { seconds: Math.ceil(seconds), text: range(seconds) };
 }
+function firstAnswers(daily, plan) {
+  const first = Object.assign({}, daily.firstAnswers);
+  if (daily.taskPlanCorrection) Object.keys(first).forEach(id => {
+    if (plan[id]) first[id] = plan[id];
+    else delete first[id];
+  });
+  return first;
+}
 function commit(state, session, now = Date.now()) {
   const day = session.day;
   const daily = state.daily[day] || (state.daily[day] = {});
   daily.taskPlan = planFor(state, session, day);
-  const first = daily.firstAnswers || {};
+  const first = firstAnswers(daily, daily.taskPlan);
   const overdue = daily.firstOverdue || {};
   const seed = (id, late) => { if (daily.taskPlan[id]) first[id] = daily.taskPlan[id]; if (late && daily.taskPlan[id] === 'review') overdue[id] = true; };
   (state.recentReviews || []).filter(r => r.day === day && ['review', 'new', 'reinforcement'].includes(r.phase)).forEach(r => seed(r.wordId, r.overdue));
@@ -119,14 +134,17 @@ function summary(state, session, day = ledger.dayKey(Date.now()), preview) {
   result.newRemaining = result.newGoal - result.newPassed;
   // Visible word counts describe work actually done, not whether every later
   // question is finished. Failed answers still count as a reviewed word once.
-  const first = Object.assign({}, daily.firstAnswers);
+  const first = firstAnswers(daily, plan);
   const remember = item => { if (plan[item.wordId] && ['review', 'new', 'reinforcement'].includes(item.phase)) first[item.wordId] = plan[item.wordId]; };
   (state.recentReviews || []).filter(item => item.day === day).forEach(remember);
   if (current) current.queue.slice(0, current.index).forEach(remember);
   const count = kind => Object.values(first).filter(value => value === kind).length;
   const offset = daily.firstAnswerOffset || {};
-  result.reviewSeen = Math.min(result.reviewGoal, Math.max(result.reviewPassed, daily.dueDone || 0, current && current.dueDone || 0, count('review') + (offset.review || 0)));
-  result.newSeen = Math.min(result.newGoal, Math.max(result.newPassed, daily.newDone || 0, current && current.newDone || 0, count('new') + (offset.new || 0)));
+  // Older sync peers may still count an actual answer under its old label.
+  const recordedReview = daily.taskPlanCorrection ? 0 : Math.max(daily.dueDone || 0, current && current.dueDone || 0);
+  const recordedNew = daily.taskPlanCorrection ? 0 : Math.max(daily.newDone || 0, current && current.newDone || 0);
+  result.reviewSeen = Math.min(result.reviewGoal, Math.max(result.reviewPassed, recordedReview, count('review') + (offset.review || 0)));
+  result.newSeen = Math.min(result.newGoal, Math.max(result.newPassed, recordedNew, count('new') + (offset.new || 0)));
   result.reviewUnseen = result.reviewGoal - result.reviewSeen;
   result.newUnseen = result.newGoal - result.newSeen;
   result.reviewPending = Math.max(0, result.reviewSeen - result.reviewPassed);

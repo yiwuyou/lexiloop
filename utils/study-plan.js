@@ -178,6 +178,109 @@ function shuffleReviews(words, today) {
   return shuffled;
 }
 
+// Older clients could retain yesterday's taskPlan after replacing its queue.
+function repairSessionPlan(session, state, settings, now) {
+  if (!session || session.mode === 'practice' || !Array.isArray(session.queue)
+      || session.day !== dayKey(now)) return false;
+  const daily = state.daily[session.day] || {};
+  const stored = session.taskPlan || {};
+  const ids = Object.keys(stored);
+  const previousDays = Object.keys(state.daily).filter(day => day < session.day);
+  const copied = ids.length && previousDays.some(day => {
+    const previous = state.daily[day].taskPlan;
+    return previous && ids.every(id => previous[id] === stored[id]);
+  });
+  const isBase = item => item.phase === 'review' || item.phase === 'new';
+  const isRecall = item => isBase(item) || item.phase === 'reinforcement';
+  const prefix = session.queue.slice(0, session.index);
+  const tail = session.queue.slice(session.index);
+  const answered = new Set(Object.keys(daily.firstAnswers || {}));
+  prefix.filter(isRecall).forEach(item => answered.add(item.wordId));
+  const seenBefore = new Set();
+  previousDays.forEach(day => {
+    Object.keys(state.daily[day].firstAnswers || {}).forEach(id => seenBefore.add(id));
+  });
+  (state.recentReviews || []).filter(isRecall).forEach(item => {
+    if (item.day === session.day) answered.add(item.wordId);
+    else if (item.day && item.day < session.day) seenBefore.add(item.wordId);
+  });
+  const dayStart = startOfDay(now);
+  const oldWord = id => seenBefore.has(id) || Boolean(state.cards[id] && state.cards[id].seen
+    && (!state.cards[id].lastAt || state.cards[id].lastAt < dayStart));
+  const scheduled = new Set(session.queue.filter(item => (isBase(item) && !item.reinforced)
+    || item.phase === 'context' || item.phase === 'sentence').map(item => item.wordId));
+  Object.values(daily.carryTasks || {}).forEach(record => {
+    if (record.item) scheduled.add(record.item.wordId);
+  });
+  const currentPlan = metrics.planFor(state, session, session.day);
+  const planned = Object.values(currentPlan);
+  const overflow = planned.filter(kind => kind === 'new').length > session.newGoal
+    || planned.filter(kind => kind === 'review').length > session.dueGoal;
+  const oldIds = new Set(copied && overflow ? ids.filter(id => !scheduled.has(id) && !answered.has(id)) : []);
+  const mislabeled = new Set(Object.keys(currentPlan).filter(id => currentPlan[id] === 'new' && oldWord(id)));
+  const badNew = item => item.phase === 'new' && oldWord(item.wordId);
+  if (!oldIds.size && !mislabeled.size && !tail.some(badNew)) return false;
+
+  const keepReview = new Set(session.queue.filter(item => item.phase === 'review').map(item => item.wordId));
+  const corrected = Object.assign({}, (daily.taskPlanCorrection || {}).review);
+  const excluded = Object.assign({}, (daily.taskPlanCorrection || {}).excluded);
+  mislabeled.forEach(id => {
+    if (answered.has(id) || keepReview.has(id)) corrected[id] = true;
+    else oldIds.add(id);
+  });
+  tail.filter(badNew).forEach(item => {
+    const id = item.wordId;
+    if (answered.has(id) || keepReview.has(id) || currentPlan[id] === 'review') corrected[id] = true;
+    else oldIds.add(id);
+  });
+  oldIds.forEach(id => { excluded[id] = true; });
+  const remaining = tail.flatMap(item => {
+    if (oldIds.has(item.wordId)) return [];
+    if (!badNew(item)) return [item];
+    const id = item.wordId;
+    if (currentPlan[id] !== 'review' || answered.has(id) || keepReview.has(id)) return [];
+    keepReview.add(id);
+    return [Object.assign({}, item, { phase: 'review' })];
+  });
+  const freshDone = new Set([...answered].filter(id => currentPlan[id] === 'new' && !oldWord(id)));
+  const newGoal = Math.min(session.newGoal || 0, (settings.dailyNewCount || 50) + (session.extraNew || 0));
+  const fresh = new Set(freshDone);
+  const deferred = new Set();
+  const pending = remaining.filter(item => {
+    if (item.phase !== 'new') return true;
+    if (fresh.has(item.wordId)) return false;
+    if (fresh.size >= newGoal) {
+      deferred.add(item.wordId);
+      excluded[item.wordId] = true;
+      return false;
+    }
+    fresh.add(item.wordId);
+    return true;
+  });
+  session.queue = prefix.concat(pending.filter(item => !deferred.has(item.wordId)));
+  if (fresh.size < newGoal) {
+    const words = getWords();
+    for (let index = 0; index < words.length && fresh.size < newGoal; index += 1) {
+      const id = words[index].id;
+      if (fresh.has(id) || oldWord(id) || (state.cards[id] && state.cards[id].seen)) continue;
+      session.queue.push({ wordId: id, phase: 'new', reinforced: false });
+      fresh.add(id);
+    }
+  }
+  session.newGoal = fresh.size;
+  daily.newGoal = session.newGoal;
+  daily.taskPlanCorrection = { excluded, review: corrected };
+  state.daily[session.day] = daily;
+  // Rebuild from the actual queue. The correction also masks old entries
+  // if another device still has a copy of the damaged day map.
+  session.taskPlan = {};
+  session.taskPlan = metrics.planFor(state, session, session.day);
+  metrics.commit(state, session, now);
+  daily.dueDone = session.dueDone;
+  daily.newDone = session.newDone;
+  return true;
+}
+
 function prepareSession(session, state, settings, now) {
   const time = now || Date.now();
   if (!session || !Array.isArray(session.queue) || session.mode === 'practice'
@@ -316,6 +419,9 @@ function rolloverSession(session, state, settings, now = Date.now()) {
   delete next.questionOrderVersion;
   questionOrder.prepare(next, state);
   studyOrder.reconcile(next, state);
+  Object.keys(session).forEach(key => {
+    if (!Object.prototype.hasOwnProperty.call(next, key)) delete session[key];
+  });
   Object.assign(session, next);
   metrics.commit(state, session, now);
   return true;
@@ -381,6 +487,7 @@ module.exports = {
   buildExtraSession,
   buildSession,
   prepareSession,
+  repairSessionPlan,
   rolloverSession,
   progressStats,
   queueContextCheck,

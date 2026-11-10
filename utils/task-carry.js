@@ -26,7 +26,13 @@ function attach(session, state, settings, extra = [], now = Date.now()) {
   const newWords = session.queue.filter(item => item.phase === 'new');
   const selected = new Set(review.concat(newWords.map(item => item.wordId)));
   session.taskPlan = Object.fromEntries(review.map(id => [id, 'review']).concat(newWords.map(item => [item.wordId, 'new'])));
-  const continuing = pending.filter(item => selected.has(item.wordId)).map(item => Object.assign({}, item, { overdue: overdueIds.has(item.wordId) }));
+  const continued = new Map();
+  pending.filter(item => selected.has(item.wordId)).forEach(item => {
+    const phase = item.phase === 'review' || item.phase === 'new' ? session.taskPlan[item.wordId] : item.phase;
+    const task = Object.assign({}, item, { phase, overdue: overdueIds.has(item.wordId) });
+    continued.set(key(task), task);
+  });
+  const continuing = [...continued.values()];
   const known = new Set(continuing.map(item => item.wordId));
   const needBase = new Set(continuing.filter(item => !continuing.some(other => other.wordId === item.wordId && ['review', 'new', 'reinforcement'].includes(other.phase))).map(item => item.wordId));
   const queue = continuing.flatMap(item => {

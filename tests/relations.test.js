@@ -491,7 +491,41 @@ function testStudyDialogIsInPlace() {
   assert.strictEqual(study.data.word, originalWord, 'detail return preserves the same learning word');
   assert.strictEqual(JSON.stringify(study.session), originalSession);
   assert.deepStrictEqual(writes, [], 'detail navigation does not submit an answer');
+  study.data.relationsOpen = false;
+  study.data.selectedChoice = 2;
+  study.openLibrary();
+  study.openLibrary();
+  assert.deepStrictEqual(navigation.map(([action, target]) => [action, target.url]), [
+    ['navigateTo', '/word-detail/index?id=' + idFor('migrate')],
+    ['navigateTo', '/word-detail/search'],
+  ], 'opening the lookup keeps study in the navigation stack and ignores repeated taps');
+  study.data.contextAnswered = false;
+  study.data.revealed = false;
+  study.onShow();
+  assert.strictEqual(study.data.word, originalWord);
+  assert.strictEqual(study.data.contextAnswered, true);
+  assert.strictEqual(study.data.revealed, true);
+  assert.strictEqual(study.data.selectedChoice, 2);
+  assert.strictEqual(study.data.relationsOpen, false);
+  assert.strictEqual(JSON.stringify(study.session), originalSession);
+  assert.deepStrictEqual(writes, [], 'looking up a word never submits the current question');
   if (study.stopSync) study.stopSync();
+}
+
+function testQuickLookup() {
+  let lookup;
+  const opened = [];
+  evaluate('word-detail/search.js', name => {
+    assert.strictEqual(name, '../utils/words');
+    return { getWords, getWord };
+  }, { Page(page) { lookup = page; }, wx: { navigateTo({ url }) { opened.push(url); } } });
+  lookup.setData = function (patch) { Object.assign(this.data, patch); };
+  lookup.search({ detail: { value: ' LEASE ' } });
+  assert.strictEqual(lookup.data.rows[0].id, idFor('lease'), 'exact English match comes before longer words');
+  lookup.search({ detail: { value: '租赁' } });
+  assert.ok(lookup.data.rows.some(word => word.id === idFor('lease')), 'search also accepts Chinese meanings');
+  lookup.openDetail({ currentTarget: { dataset: { id: idFor('lease') } } });
+  assert.deepStrictEqual(opened, ['/word-detail/index?id=' + idFor('lease')]);
 }
 
 function testDetailRelationsNavigation() {
@@ -563,6 +597,7 @@ function testDetailRelationsNavigation() {
   testDismissGestures();
   testLibraryAndTemplates();
   testStudyDialogIsInPlace();
+  testQuickLookup();
   testDetailRelationsNavigation();
   console.log('Relation loader caching/retry, dialog request races, in-place study resume, read-only behavior, recall gates and cross-day library search passed.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
