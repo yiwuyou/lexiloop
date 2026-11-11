@@ -34,5 +34,9 @@ App({
     });
   },
   onShow() { prepareAudioWhenOnline(); cloudSync.foreground(); },
-  onHide() { try { require('./utils/learning-clock').pause(); } finally { cloudSync.background(); } },
+  onHide() {
+    try { require('./utils/learning-clock').pause(); store.flushAnswers(); }
+    catch (_) { /* The durable answer journal resumes on the next launch. */ }
+    finally { cloudSync.background(); }
+  },
 });

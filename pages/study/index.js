@@ -269,7 +269,7 @@ Page({
     const state = currentState || store.getState();
     if (this.session.index >= this.session.queue.length && !this.data.isPractice) mastery.recover(this.session, state.cards);
     mastery.available(this.session, Date.now());
-    if (!this.data.isPractice && studyOrder.reconcile(this.session, state) && !cloudSync.blocked()) store.saveSession(this.session);
+    if (!this.data.isPractice && studyOrder.reconcile(this.session, state) && !cloudSync.blocked()) store.saveAnswer(state, this.session, []);
     if (this.session.index >= this.session.queue.length) {
       this.finishSession();
       return;
@@ -447,7 +447,7 @@ Page({
     if (this.data.isPractice) {
       practice.recordAnswer(state, this.session, grade);
       this.captureElapsed(state);
-      store.saveAnswer(state, this.session);
+      store.saveAnswer(state, this.session, this.data.word.id);
       this.renderCurrent(state);
       return;
     }
@@ -497,7 +497,7 @@ Page({
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
-    store.saveAnswer(state, this.session);
+    store.saveAnswer(state, this.session, this.data.word.id);
     this.renderCurrent(state);
     } catch (error) {
       this.answerFailed(error, previousSession);
@@ -510,7 +510,7 @@ Page({
     if (!this.data.word) return;
     const state = store.getState();
     const marked = weakBook.toggle(state, this.data.word.id, Date.now());
-    store.saveState(state);
+    store.saveState(state, this.data.word.id);
     this.setData({ isWeakMarked: marked });
     wx.showToast({ title: marked ? '已加入易忘' : '已移出易忘', icon: 'none' });
   },
@@ -532,7 +532,7 @@ Page({
       before = sentenceBook.has(state, entry.sentence);
       const saved = sentenceBook.toggle(state, entry);
       this.setData({ isSentenceSaved: saved });
-      store.saveState(state);
+      store.saveState(state, []);
       wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none', duration: 900 });
     } catch (error) {
       this.setData({ isSentenceSaved: before });
@@ -581,7 +581,7 @@ Page({
     item.correct = correct;
     item.selectedChoice = index;
     this.writeDailyProgress(state);
-    store.saveAnswer(state, this.session);
+    store.saveAnswer(state, this.session, this.data.word.id);
     const task = metrics.summary(state, this.session, this.session.day);
     const active = metrics.section(task, studyOrder.kind(state, this.session, item));
     this.setData({
@@ -616,7 +616,7 @@ Page({
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
-    store.saveAnswer(state, this.session);
+    store.saveAnswer(state, this.session, this.data.word.id);
     this.renderCurrent(state);
     } catch (error) {
       this.answerFailed(error, previousSession);

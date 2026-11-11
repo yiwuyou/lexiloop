@@ -63,9 +63,11 @@ assert.equal(store.getState().safety, large.safety);
 const manifest = clone(values.mem_vocab_state_v1);
 if (manifest.syncPacked) values.mem_vocab_state_v1.packed.checksum = '0'; else delete values[manifest.prefix + ':0'];
 const corrupted = clone(values.mem_vocab_state_v1);
+store.resumeCloudApply(); // Reopen the archive after a simulated process restart.
 assert.throws(()=>store.getState(), /incomplete-sync-storage|checksum/, 'corrupt storage must never initialize empty progress');
 assert.deepStrictEqual(values.mem_vocab_state_v1, corrupted);
-store.saveState({ schemaVersion:3, cards:{}, daily:{}, weakBook:{}, recentReviews:[] });
+values.mem_vocab_state_v1 = { schemaVersion:3, cards:{}, daily:{}, weakBook:{}, recentReviews:[] };
+store.resumeCloudApply();
 const stateBefore = JSON.stringify(store.getState());
 let page;
 global.Page = definition => {page = definition;};

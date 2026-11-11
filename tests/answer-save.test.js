@@ -2,14 +2,16 @@ const assert = require('assert/strict');
 const clone = value => JSON.parse(JSON.stringify(value));
 const values = {};
 let failKey = '', failRemove = false, toast, page;
+let writes = [], reads = [];
 let now = Date.parse('2026-11-11T12:00:00+08:00');
 const realNow = Date.now;
 Date.now = () => now;
 global.wx = {
-  getStorageSync: key => values[key] ? clone(values[key]) : '',
+  getStorageSync: key => { reads.push(key); return values[key] ? clone(values[key]) : ''; },
   setStorageSync(key, value) {
     if (key === failKey) throw Error('APP-SERVICE-SDK:setStorageSync:fail exceed storage max length');
     values[key] = clone(value);
+    writes.push({ key, bytes: Buffer.byteLength(JSON.stringify(value)) });
   },
   removeStorageSync(key) {
     if (failRemove && key === 'mem_vocab_answer_apply_v1') throw Error('injected-remove-failure');
@@ -36,6 +38,7 @@ page.setData = function (patch, callback) {
 function fresh() {
   failKey = ''; failRemove = false; clock.pause();
   Object.keys(values).forEach(key => delete values[key]);
+  store.resumeCloudApply();
   store.saveSettings({ schemaVersion: 2, reviewLimitVersion: 1, examPlanVersion: 1, dailyNewCount: 2 });
   const state = store.getState(), settings = store.getSettings();
   const session = plan.buildSession(state, settings, now);
@@ -46,6 +49,18 @@ function fresh() {
 }
 function grade(value) { page.revealAnswer(); page.rate({ currentTarget: { dataset: { grade: value } } }); }
 
+function restart() {
+  store.resumeCloudApply();
+  page.onLoad({});
+}
+function assertRecovered(session) {
+  assert.equal(page.session.index, 1);
+  const reviews = store.getState().recentReviews;
+  assert.equal(reviews.length, 1, 'restart must retain exactly one saved answer');
+  assert.equal(reviews[0].wordId, session.queue[0].wordId);
+  assert.equal(reviews[0].result, 'good');
+  assert.equal(page.data.word.id, session.queue[1].wordId);
+}
 try {
   let session = fresh();
   failKey = 'mem_vocab_answer_apply_v1';
@@ -58,57 +73,111 @@ try {
   grade('good');
   assert.equal(store.getState().recentReviews.length, 1);
   assert.equal(page.session.index, 1);
+  restart();
+  assertRecovered(session);
+
+  for (const failed of ['mem_vocab_state_v1', 'mem_vocab_session_v1', 'remove-journal']) {
+    session = fresh();
+    grade('good');
+    assert.equal(page.session.index, 1, 'a small durable answer can advance before full checkpoint');
+    failKey = failed === 'remove-journal' ? '' : failed;
+    failRemove = failed === 'remove-journal';
+    assert.throws(() => store.flushAnswers());
+    assert.ok(values.mem_vocab_answer_apply_v1, 'failed checkpoints retain the recovery journal');
+    failKey = ''; failRemove = false;
+    restart();
+    assertRecovered(session);
+    store.flushAnswers();
+    restart();
+    assertRecovered(session);
+    assert.ok(!values.mem_vocab_answer_apply_v1, 'successful fold removes its journal');
+  }
 
   session = fresh();
-  failKey = 'mem_vocab_state_v1';
-  grade('good');
-  assert.ok(values.mem_vocab_answer_apply_v1, 'answer and task image are durable before either study key changes');
-  assert.equal(values.mem_vocab_state_v1.recentReviews.length, 0);
-  failKey = '';
-  page.rate({ currentTarget: { dataset: { grade: 'again' } } });
-  assert.equal(store.getState().recentReviews.length, 1, 'the retry completes the existing save once');
-  assert.equal(store.getState().recentReviews[0].wordId, session.queue[0].wordId);
-  assert.equal(store.getState().recentReviews[0].result, 'good');
-  assert.equal(page.data.word.id, session.queue[1].wordId, 'recovered screen shows the next word before accepting another grade');
-  assert.equal(page.session.index, 1);
-
-  session = fresh();
-  failKey = 'mem_vocab_session_v1';
-  grade('good');
-  assert.equal(values.mem_vocab_state_v1.recentReviews.length, 1);
-  assert.ok(values.mem_vocab_answer_apply_v1);
-  failKey = '';
-  page.onLoad({});
-  assert.equal(page.session.index, 1, 'restart completes the interrupted task write');
-  assert.equal(store.getState().recentReviews.length, 1);
-  assert.equal(page.data.word.id, session.queue[1].wordId);
-
-  fresh();
-  failRemove = true;
-  grade('good');
-  failRemove = false;
-  page.rate({ currentTarget: { dataset: { grade: 'hard' } } });
-  assert.equal(store.getState().recentReviews.length, 1, 'interrupted journal removal is idempotent');
-  assert.equal(page.session.index, 1);
+  // The prior release used a whole-answer journal. Keep upgrades recoverable.
+  const legacyState = store.getState(), legacySession = clone(session);
+  store.appendReview(legacyState, { wordId: session.queue[0].wordId, result: 'good', at: now, day: session.day });
+  legacySession.index = 1;
+  values.mem_vocab_answer_apply_v1 = { state: legacyState, session: legacySession };
+  restart();
+  assertRecovered(session);
+  grade('easy');
+  assert.equal(store.getState().recentReviews.length, 2);
+  assert.equal(values.mem_vocab_answer_apply_v1.format, 2);
+  restart();
+  assert.equal(store.getState().recentReviews.length, 2);
 
   fresh();
   grade('hard');
   while (!page.data.isContext) grade('easy');
   const wordId = page.data.word.id;
-  failKey = 'mem_vocab_state_v1';
+  failKey = 'mem_vocab_answer_apply_v1';
   page.chooseContext({ currentTarget: { dataset: { index: page.data.question.answer } } });
+  assert.equal(store.getState().recentReviews.filter(item => item.wordId === wordId && item.phase === 'sentence').length, 0);
   failKey = '';
   page.chooseContext({ currentTarget: { dataset: { index: page.data.question.answer } } });
   assert.equal(store.getState().recentReviews.filter(item => item.wordId === wordId && item.phase === 'sentence').length, 1);
-  assert.equal(page.data.contextAnswered, true, 'example answer recovers its explanation screen');
+  restart();
+  assert.equal(page.data.contextAnswered, true, 'a restart retains the answered example explanation');
   const beforeIndex = page.session.index;
-  failKey = 'mem_vocab_session_v1';
+  failKey = 'mem_vocab_answer_apply_v1';
   page.nextContext();
+  assert.equal(page.session.index, beforeIndex);
   failKey = '';
   page.nextContext();
-  assert.equal(page.session.index, beforeIndex + 1, 'continuing after an interrupted save advances only once');
-  assert.ok(!values.mem_vocab_answer_apply_v1);
-  console.log('Actual study page: journal/state/session/removal failures, visible-card recovery, single answers and sentence continuation passed.');
+  assert.equal(page.session.index, beforeIndex + 1);
+  restart();
+  assert.equal(page.session.index, beforeIndex + 1, 'saved example continuation is applied once');
+
+  fresh();
+  const practiceState = store.getState(), formalTask = store.getSession();
+  const practiceTask = { mode: 'practice', queue: clone(formalTask.queue), index: 1 };
+  practiceState.practice = { saved: { answers: 1 } };
+  store.saveAnswer(practiceState, practiceTask, []);
+  restart();
+  assert.equal(store.getSession('practice').index, 1);
+  assert.equal(store.getSession().index, formalTask.index, 'practice keeps the formal task separate');
+  assert.equal(store.getState().practice.saved.answers, 1);
+  store.flushAnswers();
+  values.mem_vocab_answer_apply_v1 = { format: 2, changes: [{ path: ['state', 'cards', '__proto__'], after: {} }], extras: [] };
+  store.resumeCloudApply();
+  assert.throws(() => store.getState(), /invalid-path/);
+  assert.throws(() => store.getState(), /invalid-path/, 'a second read must not bypass a damaged pending answer');
+  delete values.mem_vocab_answer_apply_v1; store.resumeCloudApply();
+  fresh();
+  const words = require('../utils/words').getWords(), scheduler = require('../utils/scheduler');
+  const large = store.getState();
+  words.slice(0, 1600).forEach(word => {
+    large.cards[word.id] = Object.assign(scheduler.review(null, 'good', now - 7 * 86400000), { dueAt: now - 1000 });
+  });
+  large.recentReviews = Array.from({ length: 3000 }, (_, i) => ({
+    id: 'history-' + i, wordId: words[i % 1600].id, at: now - (3000 - i) * 1000,
+    day: '2026-11-10', phase: 'review', result: 'good', scheduler: 'fsrs-6',
+    note: 'Historic review metadata retained for migration and memory analysis.'
+  }));
+  large.privateExtension = { retained: true };
+  const largeSession = plan.buildSession(large, store.getSettings(), now);
+  store.saveState(large); store.saveSession(largeSession); page.onLoad({});
+  const archiveBytes = Buffer.byteLength(JSON.stringify(store.getState()));
+  assert.ok(archiveBytes > 800000);
+  reads = []; writes = [];
+  const begin = performance.now();
+  for (let i = 0; i < 10; i++) grade('good');
+  const elapsed = performance.now() - begin;
+  assert.equal(page.session.index, 10);
+  assert.equal(writes.length, 10, 'each real page rating needs only one durable small write');
+  assert.ok(writes.every(item => item.key === 'mem_vocab_answer_apply_v1' && item.bytes < 48000), 'ratings never write the complete archive or full task');
+  assert.ok(!reads.includes('mem_vocab_state_v1'), 'ratings do not re-read and decompress the archive');
+  const after = store.getState();
+  assert.equal(after.recentReviews.length, 3000);
+  restart();
+  assert.equal(page.session.index, 10);
+  assert.ok(require('../utils/sync-model').equal(store.getState(), after), 'all ten answers, daily counters and extra metadata survive restart');
+  const smallWrites = writes.slice();
+  store.clearSession();
+  assert.equal(store.getSession(), null, 'clearing a task also invalidates its working image');
+  console.log('Actual study page: durable delta/failure/restart/legacy recovery and example continuation passed.');
+  console.log(JSON.stringify({ archiveBytes, ratings: 10, writes: smallWrites.length, maxWriteBytes: Math.max(...smallWrites.map(item => item.bytes)), meanRatingMs: Math.round(elapsed / 10 * 10) / 10 }));
 } finally {
   failKey = ''; failRemove = false;
   clock.pause();

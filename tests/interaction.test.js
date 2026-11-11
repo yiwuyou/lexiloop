@@ -15,7 +15,7 @@ Date.now = () => now;
 global.wx = {
   getStorageSync: key => values[key] ? clone(values[key]) : '',
   setStorageSync: (key, value) => {
-    if (failSave && key === 'mem_vocab_state_v1') throw new Error('disk full');
+    if (failSave && ['mem_vocab_answer_apply_v1', 'mem_vocab_state_v1'].includes(key)) throw new Error('disk full');
     values[key] = clone(value); writes++;
   },
   removeStorageSync: key => { delete values[key]; },

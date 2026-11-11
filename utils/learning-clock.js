@@ -31,7 +31,7 @@ function capture(now = Date.now()) {
       cursor = finish;
     }
     // Only advance the durable cursor after the local write succeeds.
-    store.saveState(state);
+    store.saveState(state, []);
     active.cursor = end;
     const day = ledger.dayKey(now);
     listeners.forEach(listener => listener(ledger.summary(state.daily[day] || {}, day)));

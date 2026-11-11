@@ -459,11 +459,31 @@ async function main() {
   secondTask.queue.splice(61, 0, { wordId: 'new-question-b', phase: 'reinforcement' }); secondTask.index++;
   compressedPhone.store.saveSession(secondTask);
   compressedPhone.net.release(); await taskFlight;
-  assert.deepStrictEqual(compressedPhone.store.getSession().queue, secondTask.queue, 'queue edits made during a fine delta reply survive pending replay');
+  assert.deepStrictEqual(clone(compressedPhone.store.getSession().queue), clone(secondTask.queue), 'queue edits made during a fine delta reply survive pending replay');
   assert.strictEqual(compressedPhone.store.getSession().index, secondTask.index);
   while (compressedPhone.sync.status().pending) await compressedPhone.sync.flush();
   await compressedDesktop.sync.flush();
-  assert.deepStrictEqual(compressedDesktop.store.getSession(), compressedPhone.store.getSession());
+  assert.deepStrictEqual(clone(compressedDesktop.store.getSession()), clone(compressedPhone.store.getSession()));
+  // Exercise the local answer journal while an actual sync response is held.
+  const firstLocal = compressedPhone.store.getState(), firstLocalTask = compressedPhone.store.getSession();
+  firstLocal.cards['c-0'].reps++;
+  compressedPhone.store.appendReview(firstLocal, { id: 'local-durable-one', wordId: 'c-0', at: now + 3000 });
+  firstLocalTask.index++;
+  compressedPhone.store.saveAnswer(firstLocal, firstLocalTask, 'c-0');
+  compressedPhone.net.hold = true;
+  const answerFlight = compressedPhone.sync.flush(); await tick();
+  assert.ok(compressedPhone.net.release);
+  const nextLocal = compressedPhone.store.getState(), nextLocalTask = compressedPhone.store.getSession();
+  nextLocal.cards['c-1'].reps++;
+  compressedPhone.store.appendReview(nextLocal, { id: 'local-durable-two', wordId: 'c-1', at: now + 4000 });
+  nextLocalTask.index++;
+  compressedPhone.store.saveAnswer(nextLocal, nextLocalTask, 'c-1');
+  compressedPhone.net.release(); await answerFlight;
+  assert.equal(compressedPhone.store.getSession().index, nextLocalTask.index);
+  assert.ok(compressedPhone.store.getState().recentReviews.some(item => item.id === 'local-durable-two'));
+  while (compressedPhone.sync.status().pending) await compressedPhone.sync.flush();
+  await compressedDesktop.sync.flush();
+  assert.ok(model.equal(compressedDesktop.store.bundle(), compressedPhone.store.bundle()), 'durable local answers made in flight converge on both devices');
   // Resource regression: exercise capture -> upload -> actual handler/database
   // -> response/download. Checking only outer flush frequency misses chunks.
   const timingState = compressedPhone.store.getState();
