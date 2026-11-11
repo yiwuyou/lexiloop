@@ -1,3 +1,4 @@
+const wordIdentity = require('./word-identity');
 const CURRENT_STATE_SCHEMA = 3;
 const CURRENT_BACKUP_FORMAT = 3;
 
@@ -76,7 +77,7 @@ function migrateState(source) {
   if (version !== CURRENT_STATE_SCHEMA || !validateState(state)) {
     throw new Error('invalid-state');
   }
-  return state;
+  return wordIdentity.mergeState(state);
 }
 
 function migrateBackup(payload) {

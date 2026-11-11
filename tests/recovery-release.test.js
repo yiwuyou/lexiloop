@@ -12,17 +12,17 @@ const settings = { dailyNewCount: 50, dailyReviewLimit: 100, dailyBacklogLimit: 
 const next = repair.prepare(empty, now);
 assert.deepStrictEqual(empty.cards, {}, 'prepare never mutates the input');
 assert.strictEqual(next.recoveryRelease, repair.REPAIR_ID);
-assert.strictEqual(plan.progressStats(next).learned, 1036);
+assert.strictEqual(plan.progressStats(next).learned, 1030);
 assert.strictEqual(plan.progressStats(next).stable, 0);
-assert.strictEqual(plan.progressStats(next).learning, 1036);
+assert.strictEqual(plan.progressStats(next).learning, 1030);
 assert.deepStrictEqual(next.daily, {}, 'no invented old learning days');
 assert.deepStrictEqual(next.recentReviews, [], 'no invented old answers');
 assert.ok(getWords().filter(word => word.category === 'core' || word.category === 'high' && word.day < 13)
   .every(word => next.cards[word.id].seen && next.cards[word.id].reps === 0 && !isStable(next.cards[word.id])));
 const summary = plan.summarize(next, settings, now);
-assert.strictEqual(summary.remainingReviewCount, 1036);
+assert.strictEqual(summary.remainingReviewCount, 1030);
 assert.strictEqual(summary.scheduledDue.length, 100);
-assert.strictEqual(summary.deferredRecoveryCount, 936);
+assert.strictEqual(summary.deferredRecoveryCount, 930);
 assert.strictEqual(summary.unseen[0].id, 'h-13-1');
 const session = plan.buildSession(next, settings, now);
 assert.strictEqual(session.dueGoal, 100);
@@ -40,7 +40,7 @@ session.queue.filter(item => item.phase === 'review').forEach(item => {
   answered.cards[item.wordId] = review(answered.cards[item.wordId], 'good', now);
 });
 answered.daily[dayKey(now)] = { dueDone: 100, dueGoal: 100, backlogDone: 0 };
-assert.strictEqual(plan.summarize(answered, settings, now).remainingReviewCount, 936);
+assert.strictEqual(plan.summarize(answered, settings, now).remainingReviewCount, 930);
 assert.strictEqual(plan.buildSession(answered, settings, now).queue.filter(item => item.phase === 'review').length, 0);
 assert.strictEqual(repair.prepare(answered, now + DAY_MS), null,
   'reopening must never reset real post-recovery answers');
@@ -108,6 +108,6 @@ wx.onNetworkStatusChange = () => {};
 wx.showToast = () => { throw new Error('unexpected repair failure'); };
 require('../app');
 app.onLaunch();
-assert.strictEqual(plan.progressStats(store.getState()).learned, 1036);
+assert.strictEqual(plan.progressStats(store.getState()).learned, 1030);
 assert.strictEqual(store.getSettings().dailyReviewLimit, 100);
-console.log('Recovery release passed: 1036 pending words, high day 13 start, 100/day, migration, missed days, backup/write failures, idempotence and real app launch.');
+console.log('Recovery release passed: 1030 pending words, high day 13 start, 100/day, migration, missed days, backup/write failures, idempotence and real app launch.');

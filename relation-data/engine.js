@@ -13,7 +13,7 @@ function indexWords() {
     const head = headOf(word);
     if (!entries[head]) entries[head] = { head, id: word.id, word: word.word, sources: [], meanings: [], ids: [], over: word.reviewedGuide && word.breakdown && word.breakdown.startsWith('over·') && word.breakdown.replace(/·/g, '') === head };
     const entry = entries[head];
-    entry.sources.push(word.sourceLabel);
+    entry.sources.push(...(word.sources || [word]).map(source => source.sourceLabel));
     entry.ids.push(word.id);
     if (!entry.meanings.includes(word.meaning)) entry.meanings.push(word.meaning);
   });

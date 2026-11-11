@@ -8,7 +8,7 @@ const scheduler = require('../utils/scheduler');
 const studyPlan = require('../utils/study-plan');
 const migrations = require('../utils/migrations');
 const enrichment = require('../data/enrichment');
-const { getWord } = require('../utils/words');
+const { getWord, getWords } = require('../utils/words');
 
 function testVocabulary() {
   assert.strictEqual(vocabulary.length, 2522, 'complete source record count');
@@ -88,8 +88,8 @@ function testDailyReviewShuffle() {
 
 function buildHeavyDueState(now) {
   const state = { cards: {}, daily: {}, recentReviews: [] };
-  vocabulary.slice(0, 204).forEach((row, index) => {
-    const id = `${row[0]}-${row[1]}-${row[2]}`;
+  getWords().slice(0, 204).forEach((word, index) => {
+    const id = word.id;
     state.cards[id] = {
       seen: true,
       interval: 1,
@@ -125,8 +125,8 @@ function testExistingSessionUpgrade() {
   const now = new Date(2026, 8, 10, 9, 0, 0).getTime();
   const state = buildHeavyDueState(now);
   const settings = { dailyNewCount: 50, dailyReviewLimit: 80, dailyBacklogLimit: 30 };
-  const dueIds = vocabulary.slice(0, 204).map((row) => `${row[0]}-${row[1]}-${row[2]}`);
-  const newIds = vocabulary.slice(204, 254).map((row) => `${row[0]}-${row[1]}-${row[2]}`);
+  const dueIds = getWords().slice(0, 204).map(word => word.id);
+  const newIds = getWords().slice(204, 254).map(word => word.id);
   const oldSession = {
     day: dates.dayKey(now),
     index: 0,

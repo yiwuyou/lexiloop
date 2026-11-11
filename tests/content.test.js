@@ -2,14 +2,14 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { getWords, getWord } = require('../utils/words');
+const { getSourceWords, getWord } = require('../utils/words');
 const source = require('../data/vocabulary');
 const memoryGuides = Object.assign({}, require('../data/memory-guides.json'),
   require('../data/reviewed-memory-guides.json'));
 const reviewedPhrases = require('../data/reviewed-phrases.json');
 const sizes = require('../data/audio-sizes');
 const root = path.join(__dirname, '..');
-const words = getWords();
+const words = getSourceWords();
 
 function escaped(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -71,7 +71,7 @@ Object.keys(phoneticSamples).forEach((head) => {
   assert.ok(matching.length, head);
   matching.forEach((word) => assert.strictEqual(word.ipa, phoneticSamples[head], word.id));
 });
-assert.strictEqual(getWord('c-3-5').ipa, '/ˈdiːfekt/', 'noun-only defect card');
+assert.strictEqual(words.find(word => word.id === 'c-3-5').ipa, '/ˈdiːfekt/', 'original noun-only defect source');
 words.forEach((word, index) => {
   const row = source[index];
   assert.strictEqual(word.id, row.slice(0, 3).join('-'));

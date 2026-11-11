@@ -4,6 +4,8 @@ const learningContent = require('../data/learning-content');
 const readingContent = require('../data/reading-content');
 const reviewedPronunciations = require('../data/reviewed-pronunciations');
 
+const identity = require('./word-identity');
+let sourceCache;
 let cache;
 let mapCache;
 
@@ -79,9 +81,25 @@ function inflate(tuple, position) {
   return word;
 }
 
+function getSourceWords() {
+  if (!sourceCache) sourceCache = tuples.map(inflate);
+  return sourceCache;
+}
 function getWords() {
   if (!cache) {
-    cache = tuples.map(inflate);
+    const source = getSourceWords();
+    const raw = Object.fromEntries(source.map(word => [word.id, word]));
+    const merged = {};
+    identity.groups.forEach(ids => {
+      const records = ids.map(id => raw[id]);
+      const meaning = [...new Set(records.flatMap(word => word.meaning.split(/[；;]/)).map(value => value.trim()).filter(Boolean))].join('；');
+      merged[ids[0]] = Object.assign({}, records[0], {
+        meaning,
+        searchText: records.map(word => word.searchText + ' ' + word.word.replace(/\(u\)/g, 'u')).join(' '),
+        sources: records.map(({ id, category, day, index, sourceLabel }) => ({ id, category, day, index, sourceLabel })),
+      });
+    });
+    cache = source.filter(word => identity.canonicalId(word.id) === word.id).map(word => merged[word.id] || word);
   }
   return cache;
 }
@@ -89,9 +107,8 @@ function getWords() {
 function getWordMap() {
   if (!mapCache) {
     mapCache = {};
-    getWords().forEach((word) => {
-      mapCache[word.id] = word;
-    });
+    getWords().forEach((word) => { mapCache[word.id] = word; });
+    identity.groups.forEach(ids => ids.slice(1).forEach(id => { mapCache[id] = mapCache[ids[0]]; }));
   }
   return mapCache;
 }
@@ -100,4 +117,4 @@ function getWord(id) {
   return getWordMap()[id] || null;
 }
 
-module.exports = { getWord, getWordMap, getWords };
+module.exports = { getWord, getWordMap, getWords, getSourceWords };

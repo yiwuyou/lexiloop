@@ -1,4 +1,4 @@
-const { getWords } = require('./words');
+const { getSourceWords, getWord } = require('./words');
 const { initialState } = require('./scheduler');
 const { DAY_MS, startOfDay } = require('./date');
 
@@ -6,7 +6,7 @@ const REVIEW_BATCH = 100;
 
 function checkpoints() {
   const groups = [];
-  getWords().forEach((word) => {
+  getSourceWords().forEach((word) => {
     let group = groups[groups.length - 1];
     if (!group || group.category !== word.category || group.day !== word.day) {
       group = { category: word.category, day: word.day, label: `${word.category === 'core' ? '核心' : '高频'} day ${word.day}`, words: [] };
@@ -23,8 +23,9 @@ function selectedWords(groupIndex, count) {
     || !Number.isInteger(count) || count < 0 || count > groups[groupIndex].words.length) {
     throw new Error('invalid-checkpoint');
   }
-  return groups.slice(0, groupIndex).reduce((all, group) => all.concat(group.words), [])
+  const records = groups.slice(0, groupIndex).reduce((all, group) => all.concat(group.words), [])
     .concat(groups[groupIndex].words.slice(0, count));
+  return [...new Map(records.map(word => { const merged = getWord(word.id); return [merged.id, merged]; })).values()];
 }
 
 function preview(state, groupIndex, count) {

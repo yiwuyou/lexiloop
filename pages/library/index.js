@@ -1,6 +1,6 @@
 const scheduler = require('../../utils/scheduler');
 const store = require('../../utils/store');
-const { getWords, getWord } = require('../../utils/words');
+const { getWords, getWord, getSourceWords } = require('../../utils/words');
 const practice = require('../../utils/practice');
 const audioResources = require('../../utils/audio');
 const weakBook = require('../../utils/weak-book');
@@ -70,7 +70,7 @@ Page({
     });
     this.limit = PAGE_SIZE;
     const groups = [];
-    getWords().forEach((word) => {
+    getSourceWords().forEach((word) => {
       const key = `${word.category}-${word.day}`;
       if (!groups.some((group) => group.key === key)) groups.push({ key, category: word.category, day: word.day,
         label: `${word.category === 'core' ? '核心' : '高频'} day ${word.day}` });
@@ -106,16 +106,25 @@ Page({
     const counts = new Map();
     const filtered = getWords().filter(word => {
       if (query && !word.searchText.includes(query)) return false;
-      if (selected.key !== 'all' && (word.category !== selected.category || word.day !== selected.day)) return false;
+      const sources = (word.sources || [word]).filter(source =>
+        (selected.key === 'all' || source.category === selected.category && source.day === selected.day)
+        && (filter !== 'core' && filter !== 'high' || source.category === filter));
+      if (!sources.length) return false;
       const marked = weakBook.isMarked(state, word.id);
-      if (filter !== 'all' && filter !== word.category && !(filter === 'weak' && marked)) return false;
-      const key = word.category + '-' + word.day;
-      const group = counts.get(key) || { total: 0, learned: 0 };
-      group.total++;
-      if (marked || state.cards[word.id] && state.cards[word.id].seen) group.learned++;
-      counts.set(key, group);
+      if (filter === 'weak' && !marked) return false;
+      new Set(sources.map(source => source.category + '-' + source.day)).forEach(key => {
+        const group = counts.get(key) || { total: 0, learned: 0 };
+        group.total++;
+        if (marked || state.cards[word.id] && state.cards[word.id].seen) group.learned++;
+        counts.set(key, group);
+      });
       return true;
     });
+    if (selected.key !== 'all') {
+      const indexInDay = word => (word.sources || [word]).find(source =>
+        source.category === selected.category && source.day === selected.day).index;
+      filtered.sort((left, right) => indexInDay(left) - indexInDay(right));
+    }
     const dayGroups = this.groups.filter(group => counts.has(group.key)).map(group => {
       const count = counts.get(group.key);
       const countLabel = filter === 'weak' ? '易忘 ' + count.total + ' 词' : '已学 ' + count.learned + ' / ' + count.total + ' 词';

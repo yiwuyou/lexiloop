@@ -1,6 +1,7 @@
 const { dayKey } = require('./date');
 const migrations = require('./migrations');
 const syncStorage = require('./sync-storage');
+const wordIdentity = require('./word-identity');
 
 const STATE_KEY = 'mem_vocab_state_v1';
 const SESSION_KEY = 'mem_vocab_session_v1';
@@ -67,6 +68,14 @@ function loadState() {
       return null;
     }
   }
+  const merged = wordIdentity.mergeState(state);
+  if (merged !== state) {
+    const backupKey = 'mem_vocab_before_word_merge_v1';
+    if (!syncStorage.read(backupKey)) syncStorage.write(backupKey, {
+      at: Date.now(), state, session: safeGet(SESSION_KEY, null), practiceSession: safeGet(PRACTICE_SESSION_KEY, null),
+    });
+    state = safeSet(STATE_KEY, merged);
+  }
   const settings = safeGet(SETTINGS_KEY, null);
   if (!settings) {
     safeSet(SETTINGS_KEY, defaultSettings());
@@ -96,7 +105,7 @@ function getState() {
 }
 
 function saveState(state) {
-  const next = Object.assign({}, state, { schemaVersion: migrations.CURRENT_STATE_SCHEMA });
+  const next = Object.assign({}, wordIdentity.mergeState(state), { schemaVersion: migrations.CURRENT_STATE_SCHEMA });
   delete next.version;
   return safeSet(STATE_KEY, next);
 }
@@ -115,11 +124,11 @@ function saveSettings(settings) {
 }
 
 function getSession(mode) {
-  return safeGet(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, null);
+  return wordIdentity.mergeSession(safeGet(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, null));
 }
 
 function saveSession(session) {
-  return safeSet(session.mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, session);
+  return safeSet(session.mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, wordIdentity.mergeSession(session));
 }
 
 function clearSession(mode) {
@@ -143,7 +152,7 @@ function writeBundle(value) {
   syncStorage.write(STATE_KEY, value.state);
   wx.setStorageSync(SETTINGS_KEY, value.settings);
   [[SESSION_KEY, value.session], [PRACTICE_SESSION_KEY, value.practiceSession]].forEach(([key, session]) => {
-    if (session) syncStorage.write(key, session); else syncStorage.remove(key);
+    if (session) syncStorage.write(key, wordIdentity.mergeSession(session)); else syncStorage.remove(key);
   });
 }
 function replaceBundle(value) {

@@ -2,7 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { getWords, getWord } = require('../utils/words');
+const { getWords, getWord, getSourceWords } = require('../utils/words');
 const engine = require('../relation-data/engine');
 const relationData = require('../relation-data/ready');
 
@@ -35,7 +35,8 @@ function deferred() {
 async function flush() { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); }
 
 function testCorpus() {
-  assert.strictEqual(words.length, 2522, 'test the whole institution word bank, not just core days');
+  assert.strictEqual(getSourceWords().length, 2522, 'retain the whole institution source bank');
+  assert.strictEqual(words.length, 2514, 'one active card per headword');
   assert.strictEqual(heads.size, 2514);
   assert.strictEqual(Object.keys(relationData.common).length, heads.size);
   const corrected = { aural: '听觉', viable: '可行', underlying: '根本', render: '使成为', venue: '场所', sibling: '姐妹', approach: '方法', account: '账户', power: '电力', volume: '音量', sense: '意义', script: '剧本', rest: '其余', workout: '锻炼' };

@@ -55,7 +55,11 @@ function getRecallQuestion(word) {
 }
 
 function getById(id) {
-  if (String(id || '').startsWith('recall-')) return getRecallQuestion(getWord(String(id).slice(7)));
+  if (String(id || '').startsWith('recall-')) {
+    const sourceId = String(id).slice(7);
+    const word = getWord(sourceId);
+    return word ? getRecallQuestion(Object.assign({}, word, { id: sourceId })) : null;
+  }
   return byId[id] || null;
 }
 
