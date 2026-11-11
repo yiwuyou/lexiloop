@@ -64,7 +64,13 @@ function read(key) {
   return field ? model.clone(current[field]) : storage.read(key);
 }
 function project(value) {
-  const pick = map => Object.fromEntries([...touched].filter(id => Object.prototype.hasOwnProperty.call(map || {}, id)).map(id => [id, map[id]]));
+  const pick = map => {
+    const result = {};
+    touched.forEach(id => {
+      if (Object.prototype.hasOwnProperty.call(map || {}, id)) result[id] = map[id];
+    });
+    return result;
+  };
   return Object.assign({}, value, { state: Object.assign({}, value.state, {
     cards: pick(value.state.cards), weakBook: pick(value.state.weakBook),
   }) });
