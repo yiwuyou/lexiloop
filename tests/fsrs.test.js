@@ -58,11 +58,13 @@ assert.equal(require('../utils/sync-storage').read('mem_vocab_before_fsrs_v1').s
 const large = clone(values.mem_vocab_state_v1);
 large.safety = 'large archive'.repeat(120000);
 store.saveState(large);
-assert.equal(values.mem_vocab_state_v1.syncChunks, 1, 'large FSRS archives use durable chunks');
+assert.ok(values.mem_vocab_state_v1.syncPacked === 1 || values.mem_vocab_state_v1.syncChunks === 1, 'large FSRS archives use bounded durable storage');
 assert.equal(store.getState().safety, large.safety);
-const manifest = clone(values.mem_vocab_state_v1); delete values[manifest.prefix + ':0'];
-assert.throws(()=>store.getState(), /incomplete-sync-storage/, 'a broken chunk must never initialize empty progress');
-assert.deepStrictEqual(values.mem_vocab_state_v1, manifest);
+const manifest = clone(values.mem_vocab_state_v1);
+if (manifest.syncPacked) values.mem_vocab_state_v1.packed.checksum = '0'; else delete values[manifest.prefix + ':0'];
+const corrupted = clone(values.mem_vocab_state_v1);
+assert.throws(()=>store.getState(), /incomplete-sync-storage|checksum/, 'corrupt storage must never initialize empty progress');
+assert.deepStrictEqual(values.mem_vocab_state_v1, corrupted);
 store.saveState({ schemaVersion:3, cards:{}, daily:{}, weakBook:{}, recentReviews:[] });
 const stateBefore = JSON.stringify(store.getState());
 let page;

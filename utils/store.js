@@ -9,6 +9,7 @@ const PRACTICE_SESSION_KEY = 'mem_vocab_practice_session_v1';
 const SETTINGS_KEY = 'mem_vocab_settings_v1';
 const MIGRATION_BACKUP_KEY = 'mem_vocab_state_before_v2';
 const APPLY_KEY = 'mem_vocab_cloud_apply_v1';
+const ANSWER_KEY = 'mem_vocab_answer_apply_v1';
 let changeListener = null;
 let quiet = false;
 
@@ -38,7 +39,7 @@ function defaultSettings() {
 
 function safeGet(key, fallback) {
   try {
-    const value = [STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key) ? syncStorage.read(key) : wx.getStorageSync(key);
+    const value = [STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY, MIGRATION_BACKUP_KEY].includes(key) ? syncStorage.read(key) : wx.getStorageSync(key);
     return value || fallback;
   } catch (error) {
     if ([STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) throw error;
@@ -47,7 +48,7 @@ function safeGet(key, fallback) {
 }
 
 function safeSet(key, value) {
-  if ([STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) syncStorage.write(key, value);
+  if ([STATE_KEY, SESSION_KEY, PRACTICE_SESSION_KEY, MIGRATION_BACKUP_KEY].includes(key)) syncStorage.write(key, value);
   else wx.setStorageSync(key, value);
   if (!quiet && changeListener && [STATE_KEY, SETTINGS_KEY, SESSION_KEY, PRACTICE_SESSION_KEY].includes(key)) {
     try { changeListener(); } catch (error) { /* Local save is still durable; next sync reconciles it. */ }
@@ -56,6 +57,7 @@ function safeSet(key, value) {
 }
 
 function loadState() {
+  resumeAnswer();
   let state = safeGet(STATE_KEY, null);
   if (!state) {
     state = safeSet(STATE_KEY, defaultState());
@@ -124,6 +126,7 @@ function saveSettings(settings) {
 }
 
 function getSession(mode) {
+  resumeAnswer();
   return wordIdentity.mergeSession(safeGet(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, null));
 }
 
@@ -138,6 +141,34 @@ function clearSession(mode) {
   } catch (error) {
     // A failed cleanup must not discard completed review records.
   }
+}
+
+function writeAnswer(value) {
+  try {
+    syncStorage.write(STATE_KEY, value.state);
+    const session = value.session;
+    syncStorage.write(session.mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY, session);
+    syncStorage.remove(ANSWER_KEY);
+  } catch (error) {
+    error.answerPending = true;
+    throw error;
+  }
+  if (!quiet && changeListener) {
+    try { changeListener(); } catch (error) { /* The answer is already durable. */ }
+  }
+}
+function resumeAnswer() {
+  const pending = syncStorage.read(ANSWER_KEY);
+  if (!pending) return false;
+  if (!migrations.validateState(pending.state) || !pending.session || !Array.isArray(pending.session.queue)) throw new Error('invalid-answer-journal');
+  writeAnswer(pending);
+  return true;
+}
+function saveAnswer(state, session) {
+  resumeAnswer();
+  const value = { state: wordIdentity.mergeState(state), session: wordIdentity.mergeSession(session) };
+  syncStorage.write(ANSWER_KEY, value);
+  writeAnswer(value);
 }
 
 function appendReview(state, review) {
@@ -156,6 +187,7 @@ function writeBundle(value) {
   });
 }
 function replaceBundle(value) {
+  resumeAnswer();
   const next = Object.assign({}, value, { state: migrations.migrateState(value.state) });
   if (!next.settings || next.settings.schemaVersion !== 2) throw new Error('invalid-cloud-settings');
   quiet = true;
@@ -188,6 +220,8 @@ module.exports = {
   getState,
   getTodaySummary,
   saveSession,
+  saveAnswer,
+  resumeAnswer,
   saveSettings,
   saveState,
 };

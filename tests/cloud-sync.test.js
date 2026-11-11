@@ -305,12 +305,17 @@ async function main() {
   while (desktop.sync.status().pending) await desktop.sync.flush();
   assert.strictEqual(desktop.store.getSession().index, 9);
   // Publishing a multi-key journal is atomic even when a later chunk fails.
-  const large = { text: '例句'.repeat(250000) };
+  let journalSeed = 919;
+  const journalText = Array.from({ length: 600000 }, () => {
+    journalSeed ^= journalSeed << 13; journalSeed ^= journalSeed >>> 17; journalSeed ^= journalSeed << 5;
+    return String.fromCharCode(33 + ((journalSeed >>> 0) % 90));
+  }).join('');
+  const large = { text: journalText };
   desktop.storage.write('test-journal', large);
   assert.strictEqual(desktop.storage.read('test-journal').text, large.text);
   let writes = 0;
   desktop.net.failWrite = key => key.startsWith('test-journal:') && ++writes === 2;
-  assert.throws(() => desktop.storage.write('test-journal', { text: '新例'.repeat(250000) }));
+  assert.throws(() => desktop.storage.write('test-journal', { text: journalText + journalText }));
   desktop.net.failWrite = null;
   assert.strictEqual(desktop.storage.read('test-journal').text, large.text, 'failed chunk write preserves previous manifest');
   desktop.storage.remove('test-journal');

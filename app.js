@@ -20,6 +20,7 @@ App({
     if (typeof wx.setEnableDebug === 'function') wx.setEnableDebug({ enableDebug: false });
     audioOptions.configure();
     scheduler.prepare().catch(() => {});
+    require('./utils/sync-storage').compact();
     store.resumeCloudApply();
     store.ensureState();
     try {

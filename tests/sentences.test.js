@@ -27,7 +27,7 @@ const legacy = { queue: [{ wordId: word.id, phase: 'reinforcement', availableAt:
 assert.strictEqual(mastery.available(legacy, 1), true, 'old sessions must proceed immediately at the end');
 let page;
 global.Page = definition => { page = definition; };
-global.wx = { getStorageSync: () => state, setStorageSync() {} };
+global.wx = { getStorageSync: key => key === 'mem_vocab_state_v1' ? state : '', setStorageSync() {} };
 require('../pages/sentences/index');
 book.toggle(state, entry, 123);
 page.setData = values => Object.assign(page.data, values);

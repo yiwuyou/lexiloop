@@ -412,21 +412,42 @@ Page({
     if (this.data.word) wx.showModal({ title: '例句来源与说明', content: this.data.word.exampleSourceDetail, showCancel: false });
   },
 
+  resumePendingAnswer() {
+    if (!store.resumeAnswer()) return false;
+    this.session = store.getSession(this.data.isPractice ? 'practice' : undefined);
+    this.renderCurrent(store.getState());
+    return true;
+  },
+  answerFailed(error, previous) {
+    const pendingSession = this.session;
+    this.session = previous;
+    try {
+      store.resumeAnswer();
+      this.session = store.getSession(this.data.isPractice ? 'practice' : undefined) || previous;
+      this.renderCurrent(store.getState());
+    } catch (_) {
+      if (error.answerPending) this.session = pendingSession;
+    }
+    wx.showToast({ title: require('../../utils/sync-storage').isFull(error)
+      ? '本机存储写入失败，请保留记录并重新打开' : '本次保存未完成，请重试', icon: 'none' });
+  },
+
   rate(event) {
     if (cloudSync.blocked()) { wx.showToast({ title: '请先在此接续学习', icon: 'none' }); return; }
     if (!this.data.revealed || this.data.completed || this.ratingBusy) return;
     const grade = event.currentTarget.dataset.grade;
     if (!['again', 'hard', 'good', 'easy'].includes(grade)) return;
     this.ratingBusy = true;
+    const previousSession = JSON.parse(JSON.stringify(this.session));
     try {
+    if (this.resumePendingAnswer()) return;
     this.onLearningTouch();
     if (this.rollToToday()) return;
     const state = store.getState();
     if (this.data.isPractice) {
       practice.recordAnswer(state, this.session, grade);
       this.captureElapsed(state);
-      store.saveState(state);
-      store.saveSession(this.session);
+      store.saveAnswer(state, this.session);
       this.renderCurrent(state);
       return;
     }
@@ -476,9 +497,10 @@ Page({
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
-    store.saveState(state);
-    store.saveSession(this.session);
+    store.saveAnswer(state, this.session);
     this.renderCurrent(state);
+    } catch (error) {
+      this.answerFailed(error, previousSession);
     } finally {
       this.ratingBusy = false;
     }
@@ -522,6 +544,9 @@ Page({
     if (cloudSync.blocked()) return;
     if (this.rollToToday()) return;
     if (this.data.contextAnswered) return;
+    const previousSession = JSON.parse(JSON.stringify(this.session));
+    try {
+    if (this.resumePendingAnswer()) return;
     this.onLearningTouch();
     const index = Number(event.currentTarget.dataset.index);
     const question = this.data.question;
@@ -556,8 +581,7 @@ Page({
     item.correct = correct;
     item.selectedChoice = index;
     this.writeDailyProgress(state);
-    store.saveState(state);
-    store.saveSession(this.session);
+    store.saveAnswer(state, this.session);
     const task = metrics.summary(state, this.session, this.session.day);
     const active = metrics.section(task, studyOrder.kind(state, this.session, item));
     this.setData({
@@ -566,12 +590,18 @@ Page({
       contextCorrect: correct,
       selectedChoice: index,
     });
+    } catch (error) {
+      this.answerFailed(error, previousSession);
+    }
   },
 
   nextContext() {
     if (cloudSync.blocked()) return;
     if (this.rollToToday()) return;
     if (!this.data.contextAnswered) return;
+    const previousSession = JSON.parse(JSON.stringify(this.session));
+    try {
+    if (this.resumePendingAnswer()) return;
     this.onLearningTouch();
     const item = this.currentItem();
     if (item.phase === 'sentence') {
@@ -586,9 +616,11 @@ Page({
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
-    store.saveState(state);
-    store.saveSession(this.session);
+    store.saveAnswer(state, this.session);
     this.renderCurrent(state);
+    } catch (error) {
+      this.answerFailed(error, previousSession);
+    }
   },
 
   finishSession() {

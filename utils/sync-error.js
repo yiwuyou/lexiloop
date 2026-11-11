@@ -8,8 +8,9 @@ function describe(error = {}, fallback = 'local') {
   const extracted = raw.match(/errCode\s*[:=]\s*(-?\d+)/i);
   const outer = error.code != null ? error.code : error.errCode;
   const candidate = extracted && (outer == null || String(outer) === '-1') ? extracted[1] : outer != null ? outer : 'SYNC_UNKNOWN';
-  const code = /^[a-zA-Z0-9_.-]{1,100}$/.test(String(candidate)) ? String(candidate) : 'SYNC_UNKNOWN';
-  const stage = error.syncStage || fallback;
+  const localFull = require('./sync-storage').isFull(error);
+  const code = localFull ? 'LOCAL_STORAGE_FULL' : /^[a-zA-Z0-9_.-]{1,100}$/.test(String(candidate)) ? String(candidate) : 'SYNC_UNKNOWN';
+  const stage = localFull ? 'local' : error.syncStage || fallback;
   let hint = '本机记录已保留，请把这里的失败步骤和错误码发给开发者；无需清缓存或重新授权。';
   if (isQuota(error)) hint = '云端套餐资源或请求额度不足，自动同步已暂缓；额度恢复或处理套餐后可点击立即同步。待上传记录保留在本机，无需清缓存或重新授权。';
   else if (code === 'SYNC_DAILY_BUDGET') hint = '已暂停继续发出云请求，明天恢复尝试。学习及待上传记录仍保存在本机；不要清缓存或重装。';
