@@ -1,5 +1,4 @@
 const assert = require('assert/strict');
-const fs = require('fs');
 const clone = value => JSON.parse(JSON.stringify(value));
 const values = {};
 const limit = 10 * 1024 * 1024;
