@@ -208,10 +208,13 @@ function accept(result) {
   const combined = result.delta ? model.overlay(base, result.delta.changes) : model.clone(result.bundle);
   const sessionBase = { session: model.clone(combined.session || null), practiceSession: model.clone(combined.practiceSession || null) };
   remaining.forEach(event => model.apply(combined, event, { owner: result.owner }));
-  storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
-  try { store.replaceBundle(combined); }
-  catch (error) { error.syncStage = 'apply'; throw error; }
-  dataRevision++;
+  const localUnchanged = JSON.stringify(previous) === JSON.stringify(combined);
+  if (!localUnchanged) {
+    storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
+    try { store.replaceBundle(combined); }
+    catch (error) { error.syncStage = 'apply'; throw error; }
+    dataRevision++;
+  }
   meta.outbox = remaining;
   meta.observed = model.clone(combined);
   meta.rev = result.rev;
@@ -221,7 +224,7 @@ function accept(result) {
   meta.enabled = true;
   meta.lastSyncedAt = Date.now();
   clearBackoff();
-  save(true);
+  save(!localUnchanged);
   lastError = null;
   emit(remaining.length ? '有记录待同步' : '已同步');
 }

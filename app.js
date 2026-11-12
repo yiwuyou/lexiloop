@@ -21,8 +21,8 @@ App({
     audioOptions.configure();
     scheduler.prepare().catch(() => {});
     require('./utils/sync-storage').compact();
-    store.resumeCloudApply();
-    store.ensureState();
+    try { store.resumeCloudApply(); store.ensureState(); }
+    catch (error) { wx.showToast({ title: '读取学习记录未完成，请在首页重试', icon: 'none' }); return; }
     try {
       recoveryRelease.run(store);
     } catch (error) {

@@ -83,7 +83,7 @@ assert.throws(() => repair.run(store, now), /disk-full/);
 assert.deepStrictEqual(values, before, 'backup failure aborts all recovery writes');
 failBackup = false;
 failRemove = true;
-assert.throws(() => repair.run(store, now), /cannot-clear-old-task/);
+assert.throws(() => repair.run(store, now), /cannot-remove|cannot-clear-old-task/, 'cleanup failure aborts before committing the recovery marker');
 assert.strictEqual(store.getState().recoveryRelease, undefined, 'failed session clear is retryable');
 failRemove = false;
 failState = true;

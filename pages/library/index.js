@@ -191,7 +191,7 @@ Page({
         sentence: word.example, translation: word.translation, word: word.word, wordId: word.id,
       });
       updateVisible(saved);
-      store.saveState(state);
+      store.saveState(state, []);
       wx.showToast({ title: saved ? '已收藏例句' : '已取消收藏', icon: 'none', duration: 900 });
     } catch (error) {
       updateVisible(before);
@@ -215,7 +215,7 @@ Page({
   toggleWeak(event) {
     const state = store.getState();
     const marked = weakBook.toggle(state, event.currentTarget.dataset.id, Date.now());
-    store.saveState(state);
+    store.saveState(state, event.currentTarget.dataset.id);
     wx.showToast({ title: marked ? '已加入易忘' : '已移出易忘', icon: 'none' });
     this.refresh();
   },

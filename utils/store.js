@@ -145,14 +145,9 @@ function saveSession(session) {
 }
 
 function clearSession(mode) {
-  try {
-    answers.flush();
-    syncStorage.remove(mode === 'practice' ? PRACTICE_SESSION_KEY : SESSION_KEY);
-    answers.reset();
-    if (!quiet && changeListener) changeListener();
-  } catch (error) {
-    // A failed cleanup must not discard completed review records.
-  }
+  resumeAnswer();
+  answers.save({ [mode === 'practice' ? 'practiceSession' : 'session']: null }, []);
+  changed([]);
 }
 
 function changed(wordIds) {

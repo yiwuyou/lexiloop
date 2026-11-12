@@ -19,9 +19,31 @@ function schedule() {
   if (timer || !dirty) return;
   timer = setTimeout(() => {
     timer = null;
+    // Checkpoint compression shares the UI thread. Keep the durable journal
+    // while a learning/detail screen is active; fold it on exit/background.
+    if (require('./learning-clock').status().active) return;
     try { flush(); } catch (_) { /* Retain the delta; the next save or app hide retries. */ }
   }, 30000);
   if (timer && timer.unref) timer.unref();
+}
+function applyPending(base, changes) {
+  const value = model.clone(base);
+  changes.forEach(change => {
+    if (change.splice && ['session', 'practiceSession'].includes(change.path[0]) && change.path[1] === 'queue') {
+      const queue = value[change.path[0]] && value[change.path[0]].queue, patch = change.splice;
+      if (Array.isArray(queue) && model.fingerprint(queue) !== patch.before && model.fingerprint(queue) !== patch.after) {
+        // Older journals could outlive a partially written checkpoint. Its stable
+        // prefix/suffix can reconstruct the exact after image; verify its hash.
+        const tail = patch.length - patch.start - patch.remove;
+        if (tail < 0 || patch.start > queue.length || tail > queue.length) throw Error('queue-delta-base-mismatch');
+        const restored = queue.slice(0, patch.start).concat(patch.items, tail ? queue.slice(-tail) : []);
+        if (model.fingerprint(restored) !== patch.after) throw Error('queue-delta-base-mismatch');
+        change = { path: change.path, after: restored };
+      }
+    }
+    model.overlay(value, [change]);
+  });
+  return value;
 }
 function initialize() {
   if (current) return;
@@ -33,7 +55,7 @@ function initialize() {
     if (!pending) return;
     if (pending.format === 2) {
       if (!base.state || !Array.isArray(pending.changes) || !Array.isArray(pending.extras)) throw Error('invalid-answer-journal');
-      current = model.overlay(model.clone(base), pending.changes);
+      current = applyPending(base, pending.changes);
       pending.extras.forEach(change => {
         if (['__proto__', 'constructor', 'prototype'].includes(change.key)) throw Error('invalid-answer-journal');
         if (change.remove) delete current.state[change.key]; else current.state[change.key] = change.after;
@@ -61,7 +83,7 @@ function resume() {
 function read(key) {
   initialize();
   const field = Object.keys(ROOTS).find(field => ROOTS[field] === key);
-  return field ? model.clone(current[field]) : storage.read(key);
+  return field ? model.clone(current[field] == null ? null : current[field]) : storage.read(key);
 }
 function project(value) {
   const pick = map => {
@@ -82,7 +104,14 @@ function save(parts, ids) {
   if (ids == null) {
     Object.keys(base.state.cards).concat(Object.keys(next.state.cards), Object.keys(base.state.weakBook), Object.keys(next.state.weakBook)).forEach(id => touched.add(id));
   } else (Array.isArray(ids) ? ids : [ids]).forEach(id => touched.add(id));
-  const changes = model.fineDiff(project(base), project(next));
+  let changes = model.fineDiff(project(base), project(next));
+  // Local recovery must work against any partially completed checkpoint. Unlike
+  // network patches, task images therefore have no dependency on a queue base.
+  ['session', 'practiceSession'].forEach(field => {
+    if (!changes.some(change => change.path[0] === field)) return;
+    changes = changes.filter(change => change.path[0] !== field);
+    changes.push({ path: [field], after: next[field] || null });
+  });
   // Fine cloud deltas omit newly created empty maps; local recovery retains
   // them as well so the checkpoint is an exact working image.
   Object.entries(next.state.daily || {}).forEach(([day, value]) => {

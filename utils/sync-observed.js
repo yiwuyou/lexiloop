@@ -51,6 +51,7 @@ function save(meta, checkpoint = false) {
     return;
   }
   if (last !== meta.observed) delta = model.fineDiff(project(baseline), project(meta.observed));
+  if (JSON.stringify(delta).length > 131072) return save(meta, true);
   const value = record(meta, slot, delta);
   storage.write(KEY, value);
   meta.observedRef = value.observedRef;

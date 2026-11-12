@@ -112,13 +112,13 @@ function client(seed, clock, options = {}) {
     values.mem_vocab_settings_v1 = clone(seed.settings);
     if (seed.session) values.mem_vocab_session_v1 = clone(seed.session);
   }
-  const net = { online: true, hold: false, release: null, failWrite: null, failAction: null, failure: null, initFailure: null, jsonResult: false, calls: [], frames: [], maxFrame: 0 };
+  const net = { online: true, hold: false, release: null, failWrite: null, failAction: null, failure: null, initFailure: null, jsonResult: false, calls: [], frames: [], writes: [], maxFrame: 0 };
   const wx = {
     getStorageSync: key => values[key] ? clone(values[key]) : '',
     setStorageSync: (key, value) => {
       if (net.failWrite && net.failWrite(key)) throw new Error('storage write failed');
       assert.ok(Buffer.byteLength(JSON.stringify(value)) <= 1024 * 1024, 'single storage key exceeds WeChat limit');
-      values[key] = clone(value);
+      values[key] = clone(value); net.writes.push(key);
     },
     removeStorageSync: key => { delete values[key]; },
     showToast() {},
@@ -545,7 +545,9 @@ async function main() {
     economical.store.saveState(item); await clock.advance(10000);
   }
   assert.strictEqual(economical.net.calls.length, foregroundCalls, 'several bookmarks stay local until combined checkpoint');
+  economical.net.writes.length = 0;
   await clock.advance(10000);
+  assert.ok(!economical.net.writes.some(key => key.startsWith('mem_vocab_state_v1') || key === 'lexiloop_before_cloud_apply_v1'), 'an acknowledgement of identical local records never rewrites the full learning archive');
   assert.strictEqual(economical.net.calls.length, foregroundCalls + 1, 'one minute of small changes produces one request');
   assert.strictEqual(economical.sync.status().pending, 0);
   const beforeEmptyExit = economical.net.calls.length;

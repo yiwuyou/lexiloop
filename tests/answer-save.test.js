@@ -94,6 +94,26 @@ try {
   }
 
   session = fresh();
+  // Continue learning after a partially completed checkpoint, then restart.
+  for (const failed of ['mem_vocab_state_v1', 'mem_vocab_session_v1', 'remove-journal']) {
+    fresh(); grade('again');
+    failKey = failed === 'remove-journal' ? '' : failed; failRemove = failed === 'remove-journal';
+    assert.throws(() => store.flushAnswers());
+    failKey = ''; failRemove = false;
+    grade('again');
+    const expected = store.bundle();
+    store.resumeCloudApply();
+    assert.ok(require('../utils/sync-model').equal(store.bundle(), expected), 'later answers remain recoverable after an incomplete checkpoint');
+  }
+  // Reproduce the exact old splice journal against an intermediate task image.
+  fresh();
+  const oldBase = store.bundle(); grade('again');
+  store.flushAnswers(); grade('again');
+  const latestOld = store.bundle();
+  values.mem_vocab_answer_apply_v1 = { format: 2, changes: require('../utils/sync-model').fineDiff(oldBase, latestOld), extras: [] };
+  store.resumeCloudApply();
+  assert.ok(require('../utils/sync-model').equal(store.bundle(), latestOld), 'verify and recover the exact older after-image without discarding answers');
+  session = fresh();
   // The prior release used a whole-answer journal. Keep upgrades recoverable.
   const legacyState = store.getState(), legacySession = clone(session);
   store.appendReview(legacyState, { wordId: session.queue[0].wordId, result: 'good', at: now, day: session.day });

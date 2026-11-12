@@ -67,6 +67,13 @@ Page({
   },
 
   onLoad(options = {}) {
+    try { this.loadStudy(options); } catch (error) { this.openReadFailure(); }
+  },
+  openReadFailure() {
+    wx.showToast({ title: '读取学习记录未完成，请在首页重试', icon: 'none' });
+    wx.switchTab({ url: '/pages/today/index' });
+  },
+  loadStudy(options = {}) {
     scheduler.prepare().catch(() => {});
     this.audio = require('../../utils/audio-options').create();
     this.audioPlaying = false;
@@ -111,6 +118,9 @@ Page({
   },
 
   onShow() {
+    try { this.resumeStudyScreen(); } catch (error) { this.openReadFailure(); }
+  },
+  resumeStudyScreen() {
     this.libraryOpening = false;
     this.studyHidden = false;
     if (this.session && !this.data.completed) {
@@ -178,11 +188,15 @@ Page({
     if (this.studyHidden) return;
     clock.pause('study');
     if (this.stopClock) this.stopClock();
-    if (this.session && !this.data.completed && !cloudSync.blocked()) {
-      this.captureElapsed(store.getState());
-      store.saveSession(this.session);
-    }
-    this.studyHidden = true;
+    try {
+      if (this.session && !this.data.completed && !cloudSync.blocked()) {
+        const state = store.getState();
+        this.captureElapsed(state);
+        store.saveAnswer(state, this.session, []);
+      }
+    } catch (error) {
+      wx.showToast({ title: '记录保存未完成，请保留缓存', icon: 'none' });
+    } finally { this.studyHidden = true; }
   },
 
   captureElapsed(state) {
@@ -643,22 +657,32 @@ Page({
     summary.minutes = minutes;
     summary.usedTime = timeLedger.format(time.seconds);
     summary.initialTime = summary.initialEstimate ? metrics.range(summary.initialEstimate.seconds) : '旧版未记录';
-    store.saveState(state);
+    store.saveState(state, []);
     store.clearSession();
     this.setData({ completed: true, sessionSummary: summary });
     cloudSync.flush().catch(() => {});
   },
 
   exitStudy() {
-    clock.pause('study');
-    if (this.session && !this.data.completed && !cloudSync.blocked()) {
-      const state = store.getState();
-      this.captureElapsed(state);
-      this.writeDailyProgress(state);
-      store.saveState(state);
-      store.saveSession(this.session);
+    if (this.returning) return;
+    this.returning = true;
+    try {
+      clock.pause('study');
+      if (this.session && !this.data.completed && !cloudSync.blocked()) {
+        const state = store.getState();
+        this.captureElapsed(state);
+        this.writeDailyProgress(state);
+        store.saveAnswer(state, this.session, []);
+      }
+      this.studyHidden = true;
+      if (this.stopClock) this.stopClock();
+      wx.switchTab({ url: '/pages/today/index',
+        success: () => { setTimeout(() => cloudSync.flush().catch(() => {}), 500); },
+        fail: () => { this.returning = false; this.studyHidden = false; wx.showToast({ title: '暂时无法返回，请重试', icon: 'none' }); },
+      });
+    } catch (error) {
+      this.returning = false;
+      wx.showToast({ title: '本机记录保存未完成，请保留缓存并重试', icon: 'none' });
     }
-    cloudSync.flush().catch(() => {});
-    wx.reLaunch({ url: '/pages/today/index' });
   },
 });

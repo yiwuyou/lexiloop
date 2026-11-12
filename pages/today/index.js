@@ -41,6 +41,7 @@ function greeting(hour) {
 function isFormalSession(session, now) { return session && session.mode !== 'practice' && session.day === dates.dayKey(now); }
 Page({
   data: {
+    restoreError: '',
     completed: false,
     audioStatus: '',
     dateText: '',
@@ -91,6 +92,20 @@ Page({
   openSync() { wx.switchTab({ url: '/pages/progress/index' }); },
 
   refresh() {
+    try { this.refreshData(); this.setData({ restoreError: '' }); }
+    catch (error) { this.restoreFailed(error); }
+  },
+  restoreFailed(error) {
+    const reason = ['queue-delta-base-mismatch', 'queue-delta-checksum', 'invalid-answer-journal', 'invalid-path', 'incomplete-sync-storage', 'transfer-checksum-mismatch', 'missing-observed-baseline'].includes(error.message) ? error.message
+      : require('../../utils/sync-storage').isFull(error) ? 'LOCAL_STORAGE_FULL' : 'LOCAL_READ_FAILED';
+    this.restoreDiagnostic = startDiagnostic('A0', 'restore', '', error) + '\n' + reason;
+    this.setData({ restoreError: '读取学习记录未完成，本机缓存仍保留。请重试读取。' });
+  },
+  retryRestore() {
+    try { store.resumeCloudApply(); this.refresh(); } catch (error) { this.restoreFailed(error); }
+  },
+  copyRestoreDiagnostic() { if (this.restoreDiagnostic) wx.setClipboardData({ data: this.restoreDiagnostic }); },
+  refreshData() {
     const now = Date.now();
     const state = store.getState();
     const settings = store.getSettings();

@@ -22,7 +22,7 @@ Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoa
     finally { if (!this.disposed && request === this.request) this.setData({ audioLoading: false }); }
   },
   toggleWeak() { const state = store.getState(); weak.toggle(state, this.data.word.id, Date.now()); store.saveState(state); this.refresh(); },
-  toggleSentence() { const w = this.data.word; const state = store.getState(); sentences.toggle(state, { sentence: w.example, translation: w.translation, word: w.word, wordId: w.id }); store.saveState(state); this.refresh(); },
+  toggleSentence() { const w = this.data.word; const state = store.getState(); sentences.toggle(state, { sentence: w.example, translation: w.translation, word: w.word, wordId: w.id }); store.saveState(state, []); this.refresh(); },
   openRelations() { if (this.data.word) this.setData({ relationsOpen: true }); },
   closeRelations() { this.setData({ relationsOpen: false }); },
   openWordDetail(event) {
