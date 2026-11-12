@@ -20,16 +20,44 @@ function summary(daily = {}, day) {
   const spans = Object.values(ledger && ledger.segments || {}).filter(s => s && PHASES.includes(s.phase))
     .map(s => ({ start: Math.max(lo, s.start), end: Math.min(hi, s.end), phase: s.phase }))
     .filter(s => Number.isFinite(s.start) && Number.isFinite(s.end) && s.end > s.start);
-  const points = [...new Set(spans.flatMap(s => [s.start, s.end]))].sort((a, b) => a - b);
-  let milliseconds = 0;
-  for (let i = 1; i < points.length; i++) {
-    // Count overlapping devices once. Attribute the slice to the most recently
-    // entered phase, using a stable tie-break instead of device identifiers.
-    const active = spans.filter(s => s.start <= points[i - 1] && s.end >= points[i])
-      .sort((a, b) => b.start - a.start || a.phase.localeCompare(b.phase));
-    if (!active.length) continue;
-    const duration = points[i] - points[i - 1];
-    milliseconds += duration; result[active[0].phase] += duration / 1000;
+  // Sweep interval boundaries once. The newest active interval owns each
+  // slice, with the same phase tie-break as the original overlap calculation.
+  spans.sort((a, b) => a.start - b.start);
+  const points = [];
+  spans.forEach(span => { points.push(span.start, span.end); });
+  points.sort((a, b) => a - b);
+  const heap = [];
+  const higher = (a, b) => a.start > b.start || a.start === b.start && a.phase.localeCompare(b.phase) < 0;
+  const push = value => {
+    let index = heap.length; heap.push(value);
+    while (index) {
+      const parent = Math.floor((index - 1) / 2);
+      if (!higher(value, heap[parent])) break;
+      heap[index] = heap[parent]; index = parent;
+    }
+    heap[index] = value;
+  };
+  const pop = () => {
+    const value = heap.pop();
+    if (!heap.length) return;
+    let index = 0;
+    while (index * 2 + 1 < heap.length) {
+      let child = index * 2 + 1;
+      if (child + 1 < heap.length && higher(heap[child + 1], heap[child])) child++;
+      if (!higher(heap[child], value)) break;
+      heap[index] = heap[child]; index = child;
+    }
+    heap[index] = value;
+  };
+  let milliseconds = 0, next = 0;
+  for (let i = 0; i + 1 < points.length; i++) {
+    const begin = points[i], end = points[i + 1];
+    if (end <= begin) continue;
+    while (next < spans.length && spans[next].start <= begin) push(spans[next++]);
+    while (heap.length && heap[0].end <= begin) pop();
+    if (!heap.length) continue;
+    const duration = end - begin;
+    milliseconds += duration; result[heap[0].phase] += duration / 1000;
   }
   return { seconds: Math.floor(milliseconds / 1000) + legacySeconds, legacySeconds, phases: result };
 }

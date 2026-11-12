@@ -16,6 +16,7 @@ const cloudSync = require('../../utils/cloud-sync');
 const metrics = require('../../utils/learning-metrics');
 const clock = require('../../utils/learning-clock');
 const timeLedger = require('../../utils/time-ledger');
+const trace = require('../../utils/interaction-trace');
 
 const PHASE_LABELS = {
   review: '旧词复习',
@@ -202,7 +203,12 @@ Page({
   captureElapsed(state) {
     if (this.session) this.session.elapsedSeconds = timeLedger.summary(state.daily[this.session.day] || {}, this.session.day).seconds;
   },
-  onLearningTouch() { const item = this.session && this.currentItem(); if (item && item.phase && !this.data.completed) clock.touch(item.phase); },
+  onLearningTouch() {
+    const started = Date.now();
+    const item = this.session && this.currentItem();
+    if (item && item.phase && !this.data.completed) clock.touch(item.phase);
+    if (Date.now()-started >= 10) trace.record('touch.prepare', started);
+  },
 
   writeDailyProgress(state, completedAt) {
     if (this.data.isPractice) return null;
@@ -271,7 +277,7 @@ Page({
   },
   closeRelations() { this.setData({ relationsOpen: false }); },
 
-  renderCurrent(currentState) {
+  renderCurrent(currentState, timing) {
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
     const renderVersion = this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
@@ -343,7 +349,7 @@ Page({
       word,
       isWeakMarked: weakBook.isMarked(state, word.id),
       isSentenceSaved: sentenceBook.has(state, question ? question.sentence : word.example),
-    });
+    }, () => { if (timing) { timing.mark('viewCallback'); timing.finish(); } });
     if (!isQuestion) {
       phraseResources.phraseFor(word).then((phrase) => {
         this.applyPhrase(phrase, word.id, renderVersion);
@@ -352,7 +358,8 @@ Page({
   },
 
   revealAnswer() {
-    this.setData({ revealed: true, contentHeight: 0 }, () => this.fitAnswerContent());
+    const timing = trace.begin('reveal');
+    this.setData({ revealed: true, contentHeight: 0 }, () => { timing.mark('viewCallback'); timing.finish(); this.fitAnswerContent(); });
   },
   applyPhrase(phrase, wordId, version) {
     if (!phrase || version !== this.contentRenderVersion || !this.data.word || this.data.word.id !== wordId) return;
@@ -450,6 +457,7 @@ Page({
     if (!this.data.revealed || this.data.completed || this.ratingBusy) return;
     const grade = event.currentTarget.dataset.grade;
     if (!['again', 'hard', 'good', 'easy'].includes(grade)) return;
+    const timing = trace.begin('rate.' + grade);
     this.ratingBusy = true;
     const previousSession = JSON.parse(JSON.stringify(this.session));
     try {
@@ -457,11 +465,14 @@ Page({
     this.onLearningTouch();
     if (this.rollToToday()) return;
     const state = store.getState();
+    timing.mark('prepare');
     if (this.data.isPractice) {
       practice.recordAnswer(state, this.session, grade);
       this.captureElapsed(state);
+      timing.mark('schedule');
       store.saveAnswer(state, this.session, this.data.word.id);
-      this.renderCurrent(state);
+      timing.mark('save');
+      this.renderCurrent(state, timing);
       return;
     }
     const item = this.currentItem();
@@ -510,11 +521,14 @@ Page({
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
+    timing.mark('schedule');
     store.saveAnswer(state, this.session, this.data.word.id);
-    this.renderCurrent(state);
+    timing.mark('save');
+    this.renderCurrent(state, timing);
     } catch (error) {
       this.answerFailed(error, previousSession);
     } finally {
+      timing.finish();
       this.ratingBusy = false;
     }
   },

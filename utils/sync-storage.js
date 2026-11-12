@@ -78,7 +78,13 @@ function commit(key, value, text) {
   clean(previous);
 }
 function write(key, value) {
+  const started = Date.now();
+  const group = key === 'mem_vocab_answer_apply_v1' ? 'answer' : key === 'mem_vocab_state_v1' ? 'state'
+    : key === 'lexiloop_cloud_sync_v1' ? 'syncMeta' : key.indexOf('lexiloop_cloud_observed_') === 0 ? 'syncBaseline' : 'other';
+  let characters = 0;
+  try {
   const original = JSON.stringify(value);
+  characters = original.length;
   const compressed = pack(original);
   const stored = compressed || value;
   const text = compressed ? JSON.stringify(compressed) : original;
@@ -87,6 +93,7 @@ function write(key, value) {
     if (!isFull(error) || !compact()) throw error;
     commit(key, stored, text);
   }
+  } finally { require('./interaction-trace').record('storage.' + group, started, { chars: characters }); }
 }
 function remove(key) { const previous = wx.getStorageSync(key); wx.removeStorageSync(key); clean(previous); }
 module.exports = { read, write, remove, compact, isFull };

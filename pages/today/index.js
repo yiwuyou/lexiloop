@@ -219,6 +219,8 @@ Page({
     }
   },
 
+  copyPerformance() { wx.setClipboardData({ data: require('../../utils/interaction-trace').report() }); },
+
   copyStudyDiagnostic() {
     if (this.startDiagnostic) wx.setClipboardData({ data: this.startDiagnostic });
   },

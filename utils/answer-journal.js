@@ -93,7 +93,7 @@ function project(value) {
     });
     return result;
   };
-  return Object.assign({}, value, { state: Object.assign({}, value.state, {
+  return Object.assign({}, value, { session: null, practiceSession: null, state: Object.assign({}, value.state, {
     cards: pick(value.state.cards), weakBook: pick(value.state.weakBook),
   }) });
 }
@@ -108,8 +108,7 @@ function save(parts, ids) {
   // Local recovery must work against any partially completed checkpoint. Unlike
   // network patches, task images therefore have no dependency on a queue base.
   ['session', 'practiceSession'].forEach(field => {
-    if (!changes.some(change => change.path[0] === field)) return;
-    changes = changes.filter(change => change.path[0] !== field);
+    if (JSON.stringify(base[field]) === JSON.stringify(next[field])) return;
     changes.push({ path: [field], after: next[field] || null });
   });
   // Fine cloud deltas omit newly created empty maps; local recovery retains

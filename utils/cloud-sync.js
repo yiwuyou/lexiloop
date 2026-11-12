@@ -110,6 +110,7 @@ function capture() {
   clearTimeout(captureTimer); captureTimer = null;
   if (!meta || !meta.enabled || capturing) return;
   capturing = true;
+  const captureStarted = Date.now();
   try {
     const current = store.bundle();
     let changes = model.fineDiff(changedWordProjection(meta.observed || current), changedWordProjection(current));
@@ -130,7 +131,7 @@ function capture() {
     const answers = meta.outbox.reduce((n, event) => n + event.changes.filter(change => change.path[1] === 'recentReviews').length, 0);
     if (answers >= 10) schedule(1);
     else schedule(Math.max(1, 60000 - (Date.now() - changedAt)));
-  } finally { capturing = false; }
+  } finally { capturing = false; require('./interaction-trace').record('sync.capture', captureStarted); }
 }
 function schedule(delay) {
   const at = Math.max(Date.now() + delay, retryAt);
