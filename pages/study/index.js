@@ -313,7 +313,6 @@ Page({
       currentInPhase: samePhaseBefore,
       taskLabel: active.label, taskVerb: active.verb, taskPending: active.pending, taskDone: active.done, taskTotal: active.total, stageDetail,
       usedTime: timeLedger.format(timeLedger.summary(state.daily[timeLedger.dayKey(Date.now())] || {}, timeLedger.dayKey(Date.now())).seconds),
-      remainingTime: metrics.estimate(state, this.session, {}, Date.now()).text,
       isContext: isQuestion,
       questionLabel: item.phase === 'sentence' ? '例句巩固' : '语境辨义',
       questionPrompt: item.phase === 'sentence'

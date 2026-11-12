@@ -116,7 +116,7 @@ function saveState(state, changedIds) {
   if (changedIds !== undefined) {
     resumeAnswer();
     answers.save({ state: next }, changedIds);
-    changed();
+    changed(changedIds);
     return next;
   }
   return safeSet(STATE_KEY, next);
@@ -155,9 +155,9 @@ function clearSession(mode) {
   }
 }
 
-function changed() {
+function changed(wordIds) {
   if (!quiet && changeListener) {
-    try { changeListener(); } catch (_) { /* The local change is already durable. */ }
+    try { changeListener(wordIds); } catch (_) { /* The local change is already durable. */ }
   }
 }
 function resumeAnswer() {
@@ -170,7 +170,7 @@ function saveAnswer(state, session, wordId) {
     state: wordIdentity.mergeState(state),
     [session.mode === 'practice' ? 'practiceSession' : 'session']: wordIdentity.mergeSession(session),
   }, wordId);
-  changed();
+  changed(wordId);
 }
 
 function appendReview(state, review) {

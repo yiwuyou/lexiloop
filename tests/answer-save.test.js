@@ -160,13 +160,21 @@ try {
   store.saveState(large); store.saveSession(largeSession); page.onLoad({});
   const archiveBytes = Buffer.byteLength(JSON.stringify(store.getState()));
   assert.ok(archiveBytes > 800000);
+  const cloud = require('../utils/cloud-sync');
+  wx.cloud = { init() {}, callFunction() { throw Error('isolated test must not call a live cloud'); } };
+  require('../utils/sync-storage').write('lexiloop_cloud_sync_v1', {
+    device: 'test-device', enabled: true, seq: 0, rev: 1, outbox: [], observed: store.bundle(),
+    fieldChangesVersion: 1, owner: { device: 'test-device', epoch: 1 }, resourceRetryAt: now + 3600000,
+  });
+  cloud.start(); cloud.capture();
   reads = []; writes = [];
   const begin = performance.now();
-  for (let i = 0; i < 10; i++) grade('good');
+  for (let i = 0; i < 10; i++) { grade('good'); cloud.capture(); }
   const elapsed = performance.now() - begin;
   assert.equal(page.session.index, 10);
-  assert.equal(writes.length, 10, 'each real page rating needs only one durable small write');
-  assert.ok(writes.every(item => item.key === 'mem_vocab_answer_apply_v1' && item.bytes < 48000), 'ratings never write the complete archive or full task');
+  assert.equal(writes.filter(item => item.key === 'mem_vocab_answer_apply_v1').length, 10, 'each real page rating needs only one durable small answer write');
+  assert.equal(writes.filter(item => item.key === 'lexiloop_cloud_sync_v1').length, 10, 'post-rating sync capture adds only one small metadata write');
+  assert.ok(writes.every(item => ['mem_vocab_answer_apply_v1', 'lexiloop_cloud_sync_v1'].includes(item.key) && item.bytes < 48000), 'ratings never write the complete archive or full task');
   assert.ok(!reads.includes('mem_vocab_state_v1'), 'ratings do not re-read and decompress the archive');
   const after = store.getState();
   assert.equal(after.recentReviews.length, 3000);
@@ -177,9 +185,10 @@ try {
   store.clearSession();
   assert.equal(store.getSession(), null, 'clearing a task also invalidates its working image');
   console.log('Actual study page: durable delta/failure/restart/legacy recovery and example continuation passed.');
-  console.log(JSON.stringify({ archiveBytes, ratings: 10, writes: smallWrites.length, maxWriteBytes: Math.max(...smallWrites.map(item => item.bytes)), meanRatingMs: Math.round(elapsed / 10 * 10) / 10 }));
+  console.log(JSON.stringify({ archiveBytes, ratings: 10, writes: smallWrites.length, maxWriteBytes: Math.max(...smallWrites.map(item => item.bytes)), meanRatingAndSyncMs: Math.round(elapsed / 10 * 10) / 10 }));
 } finally {
   failKey = ''; failRemove = false;
+  require('../utils/cloud-sync').dispose();
   clock.pause();
   Date.now = realNow;
 }

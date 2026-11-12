@@ -4,6 +4,7 @@ const storage = require('./sync-storage');
 const errors = require('./sync-error');
 const wire = require('./sync-wire');
 const outbox = require('./sync-outbox');
+const observed = require('./sync-observed');
 const budget = require('./sync-budget');
 const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
@@ -18,7 +19,22 @@ let dataRevision = 0;
 let studyFlight = null;
 let captureTimer = null;
 let dirtyAt = 0;
-function captureSoon() {
+let allWordsDirty = true;
+const dirtyWords = new Set();
+function resetWords() { allWordsDirty = false; dirtyWords.clear(); }
+function changedWordProjection(bundle) {
+  if (allWordsDirty) return bundle;
+  const state = Object.assign({}, bundle.state);
+  ['cards', 'weakBook'].forEach(name => {
+    const values = {}, source = state[name] || {};
+    dirtyWords.forEach(id => { if (Object.prototype.hasOwnProperty.call(source, id)) values[id] = source[id]; });
+    state[name] = values;
+  });
+  return Object.assign({}, bundle, { state });
+}
+function captureSoon(wordIds) {
+  if (wordIds == null) allWordsDirty = true;
+  else (Array.isArray(wordIds) ? wordIds : [wordIds]).forEach(id => dirtyWords.add(id));
   if (captureTimer) return;
   dirtyAt = Date.now();
   message = '有记录待同步';
@@ -36,6 +52,7 @@ function load() {
     device: `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`,
     enabled: false, seq: 0, rev: 0, outbox: [], lastSyncedAt: 0, owner: null,
   };
+  observed.restore(meta);
   if (!meta.fieldChangesVersion) {
     meta.outbox = meta.outbox.map(event => Object.assign({}, event, { changes: model.fineChanges(event.changes) }));
     meta.fieldChangesVersion = 1;
@@ -48,7 +65,7 @@ function load() {
   if (meta.resourceRetryAt > Date.now()) { retryAt = Math.max(retryAt, meta.resourceRetryAt); lastError = meta.resourceError; message = '同步用量保护中，记录保存在本机'; }
   return meta;
 }
-function save() { storage.write(KEY, meta); }
+function save(checkpoint = false) { observed.save(meta, checkpoint); }
 function status() {
   if (!meta) return { dataRevision, text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
   const date = new Date(meta.lastSyncedAt || 0);
@@ -95,8 +112,8 @@ function capture() {
   capturing = true;
   try {
     const current = store.bundle();
-    let changes = model.fineDiff(meta.observed || current, current);
-    if (!changes.length) return;
+    let changes = model.fineDiff(changedWordProjection(meta.observed || current), changedWordProjection(current));
+    if (!changes.length) { resetWords(); return; }
     meta.seq++;
     // A growing day's timing/task maps must not be resent for every pending
     // checkpoint. Preserve the first preimage and last image, plus all event
@@ -104,8 +121,11 @@ function capture() {
     const compacted = outbox.snapshots(meta.outbox, changes, meta.owner && meta.owner.epoch || 0);
     meta.outbox = compacted.outbox; changes = compacted.changes;
     meta.outbox.push({ device: meta.device, seq: meta.seq, baseRev: meta.rev, epoch: meta.owner && meta.owner.epoch || 0, changes });
-    meta.observed = model.clone(current);
+    observed.mark(changes);
+    // store.bundle returns an isolated snapshot; keep it instead of copying it twice.
+    meta.observed = current;
     save();
+    resetWords();
     emit('有记录待同步');
     const answers = meta.outbox.reduce((n, event) => n + event.changes.filter(change => change.path[1] === 'recentReviews').length, 0);
     if (answers >= 10) schedule(1);
@@ -201,7 +221,7 @@ function accept(result) {
   meta.enabled = true;
   meta.lastSyncedAt = Date.now();
   clearBackoff();
-  save();
+  save(true);
   lastError = null;
   emit(remaining.length ? '有记录待同步' : '已同步');
 }
