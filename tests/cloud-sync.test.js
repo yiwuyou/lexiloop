@@ -366,6 +366,38 @@ async function main() {
   await retryInit.sync.enable();
   assert.strictEqual(retryInit.sync.status().text, '已同步', 'manual retry can recover an initial SDK initialization failure');
   retryInit.sync.dispose();
+
+  // An already-connected client follows "立即同步" -> flush, not enable.
+  const established = client(null, null, { values: retryInit.values });
+  const unsynced = established.store.getState();
+  established.store.appendReview(unsynced, { id: 'init-retry-review', wordId: 'c-1-1', at: now + 23, day: '2026-10-27', phase: 'review', result: 'good' });
+  established.store.saveState(unsynced);
+  established.net.initFailure = { errCode: -404, errMsg: 'cloud.init failed' };
+  established.sync.start();
+  assert.strictEqual(established.sync.status().enabled, true);
+  await assert.rejects(established.sync.flush(), error => error.errCode === -404);
+  assert.ok(established.sync.status().errorText.includes('初始化云连接'));
+  assert.ok(established.sync.status().errorText.includes('-404'));
+  assert.deepStrictEqual(established.net.calls, [], 'failed initialization is diagnosed before any cloud request');
+  established.net.initFailure = null;
+  assert.ok(await established.sync.flush());
+  assert.deepStrictEqual(established.net.calls, ['sync'], 'existing devices retry the original sync rather than reattach');
+  assert.equal(established.sync.status().text, '已同步');
+  assert.equal((await call('status')).bundle.state.recentReviews.filter(r => r.id === 'init-retry-review').length, 1);
+  established.sync.dispose();
+
+  const malformed = clone(established.values);
+  const metadata = established.storage.read('lexiloop_cloud_sync_v1');
+  delete malformed[metadata.observedRef.key];
+  const needsRepair = client(null, null, { values: malformed });
+  needsRepair.sync.start();
+  await assert.rejects(needsRepair.sync.flush(), /missing-observed-baseline/);
+  assert.ok(needsRepair.sync.status().errorText.includes('读取本机同步状态'));
+  assert.ok(needsRepair.sync.status().errorText.includes('LOCAL_SYNC_READ_FAILED'));
+  assert.deepStrictEqual(needsRepair.net.calls, [], 'a damaged reference never sends a replacement archive');
+  assert.deepStrictEqual(needsRepair.net.writes, [], 'a damaged reference and its pending queue remain untouched');
+  assert.equal(needsRepair.store.getState().recentReviews.filter(r => r.id === 'init-retry-review').length, 1);
+  needsRepair.sync.dispose();
   // A realistic large archive must cross the same size-limited gateway in
   // both directions. Earlier tests with a one-card seed missed the phone bug.
   identity.OPENID = 'large-archive-user';

@@ -3,6 +3,7 @@ const appVersion = require('../../utils/version');
 const plan = require('../../utils/study-plan');
 const store = require('../../utils/store');
 const migrations = require('../../utils/migrations');
+const backupCodec = require('../../utils/sync-codec');
 const recovery = require('../../utils/progress-recovery');
 const cloudSync = require('../../utils/cloud-sync');
 
@@ -11,6 +12,11 @@ const initialRecoveryIndex = recoveryGroups.findIndex((group) => group.category 
 
 function recoveryCounts(index) {
   return ['该日尚未开始'].concat(recoveryGroups[index].words.map((word, position, words) => `已学到 #${word.index} ${word.word}${position === words.length - 1 ? '（该日学完）' : ''}`));
+}
+
+function canSaveToDisk() {
+  return typeof wx.saveFileToDisk === 'function'
+    && (typeof wx.canIUse !== 'function' || wx.canIUse('saveFileToDisk'));
 }
 
 function shortDate(key) {
@@ -29,6 +35,8 @@ Page({
     week: [],
     backupBusy: false,
     backupReady: false,
+    backupToDisk: false,
+    backupHasFile: false,
     backupStatus: '',
     restoreTextOpen: false,
     restoreText: '',
@@ -164,39 +172,57 @@ Page({
 
   exportBackup() {
     if (this.data.backupBusy) return;
-    this.setData({ backupBusy: true, backupReady: false, backupStatus: '' });
+    this.backupFile = null;
+    this.backupPayload = null;
+    this.setData({ backupBusy: true, backupReady: false, backupHasFile: false, backupStatus: '' });
     try {
-    const state = store.getState();
-    const settings = store.getSettings();
-    const payload = JSON.stringify({
-      type: 'mem-vocab-backup',
-      formatVersion: migrations.CURRENT_BACKUP_FORMAT,
-      stateSchemaVersion: migrations.CURRENT_STATE_SCHEMA,
-      appVersion,
-      exportedAt: Date.now(),
-      state,
-      settings,
-    });
-    const name = `lexiloop-backup-${dates.dayKey()}-${Date.now()}.json`;
-    const filePath = `${wx.env.USER_DATA_PATH}/${name}`;
-    this.backupPayload = payload;
-    const fs = wx.getFileSystemManager();
-    fs.writeFile({
-      filePath,
-      data: payload,
-      encoding: 'utf8',
-      success: () => {
-        this.backupFile = { filePath, fileName: name };
-        this.setData({ backupBusy: false, backupReady: true, backupStatus: '文件已生成，但还没有备份到小程序外。请点“发送备份文件”保存到文件传输助手。' });
-      },
-      fail: (error) => {
-        this.backupFile = null;
-        this.setData({ backupBusy: false, backupReady: true, backupStatus: `生成文件失败：${error.errMsg || '未知错误'}。可复制备份文本保存。` });
-      },
-    });
+      const payload = JSON.stringify({
+        type: 'mem-vocab-backup',
+        formatVersion: migrations.CURRENT_BACKUP_FORMAT,
+        stateSchemaVersion: migrations.CURRENT_STATE_SCHEMA,
+        appVersion,
+        exportedAt: Date.now(),
+        state: store.getState(),
+        settings: store.getSettings(),
+      });
+      this.backupPayload = payload;
+      const name = `lexiloop-backup-${dates.dayKey()}-${Date.now()}.json`;
+      const filePath = `${wx.env.USER_DATA_PATH}/${name}`;
+      const toDisk = canSaveToDisk();
+      wx.getFileSystemManager().writeFile({
+        filePath, data: payload, encoding: 'utf8',
+        success: () => {
+          this.backupFile = { filePath, fileName: name };
+          const action = toDisk ? '保存到电脑' : '发送备份文件';
+          this.setData({ backupBusy: false, backupReady: true, backupHasFile: true, backupToDisk: toDisk,
+            backupStatus: '文件已生成，请点“' + action + '”把文件保存到小程序外。' });
+        },
+        fail: (error) => {
+          this.setData({ backupBusy: false, backupReady: true,
+            backupStatus: '生成文件失败：' + (error.errMsg || '未知错误') + '。可复制备份文本保存。' });
+        },
+      });
     } catch (error) {
-      this.setData({ backupBusy: false, backupStatus: '读取记录或生成备份失败，请重试；原记录未改动。' });
+      this.setData({ backupBusy: false, backupReady: Boolean(this.backupPayload),
+        backupStatus: this.backupPayload ? '生成文件失败，可复制备份文本保存。' : '读取记录或生成备份失败，请重试。' });
     }
+  },
+
+  saveBackupFile() {
+    if (!this.backupFile || !canSaveToDisk()) {
+      this.setData({ backupStatus: '当前无法保存到电脑，请复制备份文本。' });
+      return;
+    }
+    const fail = (error) => this.setData({ backupStatus: /cancel/i.test(error && error.errMsg || '')
+      ? '已取消保存，可重新选择位置。'
+      : '未保存到电脑，请使用“复制备份文本”。' });
+    try {
+      wx.saveFileToDisk({
+        filePath: this.backupFile.filePath,
+        success: () => this.setData({ backupStatus: '备份已保存到电脑，请确认所选位置有 JSON 文件。' }),
+        fail,
+      });
+    } catch (error) { fail(error); }
   },
 
   sendBackupFile() {
@@ -212,14 +238,22 @@ Page({
         const cancelled = /cancel/i.test(detail);
         this.setData({ backupStatus: cancelled
           ? '你取消了发送，文件仍只在小程序内。请重新发送或复制文本保存。'
-          : `文件分享失败：${detail}。请重试，或复制备份文本保存到备忘录。` });
+          : /not.supported/i.test(detail) ? '当前微信不支持发送文件，请复制备份文本保存。'
+          : `文件分享失败：${detail}。请重试，或复制备份文本保存。` });
       },
     }));
   },
 
   copyBackupText() {
     if (!this.backupPayload) return;
-    wx.setClipboardData({ data: this.backupPayload,
+    let text = this.backupPayload;
+    if (text.length >= 65536) {
+      try {
+        const packed = JSON.stringify({ type: 'mem-vocab-backup-text', packed: backupCodec.pack(text) });
+        if (packed.length < text.length) text = packed;
+      } catch (_) { /* The uncompressed format is still usable. */ }
+    }
+    wx.setClipboardData({ data: text,
       success: () => this.setData({ backupStatus: '已复制完整备份文本。请立即粘贴到备忘录并保存；剪贴板本身不是备份。恢复时可粘贴回来。' }),
       fail: () => this.setData({ backupStatus: '复制失败，请重试或发送备份文件。' }),
     });
@@ -231,7 +265,9 @@ Page({
 
   restorePayload(text) {
     try {
-      const migrated = migrations.migrateBackup(JSON.parse(text));
+      let payload = JSON.parse(text);
+      if (payload && payload.type === 'mem-vocab-backup-text') payload = JSON.parse(backupCodec.unpack(payload.packed));
+      const migrated = migrations.migrateBackup(payload);
       wx.showModal({
         title: '恢复学习记录？',
         content: '恢复会覆盖这部手机当前的学习进度。建议先导出当前记录，再确认恢复。',

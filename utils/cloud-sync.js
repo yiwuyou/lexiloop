@@ -12,7 +12,7 @@ const KEY = 'lexiloop_cloud_sync_v1';
 const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
 const QUOTA_DELAY = 3600000;
 const HANDOFF_TIMEOUT = 20000;
-let meta, flight, timer, capturing = false, ready = false, active = true;
+let meta, flight, timer, loaded = false, capturing = false, ready = false, active = true;
 let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
 let dataRevision = 0;
@@ -48,6 +48,7 @@ let message = '尚未开启云同步';
 let lastError = null;
 const listeners = new Set();
 function load() {
+  if (loaded) return;
   if (!meta) meta = storage.read(KEY) || {
     device: `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`,
     enabled: false, seq: 0, rev: 0, outbox: [], lastSyncedAt: 0, owner: null,
@@ -63,7 +64,7 @@ function load() {
     message = '云端额度不足，记录保存在本机';
   }
   if (meta.resourceRetryAt > Date.now()) { retryAt = Math.max(retryAt, meta.resourceRetryAt); lastError = meta.resourceError; message = '同步用量保护中，记录保存在本机'; }
-  return meta;
+  loaded = true;
 }
 function save(checkpoint = false) { observed.save(meta, checkpoint); }
 function status() {
@@ -84,7 +85,7 @@ function quotaPaused() { return Boolean(meta && Math.max(meta.quotaRetryAt || 0,
 function clearBackoff() { retryAt = 0; failures = 0; delete meta.quotaRetryAt; delete meta.quotaError; delete meta.resourceRetryAt; delete meta.resourceError; }
 function failed(error, stage, text) {
   lastError = errors.describe(error, stage);
-  if (/^(queue-delta-(base-mismatch|checksum)|missing-session-delta-base|sync-delta-base-mismatch)$/.test(error.message || '')) {
+  if (ready && /^(queue-delta-(base-mismatch|checksum)|missing-session-delta-base|sync-delta-base-mismatch)$/.test(error.message || '')) {
     meta.forceFull = true;
     try { save(); } catch (_) { /* Keep the local bundle and pending events untouched. */ }
   }
@@ -108,7 +109,7 @@ function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.
 function capture() {
   const changedAt = dirtyAt || Date.now(); dirtyAt = 0;
   clearTimeout(captureTimer); captureTimer = null;
-  if (!meta || !meta.enabled || capturing) return;
+  if (!ready || !meta || !meta.enabled || capturing) return;
   capturing = true;
   const captureStarted = Date.now();
   try {
@@ -140,7 +141,7 @@ function schedule(delay) {
   timer = setTimeout(() => { timer = null; automatic(false); }, Math.max(0, at - Date.now()));
 }
 function automatic(check) {
-  if (!meta || !meta.enabled || studyFlight) return;
+  if (!ready || !meta || !meta.enabled || studyFlight) return;
   if (Date.now() < retryAt) { if (meta.outbox.length) schedule(60000); return; }
   if (meta.outbox.length || check && Date.now() - checkedAt >= 60000) flush().catch(() => {});
 }
@@ -152,7 +153,7 @@ function waitBefore(promise, deadline) {
   })]).finally(() => clearTimeout(timer));
 }
 async function frame(data, deadline = Infinity) {
-  if (!ready) throw new Error('当前微信不支持云同步');
+  if (!ready) throw Object.assign(new Error('本机云连接尚未初始化'), { code: 'SYNC_NOT_READY', syncStage: 'init' });
   let timeout;
   try {
     const timeoutMs = Math.min(15000, deadline - Date.now());
@@ -232,6 +233,10 @@ function accept(result) {
 async function flush() {
   if (flight) return flight;
   if (!meta || !meta.enabled) return false;
+  if (!ready) {
+    try { initialize(); }
+    catch (error) { failed(error, 'init', '云同步暂不可用，本地记录已保留'); throw error; }
+  }
   try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); throw error; }
   clearTimeout(timer); timer = null;
   flight = (async () => {
@@ -286,12 +291,13 @@ async function connect(create) {
   return true;
 }
 async function enable() {
-  if (!ready) start();
   try {
-    if (!ready) throw Object.assign(new Error(lastError && lastError.detail || '当前微信不支持云同步'), { code: lastError && lastError.code || 'SYNC_UNSUPPORTED', syncStage: 'init' });
+    initialize();
     return await connect(true);
+  } catch (error) {
+    failed(error, 'apply', '未能完成同步，本地记录已保留');
+    throw error;
   }
-  catch (error) { failed(error, 'apply', '未能完成同步，本地记录已保留'); throw error; }
 }
 async function handoffStudy() {
   // A known local owner can resume immediately, including offline. Background
@@ -340,21 +346,36 @@ function beginStudy() {
   });
   return studyFlight;
 }
-function start() {
+function initialize() {
   if (ready) return;
   try {
     load();
-    if (!wx.cloud || !wx.cloud.init || !wx.cloud.callFunction) throw Object.assign(new Error('当前微信暂不支持云同步'), { code: 'SYNC_UNSUPPORTED' });
+    if (!meta.observed) meta.observed = store.bundle();
+  } catch (error) {
+    throw Object.assign(error, { syncStage: 'local-read' });
+  }
+  try {
+    if (!wx.cloud || typeof wx.cloud.init !== 'function' || typeof wx.cloud.callFunction !== 'function') {
+      throw Object.assign(new Error('本次运行缺少微信云开发接口'), { code: 'SYNC_UNSUPPORTED' });
+    }
     wx.cloud.init({ env: ENV, traceUser: false });
-    ready = true;
-    if (!meta.observed) meta.observed = model.clone(store.bundle());
-    save();
-    store.onChange(captureSoon);
+  } catch (error) {
+    throw Object.assign(error, { syncStage: 'init' });
+  }
+  try { save(); }
+  catch (error) { throw Object.assign(error, { syncStage: 'local' }); }
+  ready = true;
+  store.onChange(captureSoon);
+}
+function start() {
+  if (ready) return;
+  try {
+    initialize();
     if (meta.enabled) automatic(true);
     else if (!quotaPaused()) {
       connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
     }
-  } catch (error) { ready = false; failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
+  } catch (error) { failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
 }
 function foreground(online) { active = true; if (online && !quotaPaused()) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
 function background() { active = false; try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); } if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }

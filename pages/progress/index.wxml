@@ -90,7 +90,8 @@
     </view>
     <view class="backup-result" wx:if="{{backupStatus}}"><text selectable>{{backupStatus}}</text></view>
     <view class="backup-actions" wx:if="{{backupReady}}">
-      <button class="secondary-button" bindtap="sendBackupFile">发送备份文件</button>
+      <button class="secondary-button" wx:if="{{backupHasFile && backupToDisk}}" bindtap="saveBackupFile">保存到电脑</button>
+      <button class="secondary-button" wx:elif="{{backupHasFile}}" bindtap="sendBackupFile">发送备份文件</button>
       <button class="secondary-button" bindtap="copyBackupText">复制备份文本</button>
     </view>
     <button class="text-restore-button" bindtap="toggleTextRestore">{{restoreTextOpen ? '收起文本恢复' : '用备份文本恢复'}}</button>
