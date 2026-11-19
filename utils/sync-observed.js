@@ -42,7 +42,8 @@ function record(meta, key, changes) {
 function save(meta, checkpoint = false) {
   if (!meta.observed) { storage.write(KEY, meta); return; }
   if (!baseline || checkpoint) {
-    const next = slot === SLOTS[0] ? SLOTS[1] : SLOTS[0];
+    const previous = slot || (meta.observedRef && meta.observedRef.key);
+    const next = previous === SLOTS[0] ? SLOTS[1] : SLOTS[0];
     storage.write(next, meta.observed);
     const value = record(meta, next, []);
     storage.write(KEY, value);

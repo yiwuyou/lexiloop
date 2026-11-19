@@ -10,6 +10,7 @@ const ENV = 'lj-tx-serv-d1gw7ceh2130f8cc4';
 const FUNCTION = 'lexiloop-sync';
 const KEY = 'lexiloop_cloud_sync_v1';
 const BEFORE_KEY = 'lexiloop_before_cloud_apply_v1';
+const REPAIR_BACKUP_KEY = 'lexiloop_before_baseline_repair_v1';
 const QUOTA_DELAY = 3600000;
 const HANDOFF_TIMEOUT = 20000;
 let meta, flight, timer, loaded = false, capturing = false, ready = false, active = true;
@@ -20,6 +21,7 @@ let studyFlight = null;
 let captureTimer = null;
 let dirtyAt = 0;
 let allWordsDirty = true;
+let baselineMissing = false;
 const dirtyWords = new Set();
 function resetWords() { allWordsDirty = false; dirtyWords.clear(); }
 function changedWordProjection(bundle) {
@@ -53,7 +55,11 @@ function load() {
     device: `d-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`,
     enabled: false, seq: 0, rev: 0, outbox: [], lastSyncedAt: 0, owner: null,
   };
-  observed.restore(meta);
+  try { observed.restore(meta); }
+  catch (error) {
+    if (!meta.enabled || error.message !== 'missing-observed-baseline') throw error;
+    baselineMissing = true;
+  }
   if (!meta.fieldChangesVersion) {
     meta.outbox = meta.outbox.map(event => Object.assign({}, event, { changes: model.fineChanges(event.changes) }));
     meta.fieldChangesVersion = 1;
@@ -71,7 +77,7 @@ function status() {
   if (!meta) return { dataRevision, text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
   const date = new Date(meta.lastSyncedAt || 0);
   return {
-    dataRevision, text: message, enabled: meta.enabled, pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
+    dataRevision, text: message, enabled: meta.enabled, needsCloudRead: lastError && lastError.code === 'SYNC_BASELINE_DIVERGED', pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
     errorText: errors.format(lastError),
     usageText: meta.requestBudget ? `本机今日已发出同步请求 ${meta.requestBudget.day === new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10) ? meta.requestBudget.calls : 0} 次` : '',
     last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
@@ -109,7 +115,7 @@ function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.
 function capture() {
   const changedAt = dirtyAt || Date.now(); dirtyAt = 0;
   clearTimeout(captureTimer); captureTimer = null;
-  if (!ready || !meta || !meta.enabled || capturing) return;
+  if (!ready || baselineMissing || !meta || !meta.enabled || capturing) return;
   capturing = true;
   const captureStarted = Date.now();
   try {
@@ -141,7 +147,7 @@ function schedule(delay) {
   timer = setTimeout(() => { timer = null; automatic(false); }, Math.max(0, at - Date.now()));
 }
 function automatic(check) {
-  if (!ready || !meta || !meta.enabled || studyFlight) return;
+  if (!ready || baselineMissing || !meta || !meta.enabled || studyFlight) return;
   if (Date.now() < retryAt) { if (meta.outbox.length) schedule(60000); return; }
   if (meta.outbox.length || check && Date.now() - checkedAt >= 60000) flush().catch(() => {});
 }
@@ -226,11 +232,78 @@ function accept(result) {
   meta.enabled = true;
   meta.lastSyncedAt = Date.now();
   clearBackoff();
-  save(!localUnchanged);
+  save(baselineMissing || !localUnchanged);
   lastError = null;
   emit(remaining.length ? '有记录待同步' : '已同步');
 }
-async function flush() {
+function recoveryError(code, message) {
+  return Object.assign(new Error(message), { code, syncStage: 'repair' });
+}
+
+async function recoverBaseline(preferCloud) {
+  const deadline = Date.now() + HANDOFF_TIMEOUT;
+  let result = await request('status', { knownRev: 0 }, deadline);
+  if (!result.exists || !model.valid(result.bundle) || !Number.isSafeInteger(result.rev) || result.rev < meta.rev
+    || !Number.isSafeInteger(result.ack) || result.ack < 0) {
+    throw recoveryError('SYNC_BASELINE_UNVERIFIED', '云端存档无法用来校验本机记录');
+  }
+  const pending = meta.outbox.filter(event => event.seq > result.ack);
+  const contiguous = pending.length === meta.seq - result.ack
+    && pending.every((event, index) => event.seq === result.ack + index + 1 && event.device === meta.device);
+  if (!contiguous) throw recoveryError('SYNC_BASELINE_UNVERIFIED', '无法核对待上传记录的顺序');
+
+  // At the same cloud revision, acknowledged state plus queued local writes
+  // reconstructs the comparison point. Normal capture can then see fresh edits.
+  if (result.rev === meta.rev) {
+    try {
+      const anchor = model.clone(result.bundle);
+      pending.forEach(event => model.overlay(anchor, event.changes));
+      meta.observed = anchor;
+    } catch (error) {
+      if (!preferCloud) throw recoveryError('SYNC_BASELINE_DIVERGED', '无法用云端和待传记录重建本机同步基准');
+    }
+    if (meta.observed) {
+      meta.sessionBase = { session: result.bundle.session || null, practiceSession: result.bundle.practiceSession || null };
+      try { save(true); }
+      catch (error) { delete meta.observed; throw error; }
+      baselineMissing = false;
+      capture();
+      // A verified current snapshot already serves as the acknowledgement.
+      if (!meta.outbox.some(event => event.seq > result.ack)) {
+        accept({ ...result, unchanged: true });
+        return true;
+      }
+      return false;
+    }
+  }
+  if (!preferCloud) throw recoveryError('SYNC_BASELINE_DIVERGED', '云端已有更新，需要确认从云端接回');
+
+  // Send only the durable outbox, then save a separate local copy before
+  // applying the cloud snapshot. An unknown difference never becomes an upload.
+  const local = store.bundle();
+  let remaining = pending;
+  for (let i = 0; remaining.length && i < 8; i++) {
+    const next = await request('sync', { events: wire.batch(remaining), knownRev: result.rev }, deadline);
+    if (!next.exists || !Number.isSafeInteger(next.ack) || next.ack <= result.ack || next.ack > meta.seq) throw recoveryError('SYNC_NO_PROGRESS', '待上传记录未收到确认');
+    if (!next.bundle) {
+      if (!next.delta || next.delta.baseRev !== result.rev) throw recoveryError('SYNC_BASELINE_UNVERIFIED', '云端返回的版本无法接续');
+      next.bundle = model.overlay(model.clone(result.bundle), next.delta.changes);
+      delete next.delta;
+    }
+    if (!model.valid(next.bundle)) throw recoveryError('SYNC_BASELINE_UNVERIFIED', '云端记录格式无法校验');
+    result = next;
+    remaining = remaining.filter(event => event.seq > result.ack);
+  }
+  if (remaining.length) throw recoveryError('SYNC_NO_PROGRESS', '仍有待上传记录，请再试一次');
+  // If a local edit was made during recovery, keep it in place for a new pass.
+  if (!model.equal(local, store.bundle())) throw recoveryError('SYNC_BASELINE_DIVERGED', '恢复期间本机记录有变化，请重新确认');
+  if (!model.equal(local, result.bundle)) storage.write(REPAIR_BACKUP_KEY, local);
+  accept(result);
+  baselineMissing = false;
+  return true;
+}
+
+async function flush({ preferCloud = false } = {}) {
   if (flight) return flight;
   if (!meta || !meta.enabled) return false;
   if (!ready) {
@@ -242,6 +315,7 @@ async function flush() {
   flight = (async () => {
     try {
       checkedAt = Date.now();
+      if (baselineMissing && await recoverBaseline(preferCloud)) return true;
       const batch = wire.batch(meta.outbox);
       if (batch.length) emit('正在同步');
       const result = await request('sync', { events: batch, knownRev: meta.rev });
@@ -315,6 +389,7 @@ async function handoffStudy() {
       return !blocked();
     }
     if (flight) await waitBefore(flight, deadline);
+    if (baselineMissing) await waitBefore(flush(), deadline);
     capture();
     while (meta.outbox.length) {
       if (Date.now() >= deadline) throw syncTimeout();
@@ -350,7 +425,7 @@ function initialize() {
   if (ready) return;
   try {
     load();
-    if (!meta.observed) meta.observed = store.bundle();
+    if (!meta.observed && !baselineMissing) meta.observed = store.bundle();
   } catch (error) {
     throw Object.assign(error, { syncStage: 'local-read' });
   }
@@ -362,7 +437,7 @@ function initialize() {
   } catch (error) {
     throw Object.assign(error, { syncStage: 'init' });
   }
-  try { save(); }
+  try { if (!baselineMissing) save(); }
   catch (error) { throw Object.assign(error, { syncStage: 'local' }); }
   ready = true;
   store.onChange(captureSoon);
@@ -371,7 +446,9 @@ function start() {
   if (ready) return;
   try {
     initialize();
-    if (meta.enabled) automatic(true);
+    if (baselineMissing) {
+      failed(recoveryError('SYNC_BASELINE_MISSING', '本机同步比对存档不可用'), 'repair', '同步可修复，本机记录已保留');
+    } else if (meta.enabled) automatic(true);
     else if (!quotaPaused()) {
       connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
     }
@@ -380,4 +457,5 @@ function start() {
 function foreground(online) { active = true; if (online && !quotaPaused()) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
 function background() { active = false; try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); } if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }
 function dispose() { clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
-module.exports = { start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };
+module.exports = { hasRepairBackup: () => Boolean(wx.getStorageSync(REPAIR_BACKUP_KEY)),
+  repairBackup: () => storage.read(REPAIR_BACKUP_KEY), start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };

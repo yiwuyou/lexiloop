@@ -51,12 +51,14 @@ Page({
     sync: { text: '尚未开启云同步', enabled: false, busy: false, pending: 0, last: '' },
     syncBusy: false,
     syncError: '',
+    repairBackupAvailable: false,
   },
 
   onShow() {
     const tabBar = typeof this.getTabBar === 'function' ? this.getTabBar() : null;
     if (tabBar) tabBar.setData({ selected: 2 });
     this.refresh();
+    this.refreshRepairBackup();
     if (this.stopSync) this.stopSync();
     let revision;
     this.stopSync = cloudSync.subscribe(sync => {
@@ -69,16 +71,31 @@ Page({
   onHide() { if (this.stopSync) this.stopSync(); },
   onUnload() { if (this.stopSync) this.stopSync(); },
 
-  async syncNow() {
+  syncNow() { return this.runSync(false); },
+  confirmCloudRead() {
+    wx.showModal({
+      title: '备份本机并接回云端',
+      content: '请先确认最新的设备已同步。本机会补传同步队列中的记录，再读取云端进度。修复前的本机记录可在本页导出。',
+      confirmText: '接回云端',
+      success: result => { if (result.confirm) this.runSync(true); },
+    });
+  },
+
+  refreshRepairBackup() {
+    try { this.setData({ repairBackupAvailable: cloudSync.hasRepairBackup() }); }
+    catch (_) { /* A backup read error is reported when the user exports. */ }
+  },
+
+  async runSync(preferCloud) {
     if (this.data.syncBusy) return;
     this.setData({ syncBusy: true, syncError: '' });
     try {
-      if (cloudSync.status().enabled) await cloudSync.flush();
+      if (cloudSync.status().enabled) await cloudSync.flush({ preferCloud });
       else await cloudSync.enable();
       this.refresh();
     } catch (error) {
       this.setData({ syncError: cloudSync.status().errorText || '同步未完成，本机记录已保留。请勿清缓存。' });
-    } finally { this.setData({ syncBusy: false }); }
+    } finally { this.setData({ syncBusy: false }); this.refreshRepairBackup(); }
   },
 
   copySyncError() {
@@ -170,20 +187,25 @@ Page({
     });
   },
 
-  exportBackup() {
+  exportBackup() { this.generateBackup(false); },
+  exportRepairBackup() { this.generateBackup(true); },
+
+  generateBackup(beforeRepair) {
     if (this.data.backupBusy) return;
     this.backupFile = null;
     this.backupPayload = null;
     this.setData({ backupBusy: true, backupReady: false, backupHasFile: false, backupStatus: '' });
     try {
+      const snapshot = beforeRepair ? cloudSync.repairBackup() : { state: store.getState(), settings: store.getSettings() };
+      if (!snapshot) throw Error('missing-repair-backup');
       const payload = JSON.stringify({
         type: 'mem-vocab-backup',
         formatVersion: migrations.CURRENT_BACKUP_FORMAT,
         stateSchemaVersion: migrations.CURRENT_STATE_SCHEMA,
         appVersion,
         exportedAt: Date.now(),
-        state: store.getState(),
-        settings: store.getSettings(),
+        state: snapshot.state,
+        settings: snapshot.settings,
       });
       this.backupPayload = payload;
       const name = `lexiloop-backup-${dates.dayKey()}-${Date.now()}.json`;

@@ -1,4 +1,4 @@
-const LABELS = { init: '初始化云连接', status: '读取云端存档', bootstrap: '首次上传', attach: '合并本机记录', sync: '同步变化', claim: '接续学习任务', apply: '保存云端返回记录', local: '保存本机同步队列', 'local-read': '读取本机同步状态', 'transaction-read': '读取云端事务', 'snapshot-write': '保存云端快照', 'record-write': '写入云端存档', 'transaction-commit': '提交云端事务' };
+const LABELS = { init: '初始化云连接', status: '读取云端存档', bootstrap: '首次上传', attach: '合并本机记录', sync: '同步变化', claim: '接续学习任务', apply: '保存云端返回记录', local: '保存本机同步队列', 'local-read': '读取本机同步状态', repair: '修复本机同步状态', 'transaction-read': '读取云端事务', 'snapshot-write': '保存云端快照', 'record-write': '写入云端存档', 'transaction-commit': '提交云端事务' };
 function safeText(value, limit = 280) {
   return String(value || '').replace(/(?:openid|unionid|secret(?:id|key)?|access[_-]?token|authorization)\s*[=:：]\s*["']?[^\s,"'}]+/gi, '[已隐藏]')
     .replace(/Bearer\s+\S+/gi, 'Bearer [已隐藏]').split(/\b(?:bundle|payload|changes)\s*[=:]/i)[0].slice(0, limit);
@@ -16,6 +16,8 @@ function describe(error = {}, fallback = 'local') {
   if (isQuota(error)) hint = '云端套餐资源或请求额度不足，自动同步已暂缓；额度恢复或处理套餐后可点击立即同步。待上传记录保留在本机，无需清缓存或重新授权。';
   else if (code === 'SYNC_DAILY_BUDGET') hint = '已暂停继续发出云请求，明天恢复尝试。学习及待上传记录仍保存在本机；不要清缓存或重装。';
   else if (code === 'SYNC_PACKET_BUDGET') hint = '程序已阻止异常大包继续拆分请求。请反馈此错误码以便处理；不要清缓存或重装。';
+  else if (code === 'SYNC_BASELINE_MISSING') hint = '点立即同步可先核对云端，本机记录和待上传队列仍保留。';
+  else if (code === 'SYNC_BASELINE_DIVERGED') hint = '先同步有最新进度的设备，再在这台设备选择接回云端。';
   else if (code === 'SYNC_UNSUPPORTED') hint = '请在当前设备完全退出微信再重开后重试。若仍缺少云开发接口，请先导出本机备份，保留当前设备的记录。';
   else if (/env not exists|invalid env|非法的\s*env/i.test(raw)) hint = '微信端未识别目标云环境。需核对原生小程序调用链；不要再授权微搭。';
   else if (/IDENTITY_REQUIRED/.test(code)) hint = '云函数没有取得预期的微信身份，需要检查调用链；不要重置学习进度。';

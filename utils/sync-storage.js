@@ -8,7 +8,7 @@ const KEYS = [
   'mem_vocab_state_v1', 'mem_vocab_session_v1', 'mem_vocab_practice_session_v1',
   'lexiloop_cloud_observed_a_v1', 'lexiloop_cloud_observed_b_v1',
   'lexiloop_cloud_sync_v1', 'mem_vocab_cloud_apply_v1', 'mem_vocab_answer_apply_v1',
-  'lexiloop_before_cloud_apply_v1', 'mem_vocab_before_word_merge_v1',
+  'lexiloop_before_baseline_repair_v1', 'lexiloop_before_cloud_apply_v1', 'mem_vocab_before_word_merge_v1',
   'mem_vocab_before_fsrs_v1', 'mem_vocab_before_repair_20261027', 'mem_vocab_state_before_v2',
 ];
 function chunks(value) { return value && value.syncChunks === 1 && typeof value.prefix === 'string' && Number.isInteger(value.count); }

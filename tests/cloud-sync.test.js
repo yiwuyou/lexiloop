@@ -386,18 +386,73 @@ async function main() {
   assert.equal((await call('status')).bundle.state.recentReviews.filter(r => r.id === 'init-retry-review').length, 1);
   established.sync.dispose();
 
-  const malformed = clone(established.values);
-  const metadata = established.storage.read('lexiloop_cloud_sync_v1');
-  delete malformed[metadata.observedRef.key];
-  const needsRepair = client(null, null, { values: malformed });
-  needsRepair.sync.start();
-  await assert.rejects(needsRepair.sync.flush(), /missing-observed-baseline/);
-  assert.ok(needsRepair.sync.status().errorText.includes('读取本机同步状态'));
-  assert.ok(needsRepair.sync.status().errorText.includes('LOCAL_SYNC_READ_FAILED'));
-  assert.deepStrictEqual(needsRepair.net.calls, [], 'a damaged reference never sends a replacement archive');
-  assert.deepStrictEqual(needsRepair.net.writes, [], 'a damaged reference and its pending queue remain untouched');
-  assert.equal(needsRepair.store.getState().recentReviews.filter(r => r.id === 'init-retry-review').length, 1);
-  needsRepair.sync.dispose();
+  // Reproduce the phone error on each client, with distinct real device IDs.
+  const oldPhone = client(blank());
+  oldPhone.sync.start(); await tick(); await tick();
+  await oldPhone.sync.enable();
+  const phoneWithoutBaseline = clone(oldPhone.values);
+  delete phoneWithoutBaseline[oldPhone.storage.read('lexiloop_cloud_sync_v1').observedRef.key];
+  oldPhone.sync.dispose();
+
+  // The desktop has both durable queued answers and a more recent edit.
+  // Lose the pointer target while the original cloud revision still matches.
+  const beforeDesktopLoss = client(null, null, { values: established.values });
+  beforeDesktopLoss.sync.start(); await tick(); await tick();
+  const queued = beforeDesktopLoss.store.getState();
+  beforeDesktopLoss.store.appendReview(queued, { id: 'repair-queued-answer', wordId: 'c-1-1', at: now + 40, day: '2026-10-27', phase: 'review', result: 'good' });
+  beforeDesktopLoss.store.saveState(queued); beforeDesktopLoss.sync.capture();
+  const repairPendingMeta = beforeDesktopLoss.storage.read('lexiloop_cloud_sync_v1');
+  assert.equal(repairPendingMeta.outbox.length, 1);
+  const more = beforeDesktopLoss.store.getState();
+  more.cards['c-1-3'] = { seen: true, reps: 1, dueAt: now + 100, lastAt: now + 50 };
+  beforeDesktopLoss.store.appendReview(more, { id: 'repair-uncaptured-answer', wordId: 'c-1-3', at: now + 50, day: '2026-10-27', phase: 'new', result: 'good' });
+  beforeDesktopLoss.store.saveState(more);
+  const desktopWithoutBaseline = clone(beforeDesktopLoss.values);
+  delete desktopWithoutBaseline[repairPendingMeta.observedRef.key];
+  beforeDesktopLoss.sync.dispose();
+
+  const desktopRepair = client(null, null, { values: desktopWithoutBaseline });
+  desktopRepair.sync.start();
+  assert.ok(desktopRepair.sync.status().errorText.includes('SYNC_BASELINE_MISSING'));
+  assert.deepStrictEqual(desktopRepair.net.calls, [], 'startup leaves the original queue untouched and waits for repair');
+  assert.ok(await desktopRepair.sync.flush(), 'same-revision recovery captures unsynced local answers');
+  assert.deepStrictEqual(desktopRepair.net.calls, ['status', 'sync']);
+  assert.equal(desktopRepair.sync.status().pending, 0);
+  const repairedServer = (await call('status')).bundle;
+  for (const id of ['repair-queued-answer', 'repair-uncaptured-answer']) {
+    assert.equal(repairedServer.state.recentReviews.filter(r => r.id === id).length, 1);
+  }
+  assert.equal(repairedServer.state.cards['c-1-3'].reps, 1);
+
+  // The old phone starts while desktop stays open. No claim, stale upload or
+  // local replacement is allowed until the user confirms the advanced cloud.
+  const phoneRepair = client(null, null, { values: phoneWithoutBaseline });
+  phoneRepair.sync.start();
+  const phoneBefore = clone(phoneRepair.store.bundle());
+  const cloudBeforePhoneRepair = clone(Array.from(rows).filter(([key]) => key.startsWith('lexiloop_sync/')));
+  await assert.rejects(phoneRepair.sync.flush(), error => error.code === 'SYNC_BASELINE_DIVERGED');
+  assert.deepStrictEqual(phoneRepair.net.calls, ['status']);
+  assert.equal(phoneRepair.sync.status().needsCloudRead, true);
+  assert.deepStrictEqual(clone(phoneRepair.store.bundle()), phoneBefore);
+  phoneRepair.net.failWrite = key => key === 'lexiloop_before_baseline_repair_v1';
+  await assert.rejects(phoneRepair.sync.flush({ preferCloud: true }), /storage write failed/);
+  assert.deepStrictEqual(clone(phoneRepair.store.bundle()), phoneBefore, 'a failed backup write prevents local replacement');
+  phoneRepair.net.failWrite = null;
+  assert.ok(await phoneRepair.sync.flush({ preferCloud: true }));
+  assert.deepStrictEqual(phoneRepair.net.calls, ['status', 'status', 'status']);
+  assert.deepStrictEqual(Array.from(rows).filter(([key]) => key.startsWith('lexiloop_sync/')), cloudBeforePhoneRepair, 'catching up the phone does not alter the learning archive');
+  assert.equal(phoneRepair.sync.status().pending, 0);
+  assert.equal(phoneRepair.sync.status().needsCloudRead, null);
+  assert.deepStrictEqual(clone(phoneRepair.sync.repairBackup()), phoneBefore);
+  assert.ok(phoneRepair.store.getState().recentReviews.some(r => r.id === 'repair-uncaptured-answer'));
+  assert.equal(phoneRepair.sync.blocked(), true, 'opening or syncing the phone never takes ownership from desktop');
+  assert.equal(desktopRepair.sync.blocked(), false);
+  const restartedPhone = client(null, null, { values: phoneRepair.values });
+  restartedPhone.sync.start(); await tick(); await tick();
+  assert.ok(await restartedPhone.sync.flush());
+  assert.equal(restartedPhone.sync.status().text, '已同步');
+  [desktopRepair, phoneRepair, restartedPhone].forEach(client => client.sync.dispose());
+
   // A realistic large archive must cross the same size-limited gateway in
   // both directions. Earlier tests with a one-card seed missed the phone bug.
   identity.OPENID = 'large-archive-user';

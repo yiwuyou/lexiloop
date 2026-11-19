@@ -13,6 +13,7 @@
     <text class="backup-note" wx:if="{{sync.usageText}}">{{sync.usageText}}</text>
     <view class="sync-error" wx:if="{{sync.errorText || syncError}}"><text selectable>{{sync.errorText || syncError}}</text><button class="copy-sync-error" bindtap="copySyncError">复制失败原因</button></view>
     <button class="secondary-button" loading="{{syncBusy}}" disabled="{{syncBusy}}" bindtap="syncNow">{{sync.enabled ? '立即同步' : '开启云同步'}}</button>
+    <button class="text-restore-button" wx:if="{{sync.needsCloudRead}}" disabled="{{syncBusy}}" bindtap="confirmCloudRead">备份本机并接回云端</button>
   </view>
 
   <view class="section-card card recovery-card" wx:if="{{!stats.learned || recoveryOpen || recoveryStatus}}">
@@ -25,6 +26,7 @@
       <text class="backup-note">所选范围 {{recoveryPreview.total}} 词，需补回 {{recoveryPreview.added}} 词；按每天 {{recoveryBatch}} 词分批到期，计入每日复习上限，不一次堆到今天。已有记录不会覆盖，主动复习仍可随时加练。</text>
       <button class="primary-button" bindtap="recoverProgress">补回已学范围</button>
     </view>
+    <button class="text-restore-button" wx:if="{{repairBackupAvailable}}" disabled="{{backupBusy}}" bindtap="exportRepairBackup">导出修复前的本机备份</button>
     <view class="backup-result" wx:if="{{recoveryStatus}}"><text>{{recoveryStatus}}</text></view>
   </view>
 
