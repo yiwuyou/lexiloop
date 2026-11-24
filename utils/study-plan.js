@@ -9,10 +9,10 @@ const studyOrder = require('./study-order');
 const timeLedger = require('./time-ledger');
 const metrics = require('./learning-metrics');
 
-const REVIEW_PLAN_VERSION = 2;
+const REVIEW_PLAN_VERSION = 3;
 const CONTEXT_PLAN_VERSION = 3;
 const DEFAULT_DAILY_REVIEW_LIMIT = 100;
-const DEFAULT_DAILY_BACKLOG_LIMIT = 30;
+const RECOVERY_RESERVE = 30;
 const DAILY_CONTEXT_LIMIT = 12;
 
 // Separate exam coverage from the memory model: spread first checks across
@@ -39,28 +39,21 @@ function selectReviews(state, settings, words, time, progress) {
   const todayStart = startOfDay(time);
   const daily = progress || state.daily[dayKey(time)] || {};
   const totalLimit = settings.dailyReviewLimit || DEFAULT_DAILY_REVIEW_LIMIT;
-  const backlogLimit = settings.dailyBacklogLimit || DEFAULT_DAILY_BACKLOG_LIMIT;
-  const totalCapacity = Math.max(0, totalLimit - (daily.dueDone || 0));
-  const backlogCapacity = Math.max(0, Math.min(
-    totalCapacity,
-    backlogLimit - (daily.backlogDone || 0),
-  ));
-  const overdue = [];
-  const current = [];
-
-  words.forEach((word) => {
-    const card = state.cards[word.id] || {};
-    // Unverified restored words are a gradual first check, not a missed
-    // historical review. Otherwise an unattended restored batch would be
-    // throttled to the separate 30-word overdue allowance forever.
-    (card.dueAt < todayStart && !isRecoveryPending(card) ? overdue : current).push(word);
+  const capacity = Math.max(0, totalLimit - (daily.dueDone || 0));
+  const verified = [], recovery = [];
+  words.forEach(word => {
+    (isRecoveryPending(state.cards[word.id]) ? recovery : verified).push(word);
   });
-  overdue.sort((left, right) => reviewPriority(state, left, right));
-  current.sort((left, right) => reviewPriority(state, left, right));
-
-  const selectedOverdue = overdue.slice(0, backlogCapacity);
-  const selectedCurrent = current.slice(0, Math.max(0, totalCapacity - selectedOverdue.length));
-  const selected = selectedOverdue.concat(selectedCurrent);
+  const priority = (a, b) => reviewPriority(state, a, b);
+  verified.sort(priority);
+  recovery.sort(priority);
+  const reserved = Math.min(capacity, RECOVERY_RESERVE, recovery.length);
+  const selected = verified.slice(0, capacity - reserved);
+  selected.push(...recovery.slice(0, capacity - selected.length));
+  const selectedOverdue = selected.filter(word => {
+    const card = state.cards[word.id];
+    return card && card.dueAt < todayStart && !isRecoveryPending(card);
+  });
   return {
     words: selected,
     overdueIds: new Set(selectedOverdue.map((word) => word.id)),
@@ -69,12 +62,17 @@ function selectReviews(state, settings, words, time, progress) {
   };
 }
 
-function summarize(state, settings, now) {
+function summarize(state, settings, now, excluded = new Set()) {
   const time = now || Date.now();
   const todayStart = startOfDay(time);
   const words = getWords();
   const cardStates = state.cards || {};
   const due = [];
+  const later = [];
+  const day = dayKey(time);
+  const today = state.daily[day] || {};
+  const answered = new Set(Object.keys(today.firstAnswers || {}));
+  (state.recentReviews || []).forEach(r => { if (r.day === day && ['new', 'review', 'reinforcement'].includes(r.phase)) answered.add(r.wordId); });
   const overdue = [];
   const unseen = [];
   let learned = 0;
@@ -91,16 +89,26 @@ function summarize(state, settings, now) {
     learned += 1;
     if (isStable(card)) stable += 1;
     if (weakBook.isMarked(state, word.id)) weak += 1;
+    if (excluded.has(word.id) || answered.has(word.id) || card.lastAt >= todayStart || card.passedDay === day) return;
     if (card.needsRecall || card.needsContext || (card.dueAt <= time && card.lastAt < todayStart) || examCoverageDue(word, card, settings, time)) {
       due.push(word);
       if (card.dueAt < todayStart && !isRecoveryPending(card)) overdue.push(word);
-    } else if (isRecoveryPending(card)) {
-      deferredRecoveryCount += 1;
+    } else {
+      later.push(word);
+      if (isRecoveryPending(card)) deferredRecoveryCount += 1;
     }
   });
 
-  const today = state.daily[dayKey(time)] || {};
   const reviewPlan = selectReviews(state, settings, due, time, today);
+  const vacancies = Math.max(0, (settings.dailyReviewLimit || DEFAULT_DAILY_REVIEW_LIMIT)
+    - (today.dueDone || 0) - reviewPlan.words.length);
+  let earlyCount = 0;
+  if (vacancies) {
+    later.sort((a, b) => reviewPriority(state, a, b));
+    const early = later.slice(0, vacancies);
+    earlyCount = early.filter(word => !isRecoveryPending(cardStates[word.id])).length;
+    reviewPlan.words.push(...early);
+  }
   const newCount = today.newGoal == null
     ? Math.min(settings.dailyNewCount, unseen.length)
     : Math.max(0, today.newGoal - (today.newDone || 0));
@@ -112,7 +120,7 @@ function summarize(state, settings, now) {
   return {
     due,
     deferredRecoveryCount,
-    remainingReviewCount: due.length + deferredRecoveryCount,
+    remainingReviewCount: due.length + deferredRecoveryCount + earlyCount,
     estimatedMinutes,
     learned,
     newCount,
@@ -294,7 +302,7 @@ function prepareSession(session, state, settings, now) {
     || session.day !== dayKey(time)) return false;
   let changed = false;
 
-  if (session.reviewPlanVersion !== REVIEW_PLAN_VERSION) {
+  if ((session.reviewPlanVersion || 0) < 2) {
     const completed = session.queue.slice(0, session.index);
     const remaining = session.queue.slice(session.index);
     const reviewItems = remaining.filter((item) => item.phase === 'review');
@@ -328,10 +336,27 @@ function prepareSession(session, state, settings, now) {
     session.queue = completed.concat(nextRemaining);
     session.dueGoal = (session.dueDone || 0) + selectedItems.length;
     session.backlogDone = session.backlogDone || 0;
-    session.reviewPlanVersion = REVIEW_PLAN_VERSION;
+    session.reviewPlanVersion = 2;
     changed = true;
   }
 
+  if (session.reviewPlanVersion === 2) {
+    const daily = state.daily[session.day] || {};
+    const remaining = session.queue.slice(session.index);
+    const planned = metrics.planFor(state, session, session.day);
+    const occupied = new Set(Object.keys(planned).concat(session.queue.map(item => item.wordId)));
+    const slots = (settings.dailyReviewLimit || DEFAULT_DAILY_REVIEW_LIMIT)
+      - Math.max(session.dueGoal || 0, Object.values(planned).filter(kind => kind === 'review').length);
+    if (slots > 0 && remaining.length && !daily.completedAt && !session.extraNew) {
+      const stats = summarize(state, settings, time, occupied);
+      const overdue = new Set(stats.overdue.map(w => w.id));
+      const extra = shuffleReviews(stats.scheduledDue.slice(0, slots), session.day);
+      session.queue.push(...extra.map(word => ({ wordId: word.id, phase: 'review', reinforced: false, overdue: overdue.has(word.id) })));
+      session.dueGoal = (session.dueGoal || 0) + extra.length;
+    }
+    session.reviewPlanVersion = REVIEW_PLAN_VERSION;
+    changed = true;
+  }
   if (session.contextPlanVersion !== CONTEXT_PLAN_VERSION) {
     const completed = session.queue.slice(0, session.index);
     const remainingWithoutContext = session.queue.slice(session.index)

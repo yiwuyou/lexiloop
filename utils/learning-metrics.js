@@ -116,6 +116,11 @@ function summary(state, session, day = ledger.dayKey(Date.now()), preview) {
     preview.scheduledDue.forEach(w => { plan[w.id] = 'review'; });
     preview.unseen.slice(0, preview.newCount).forEach(w => { plan[w.id] = 'new'; });
   }
+  // An older version may already have closed today's 35/75-word plan.
+  // Preview just the additional old words; historical days never use a preview.
+  if (!current && daily.completedAt && preview) {
+    preview.scheduledDue.forEach(word => { if (!plan[word.id]) plan[word.id] = 'review'; });
+  }
   const result = { reviewGoal: 0, newGoal: 0, reviewPassed: 0, newPassed: 0 };
   const pendingSet = pendingIds(current);
   Object.entries(plan).forEach(([id, kind]) => {
@@ -124,7 +129,8 @@ function summary(state, session, day = ledger.dayKey(Date.now()), preview) {
       ? daily.taskStatus[id].passed : Boolean(daily.completedAt && state.cards[id] && state.cards[id].passedDay === day && !state.cards[id].needsRecall && !state.cards[id].needsContext);
     if (ok) result[kind === 'new' ? 'newPassed' : 'reviewPassed']++;
   });
-  result.reviewGoal = Math.max(result.reviewGoal, daily.dueGoal || 0, current && current.dueGoal || 0);
+  const previewGoal = !current && preview ? (daily.dueDone || 0) + preview.scheduledDue.length : 0;
+  result.reviewGoal = Math.max(result.reviewGoal, previewGoal, daily.dueGoal || 0, current && current.dueGoal || 0);
   result.newGoal = Math.max(result.newGoal, daily.newGoal || 0, current && current.newGoal || 0);
   result.total = result.reviewGoal + result.newGoal;
   result.done = result.reviewPassed + result.newPassed;

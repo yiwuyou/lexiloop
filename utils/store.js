@@ -111,7 +111,7 @@ function getState() {
 }
 
 function saveState(state, changedIds) {
-  const next = Object.assign({}, wordIdentity.mergeState(state), { schemaVersion: migrations.CURRENT_STATE_SCHEMA });
+  const next = answers.isStudyDraft(state) ? state : Object.assign({}, wordIdentity.mergeState(state), { schemaVersion: migrations.CURRENT_STATE_SCHEMA });
   delete next.version;
   if (changedIds !== undefined) {
     resumeAnswer();
@@ -162,7 +162,7 @@ function resumeAnswer() {
 function saveAnswer(state, session, wordId) {
   resumeAnswer();
   answers.save({
-    state: wordIdentity.mergeState(state),
+    state: answers.isStudyDraft(state) ? state : wordIdentity.mergeState(state),
     [session.mode === 'practice' ? 'practiceSession' : 'session']: wordIdentity.mergeSession(session),
   }, wordId);
   changed(wordId);
@@ -219,6 +219,7 @@ module.exports = {
   getSession,
   getSettings,
   getState,
+  getStudyState: answers.studyState,
   getTodaySummary,
   saveSession,
   saveAnswer,

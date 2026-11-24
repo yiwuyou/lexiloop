@@ -17,7 +17,8 @@ function capture(now = Date.now()) {
   if (blocked()) { active = null; stopTimer(); return; }
   const end = Math.min(now, lastTouch + IDLE_MS);
   if (end - active.cursor >= 1000) {
-    const state = store.getState();
+    const dayAtStart = ledger.dayKey(active.cursor);
+    const state = dayAtStart === ledger.dayKey(end) ? store.getStudyState(null, dayAtStart) : store.getState();
     let cursor = active.cursor;
     while (cursor < end) {
       const day = ledger.dayKey(cursor), dayEnd = ledger.bounds(day)[1];

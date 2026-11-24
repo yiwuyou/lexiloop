@@ -191,7 +191,7 @@ Page({
     if (this.stopClock) this.stopClock();
     try {
       if (this.session && !this.data.completed && !cloudSync.blocked()) {
-        const state = store.getState();
+        const state = store.getStudyState(this.data.word && this.data.word.id, this.session.day);
         this.captureElapsed(state);
         store.saveAnswer(state, this.session, []);
       }
@@ -464,7 +464,7 @@ Page({
     if (this.resumePendingAnswer()) return;
     this.onLearningTouch();
     if (this.rollToToday()) return;
-    const state = store.getState();
+    const state = store.getStudyState(this.data.word && this.data.word.id, this.session.day);
     timing.mark('prepare');
     if (this.data.isPractice) {
       practice.recordAnswer(state, this.session, grade);
@@ -580,7 +580,7 @@ Page({
     const correct = index === question.answer;
     const now = Date.now();
     const item = this.currentItem();
-    const state = store.getState();
+    const state = store.getStudyState(this.data.word && this.data.word.id, this.session.day);
     this.captureElapsed(state);
     const card = state.cards[item.wordId];
     if (!correct && card) {
@@ -638,7 +638,7 @@ Page({
       this.session.contextDone += 1;
       if (this.data.contextCorrect) this.session.contextCorrect += 1;
     }
-    const state = store.getState();
+    const state = store.getStudyState(this.data.word && this.data.word.id, this.session.day);
     this.captureElapsed(state);
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
@@ -664,7 +664,7 @@ Page({
         minutes, usedTime: timeLedger.format(time.seconds), practiceDone: this.session.answers.length,
         remembered: this.session.ratings.good + this.session.ratings.easy,
       } });
-      cloudSync.flush().catch(() => {});
+      setTimeout(() => cloudSync.flush().catch(() => {}), 0);
       return;
     }
     const summary = this.writeDailyProgress(state, now);
@@ -674,7 +674,7 @@ Page({
     store.saveState(state, []);
     store.clearSession();
     this.setData({ completed: true, sessionSummary: summary });
-    cloudSync.flush().catch(() => {});
+    setTimeout(() => cloudSync.flush().catch(() => {}), 0);
   },
 
   exitStudy() {
@@ -683,9 +683,8 @@ Page({
     try {
       clock.pause('study');
       if (this.session && !this.data.completed && !cloudSync.blocked()) {
-        const state = store.getState();
+        const state = store.getStudyState(this.data.word && this.data.word.id, this.session.day);
         this.captureElapsed(state);
-        this.writeDailyProgress(state);
         store.saveAnswer(state, this.session, []);
       }
       this.studyHidden = true;

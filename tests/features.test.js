@@ -42,7 +42,9 @@ assert.deepStrictEqual(migrations.migrateState(state).practice, state.practice);
 const isolated = { schemaVersion: 3, cards: {}, daily: {}, weakBook: {}, recentReviews: [] };
 isolated.cards['c-1-1'] = scheduler.review(null, 'good', now);
 weakBook.mark(isolated, 'c-1-1', 'manual', now);
-assert.strictEqual(plan.buildSession(isolated, { dailyNewCount: 0 }, now + 86400000).dueGoal, 0,
+const unmarked = Object.assign({}, isolated, { weakBook: {} });
+assert.deepStrictEqual(plan.buildSession(isolated, { dailyNewCount: 0 }, now + 86400000).queue,
+  plan.buildSession(unmarked, { dailyNewCount: 0 }, now + 86400000).queue,
   'permanent weak list must not create daily due reviews');
 let twiceHard = scheduler.review(null, 'hard', now);
 assert.strictEqual(weakBook.shouldAutoMark(twiceHard, 'hard'), false);

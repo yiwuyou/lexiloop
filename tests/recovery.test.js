@@ -80,7 +80,7 @@ assert.deepStrictEqual(merged.recentReviews, existing.recentReviews);
 // Simulate actual review days: recovered batches do not overflow daily limits,
 // and real answers replace unknown initial mastery without fake old grades.
 const working = clone(next);
-for (let day = 0; day < summary.days + 10; day += 1) {
+for (let day = 0; day < Math.ceil(Object.keys(working.cards).length / 30) + 1; day += 1) {
   const time = now + day * DAY_MS;
   const session = plan.buildSession(working, settings, time);
   const reviews = session.queue.filter(item => item.phase === 'review');

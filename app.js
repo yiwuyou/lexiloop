@@ -20,7 +20,6 @@ App({
     if (typeof wx.setEnableDebug === 'function') wx.setEnableDebug({ enableDebug: false });
     audioOptions.configure();
     scheduler.prepare().catch(() => {});
-    require('./utils/sync-storage').compact();
     try { store.resumeCloudApply(); store.ensureState(); }
     catch (error) { wx.showToast({ title: '读取学习记录未完成，请在首页重试', icon: 'none' }); return; }
     try {
@@ -35,7 +34,7 @@ App({
   },
   onShow() { prepareAudioWhenOnline(); cloudSync.foreground(); },
   onHide() {
-    try { require('./utils/learning-clock').pause(); store.flushAnswers(); }
+    try { require('./utils/learning-clock').pause(); }
     catch (_) { /* The durable answer journal resumes on the next launch. */ }
     finally { cloudSync.background(); }
   },

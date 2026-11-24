@@ -13,14 +13,14 @@ function attach(session, state, settings, extra = [], now = Date.now()) {
   const capacity = Math.max(0, (settings.dailyReviewLimit || 100) - (previous.dueDone || 0));
   const carryReview = [...new Set(pending.filter(item => state.cards[item.wordId] && state.cards[item.wordId].seen).map(item => item.wordId))];
   const start = Date.parse(session.day + 'T00:00:00+08:00');
-  let backlog = Math.max(0, (settings.dailyBacklogLimit || 30) - (previous.backlogDone || 0));
+  const answered = previous.firstAnswers || {};
   const overdueIds = new Set();
   const review = [];
   [...new Set(carryReview.concat(session.queue.filter(item => item.phase === 'review').map(item => item.wordId)))].forEach(id => {
     const card = state.cards[id] || {};
     const overdue = card.dueAt < start && !isRecoveryPending(card);
-    if (review.length >= capacity || overdue && !backlog) return;
-    if (overdue) { backlog--; overdueIds.add(id); }
+    if (review.length >= capacity || answered[id]) return;
+    if (overdue) overdueIds.add(id);
     review.push(id);
   });
   const newWords = session.queue.filter(item => item.phase === 'new');

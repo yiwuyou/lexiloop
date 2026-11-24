@@ -107,20 +107,52 @@ function testBacklogSmoothing() {
   const summary = studyPlan.summarize(state, settings, now);
   assert.strictEqual(summary.due.length, 204, 'all genuinely due words remain visible to the planner');
   assert.strictEqual(summary.overdue.length, 173);
-  assert.strictEqual(summary.scheduledDue.length, 61,
-    'today gets 30 historical reviews plus all 31 reviews due today');
-  assert.strictEqual(summary.scheduledBacklogCount, 30);
-  assert.strictEqual(summary.deferredDueCount, 143);
+  assert.strictEqual(summary.scheduledDue.length, 80,
+    'a full quota is available to verified due words');
+  assert.strictEqual(summary.scheduledBacklogCount, 80);
+  assert.strictEqual(summary.deferredDueCount, 124);
 
   const session = studyPlan.buildSession(state, settings, now);
   const reviews = session.queue.filter((item) => item.phase === 'review');
-  assert.strictEqual(reviews.length, 61);
-  assert.strictEqual(reviews.filter((item) => item.overdue).length, 30);
+  assert.strictEqual(reviews.length, 80);
+  assert.strictEqual(reviews.filter((item) => item.overdue).length, 80);
   assert.strictEqual(session.queue.filter((item) => item.phase === 'new').length, 50,
     'smoothed reviews must leave room for today\'s new words');
-  assert.strictEqual(session.reviewPlanVersion, 2);
+  assert.strictEqual(session.reviewPlanVersion, 3);
 }
 
+// Eligible words can outnumber the old 30+5 / 30+45 selection.
+for (const todayCount of [5, 45]) {
+  const now = new Date(2026, 10, 24, 12).getTime(), words = getWords();
+  const state = { cards: {}, daily: {}, recentReviews: [] }, settings = { dailyNewCount: 50 };
+  words.slice(0, 190).forEach((word, i) => {
+    state.cards[word.id] = { seen: true, lastAt: now - dates.DAY_MS, dueAt: now - (i < todayCount ? 1 : 2 * dates.DAY_MS) };
+  });
+  const fresh = studyPlan.buildSession(state, settings, now);
+  assert.equal(fresh.dueGoal, 100);
+  const old = Object.assign({}, fresh, { reviewPlanVersion: 2, index: 1, dueDone: 1, dueGoal: 30 + todayCount });
+  old.queue = fresh.queue.slice(0, old.dueGoal).concat(fresh.queue.slice(100));
+  const prefix = old.queue[0];
+  studyPlan.prepareSession(old, state, settings, now);
+  assert.equal(old.dueGoal, 100);
+  assert.equal(old.queue[0], prefix);
+  assert.equal(new Set(old.queue.filter(i => i.phase === 'review').map(i => i.wordId)).size, 100);
+  assert.equal(studyPlan.prepareSession(old, state, settings, now), false);
+}
+{
+  const now = new Date(2026, 10, 24, 12).getTime(), day = dates.dayKey(now);
+  const words = getWords().slice(0, 130), settings = { dailyNewCount: 50 };
+  const done = Object.fromEntries(words.slice(0, 75).map(word => [word.id, 'review']));
+  const state = { cards: {}, daily: { [day]: { completedAt: now - 1000, dueDone: 75, dueGoal: 75, newDone: 50, newGoal: 50, taskPlan: done, firstAnswers: done } }, recentReviews: [] };
+  words.forEach(word => { state.cards[word.id] = { seen: true, lastAt: done[word.id] ? now - 1000 : now - 86400000, passedDay: done[word.id] ? day : '', dueAt: now + 86400000 }; });
+  const session = studyPlan.buildSession(state, settings, now);
+  assert.equal(session.dueGoal, 100);
+  assert.equal(session.queue.length, 25);
+  assert.ok(session.queue.every(q => q.phase === 'review' && !done[q.wordId]));
+  const home = require('../utils/learning-metrics').summary(state, null, day, studyPlan.summarize(state, settings, now));
+  assert.equal(home.reviewGoal, 100);
+  assert.equal(home.reviewSeen, 75);
+}
 function testExistingSessionUpgrade() {
   const now = new Date(2026, 8, 10, 9, 0, 0).getTime();
   const state = buildHeavyDueState(now);
@@ -141,12 +173,12 @@ function testExistingSessionUpgrade() {
   assert.strictEqual(studyPlan.prepareSession(oldSession, state, settings, now), false,
     'the same session must not be reshuffled repeatedly');
   const reviews = oldSession.queue.filter((item) => item.phase === 'review');
-  assert.strictEqual(reviews.length, 61);
-  assert.strictEqual(reviews.filter((item) => item.overdue).length, 30);
+  assert.strictEqual(reviews.length, 80);
+  assert.strictEqual(reviews.filter((item) => item.overdue).length, 80);
   assert.strictEqual(oldSession.queue.filter((item) => item.phase === 'new').length, 50);
   assert.strictEqual(oldSession.queue.filter((item) => item.phase === 'context').length, 0,
     'old pre-generated or fabricated context items must be removed');
-  assert.strictEqual(oldSession.dueGoal, 61);
+  assert.strictEqual(oldSession.dueGoal, 80);
 }
 
 function testContextQuestions() {

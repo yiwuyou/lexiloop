@@ -85,7 +85,30 @@ function read(key) {
   const field = Object.keys(ROOTS).find(field => ROOTS[field] === key);
   return field ? model.clone(current[field] == null ? null : current[field]) : storage.read(key);
 }
-function project(value) {
+// A rating only edits one card, today's ledger, and pending carry records.
+const studyDrafts = new WeakMap();
+function copyStudyState(source, wordId, day) {
+  const cards = Object.assign({}, source.cards);
+  if (wordId && cards[wordId]) cards[wordId] = model.clone(cards[wordId]);
+  const daily = Object.assign({}, source.daily);
+  if (daily[day]) daily[day] = model.clone(daily[day]);
+  Object.keys(daily).forEach(key => {
+    if (key !== day && daily[key].carryTasks) daily[key] = Object.assign({}, daily[key], {
+      carryTasks: Object.assign({}, daily[key].carryTasks),
+    });
+  });
+  const next = Object.assign({}, source, { cards, daily, weakBook: Object.assign({}, source.weakBook) });
+  if (source.practice) next.practice = model.clone(source.practice);
+  // appendReview replaces the history array. Existing review entries are read-only.
+  return next;
+}
+function studyState(wordId, day) {
+  initialize();
+  const draft = copyStudyState(current.state, wordId, day);
+  studyDrafts.set(draft, { wordId, day });
+  return draft;
+}
+function project(value, other) {
   const pick = map => {
     const result = {};
     touched.forEach(id => {
@@ -93,18 +116,27 @@ function project(value) {
     });
     return result;
   };
+  const daily = {};
+  Object.keys(value.state.daily).forEach(day => {
+    if (value.state.daily[day] !== other.state.daily[day]) daily[day] = value.state.daily[day];
+  });
   return Object.assign({}, value, { session: null, practiceSession: null, state: Object.assign({}, value.state, {
-    cards: pick(value.state.cards), weakBook: pick(value.state.weakBook),
+    daily, cards: pick(value.state.cards), weakBook: pick(value.state.weakBook),
   }) });
 }
 function save(parts, ids) {
   initialize();
   if (!base.state || base.state.schemaVersion !== 3) throw Error('answer-checkpoint-required');
-  const next = Object.assign({}, current, model.clone(parts));
+  const next = Object.assign({}, current);
+  const draft = parts.state && studyDrafts.get(parts.state);
+  Object.keys(parts).forEach(key => {
+    next[key] = key === 'state' && draft
+      ? copyStudyState(parts.state, draft.wordId, draft.day) : model.clone(parts[key]);
+  });
   if (ids == null) {
     Object.keys(base.state.cards).concat(Object.keys(next.state.cards), Object.keys(base.state.weakBook), Object.keys(next.state.weakBook)).forEach(id => touched.add(id));
   } else (Array.isArray(ids) ? ids : [ids]).forEach(id => touched.add(id));
-  let changes = model.fineDiff(project(base), project(next));
+  let changes = model.fineDiff(project(base, next), project(next, base));
   // Local recovery must work against any partially completed checkpoint. Unlike
   // network patches, task images therefore have no dependency on a queue base.
   ['session', 'practiceSession'].forEach(field => {
@@ -114,6 +146,7 @@ function save(parts, ids) {
   // Fine cloud deltas omit newly created empty maps; local recovery retains
   // them as well so the checkpoint is an exact working image.
   Object.entries(next.state.daily || {}).forEach(([day, value]) => {
+    if (value === base.state.daily[day]) return;
     const before = base.state.daily[day] || {};
     if (!Object.keys(value).length && !base.state.daily[day]) changes.push({ path: ['state', 'daily', day], after: {} });
     Object.entries(value).forEach(([key, field]) => {
@@ -144,4 +177,4 @@ function flush() {
   clearTimeout(timer); timer = null;
 }
 function has(key) { return Object.values(ROOTS).includes(key); }
-module.exports = { read, save, flush, reset, resume, has };
+module.exports = { studyState, isStudyDraft: value => studyDrafts.has(value), read, save, flush, reset, resume, has };

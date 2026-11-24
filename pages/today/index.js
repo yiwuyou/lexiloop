@@ -75,7 +75,8 @@ Page({
     if (this.stopSync) this.stopSync();
     let revision;
     this.stopSync = cloudSync.subscribe(status => {
-      if (status.text !== this.data.syncText) this.setData({ syncText: status.text });
+      const syncText = status.text === '已同步' && status.last ? '已核对云端 · ' + status.last : status.text;
+      if (syncText !== this.data.syncText) this.setData({ syncText });
       const dataChanged = revision !== undefined && revision !== status.dataRevision;
       revision = status.dataRevision;
       if (dataChanged) this.refresh();
@@ -111,7 +112,7 @@ Page({
     const settings = store.getSettings();
     const session = store.getSession();
     const repaired = !cloudSync.blocked() && plan.repairSessionPlan(session, state, settings, now);
-    const prepared = plan.prepareSession(session, state, settings, now);
+    const prepared = !cloudSync.blocked() && plan.prepareSession(session, state, settings, now);
     if (repaired) store.saveState(state);
     if (repaired || prepared) store.saveSession(session);
     const stats = plan.summarize(state, settings, now);
@@ -131,8 +132,10 @@ Page({
     const nextWord = stats.unseen[0];
     const todayNew = summary ? (summary.newGoal || summary.newDone || 0) : 0;
     const remainingCapacity = Math.max(0, (settings.dailyMaxNewCount || 100) - Math.max(settings.dailyNewCount, todayNew));
+    const completed = Boolean(summary && summary.completedAt && !stats.scheduledDue.length
+      && !(isTodaySession && session.index < session.queue.length));
     this.setData({
-      completed: Boolean(summary && summary.completedAt && !(session && session.day === dates.dayKey(now) && session.index < session.queue.length)),
+      completed,
       task, usedTime: timeLedger.format(time.seconds), remainingTime: task.remaining ? estimate.text : '已完成',
       futureReviewCount: Math.max(0, stats.remainingReviewCount - task.reviewRemaining),
       initialTime: summary && summary.initialEstimate ? metrics.range(summary.initialEstimate.seconds) : summary && summary.completedAt ? '旧版未记录' : estimate.text,
@@ -152,8 +155,8 @@ Page({
       sourceTag: nextWord ? `${nextWord.category === 'core' ? '核心' : '高频'} day ${nextWord.day}` : '首轮已完成',
       total: progress.total,
       resume: Boolean(session && session.day === dates.dayKey(now) && session.index < session.queue.length),
-      canAdd25: Boolean(summary && summary.completedAt && remainingCapacity >= 25 && stats.unseen.length),
-      canAdd50: Boolean(summary && summary.completedAt && remainingCapacity >= 50 && stats.unseen.length >= 50),
+      canAdd25: Boolean(completed && remainingCapacity >= 25 && stats.unseen.length),
+      canAdd50: Boolean(completed && remainingCapacity >= 50 && stats.unseen.length >= 50),
     });
   },
 

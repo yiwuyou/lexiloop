@@ -18,8 +18,9 @@ let timerAt = 0, checkedAt = 0, retryAt = 0, failures = 0;
 let connecting = null;
 let dataRevision = 0;
 let studyFlight = null;
+let checkPeerOnReply = false, peerTimer = null;
 let captureTimer = null;
-let dirtyAt = 0;
+let dirtyAt = 0, pendingSaves = 0;
 let allWordsDirty = true;
 let baselineMissing = false;
 const dirtyWords = new Set();
@@ -37,14 +38,18 @@ function changedWordProjection(bundle) {
 function captureSoon(wordIds) {
   if (wordIds == null) allWordsDirty = true;
   else (Array.isArray(wordIds) ? wordIds : [wordIds]).forEach(id => dirtyWords.add(id));
-  if (captureTimer) return;
-  dirtyAt = Date.now();
-  message = '有记录待同步';
-  // Both local saves remain durable. Diff/journal work yields to card paint.
+  if (!meta || !meta.enabled) return;
+  if (!dirtyAt) dirtyAt = Date.now();
+  const changes = ++pendingSaves;
+  if (changes === 1) emit('有记录待同步');
+  // The answer journal is already durable. Build one cloud delta for a batch.
+  if (changes !== 10 && captureTimer) return;
+  clearTimeout(captureTimer);
   captureTimer = setTimeout(() => {
     captureTimer = null;
-    try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); }
-  }, 120);
+    try { capture(); automatic(false); }
+    catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); }
+  }, changes >= 10 ? 1 : 60000);
 }
 let message = '尚未开启云同步';
 let lastError = null;
@@ -77,7 +82,7 @@ function status() {
   if (!meta) return { dataRevision, text: message, enabled: false, pending: 0, last: '', busy: false, errorText: errors.format(lastError) };
   const date = new Date(meta.lastSyncedAt || 0);
   return {
-    dataRevision, text: message, enabled: meta.enabled, needsCloudRead: lastError && lastError.code === 'SYNC_BASELINE_DIVERGED', pending: meta.outbox.length + (captureTimer ? 1 : 0), busy: !!flight,
+    dataRevision, text: message, enabled: meta.enabled, needsCloudRead: lastError && lastError.code === 'SYNC_BASELINE_DIVERGED', pending: meta.outbox.length + (dirtyAt ? 1 : 0), busy: !!flight,
     errorText: errors.format(lastError),
     usageText: meta.requestBudget ? `本机今日已发出同步请求 ${meta.requestBudget.day === new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10) ? meta.requestBudget.calls : 0} 次` : '',
     last: meta.lastSyncedAt ? `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}` : '',
@@ -113,7 +118,9 @@ function failed(error, stage, text) {
 function subscribe(fn) { listeners.add(fn); fn(status()); return () => listeners.delete(fn); }
 function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.device !== meta.device); }
 function capture() {
-  const changedAt = dirtyAt || Date.now(); dirtyAt = 0;
+  if (!dirtyAt && !allWordsDirty) return;
+  const changedAt = dirtyAt || Date.now();
+  pendingSaves = 0;
   clearTimeout(captureTimer); captureTimer = null;
   if (!ready || baselineMissing || !meta || !meta.enabled || capturing) return;
   capturing = true;
@@ -121,7 +128,13 @@ function capture() {
   try {
     const current = store.bundle();
     let changes = model.fineDiff(changedWordProjection(meta.observed || current), changedWordProjection(current));
-    if (!changes.length) { resetWords(); return; }
+    if (!changes.length) {
+      dirtyAt = 0;
+      resetWords();
+      if (!meta.outbox.length && message === '有记录待同步' && meta.lastSyncedAt) emit('已同步');
+      return;
+    }
+    const previousOutbox = meta.outbox, previousObserved = meta.observed;
     meta.seq++;
     // A growing day's timing/task maps must not be resent for every pending
     // checkpoint. Preserve the first preimage and last image, plus all event
@@ -132,7 +145,14 @@ function capture() {
     observed.mark(changes);
     // store.bundle returns an isolated snapshot; keep it instead of copying it twice.
     meta.observed = current;
-    save();
+    try { save(); }
+    catch (error) {
+      meta.observed = previousObserved;
+      meta.outbox = previousOutbox;
+      meta.seq--;
+      throw error;
+    }
+    dirtyAt = 0;
     resetWords();
     emit('有记录待同步');
     const answers = meta.outbox.reduce((n, event) => n + event.changes.filter(change => change.path[1] === 'recentReviews').length, 0);
@@ -316,11 +336,25 @@ async function flush({ preferCloud = false } = {}) {
     try {
       checkedAt = Date.now();
       if (baselineMissing && await recoverBaseline(preferCloud)) return true;
-      const batch = wire.batch(meta.outbox);
-      if (batch.length) emit('正在同步');
-      const result = await request('sync', { events: batch, knownRev: meta.rev });
-      if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
-      accept(result);
+      let batches = 0, uploaded;
+      do {
+        const batch = wire.batch(meta.outbox);
+        emit(batch.length ? '正在同步' : '正在核对云端进度');
+        const result = await request('sync', { events: batch, knownRev: meta.rev });
+        if (!result.exists) throw new Error('云端存档不存在，本机记录已保留');
+        accept(result);
+        if (checkPeerOnReply) {
+          checkPeerOnReply = false;
+          if (active && blocked() && result.unchanged && !peerTimer) {
+            // The other device can still be finishing its exit upload.
+            peerTimer = setTimeout(() => {
+              peerTimer = null;
+              if (active && blocked() && !flight && !studyFlight && Date.now() >= retryAt) flush().catch(() => {});
+            }, 5000);
+          }
+        }
+        uploaded = !batch.length || result.ack >= batch[batch.length - 1].seq;
+      } while (!active && uploaded && meta.outbox.length && ++batches < 8);
       clearBackoff();
       if (meta.outbox.length) schedule(1000);
       return true;
@@ -448,14 +482,34 @@ function start() {
     initialize();
     if (baselineMissing) {
       failed(recoveryError('SYNC_BASELINE_MISSING', '本机同步比对存档不可用'), 'repair', '同步可修复，本机记录已保留');
-    } else if (meta.enabled) automatic(true);
+    } else if (meta.enabled) { checkPeerOnReply = true; automatic(true); }
     else if (!quotaPaused()) {
       connecting = connect(false).catch(error => failed(error, 'status', '尚未连接云端，点击重试')).finally(() => { connecting = null; });
     }
   } catch (error) { failed(error, 'init', '云同步暂不可用，本地记录已保留'); }
 }
-function foreground(online) { active = true; if (online && !quotaPaused()) { retryAt = 0; failures = 0; } if (!ready) start(); else automatic(true); }
-function background() { active = false; try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); } if (meta && meta.enabled && meta.outbox.length) automatic(false); clearTimeout(timer); timer = null; }
-function dispose() { clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
+function foreground(online) {
+  const resumed = !active;
+  active = true;
+  if (online && !quotaPaused()) { retryAt = 0; failures = 0; }
+  if (resumed || online) { checkedAt = 0; checkPeerOnReply = true; }
+  if (!ready) start();
+  else if (resumed && flight) {
+    // An old in-flight read may have sampled the cloud before the PC finished.
+    flight.then(() => { if (active) { checkedAt = 0; automatic(true); } }, () => {});
+  } else automatic(true);
+}
+function background() {
+  active = false;
+  clearTimeout(peerTimer); peerTimer = null; checkPeerOnReply = false;
+  clearTimeout(timer); timer = null;
+  try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); }
+  if (meta && meta.enabled && meta.outbox.length) automatic(false);
+  // Fold only after starting the upload. Suspension is safe: the journal is durable.
+  const checkpoint = () => { if (!active) { try { store.flushAnswers(); } catch (_) { /* retry on the next exit */ } } };
+  if (flight) flight.then(checkpoint, checkpoint);
+  else setTimeout(checkpoint, 0);
+}
+function dispose() { clearTimeout(peerTimer); clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
 module.exports = { hasRepairBackup: () => Boolean(wx.getStorageSync(REPAIR_BACKUP_KEY)),
   repairBackup: () => storage.read(REPAIR_BACKUP_KEY), start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };
