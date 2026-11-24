@@ -18,13 +18,14 @@ function describe(error = {}, fallback = 'local') {
   else if (code === 'SYNC_PACKET_BUDGET') hint = '程序已阻止异常大包继续拆分请求。请反馈此错误码以便处理；不要清缓存或重装。';
   else if (code === 'SYNC_BASELINE_MISSING') hint = '点立即同步可先核对云端，本机记录和待上传队列仍保留。';
   else if (code === 'SYNC_BASELINE_DIVERGED') hint = '先同步有最新进度的设备，再在这台设备选择接回云端。';
+  else if (code === 'SYNC_LEARNED_CONFLICT') hint = '请保留两台设备的缓存和备份，先在最新设备核对同步状态，再处理落后的设备。';
   else if (code === 'SYNC_UNSUPPORTED') hint = '请在当前设备完全退出微信再重开后重试。若仍缺少云开发接口，请先导出本机备份，保留当前设备的记录。';
   else if (/env not exists|invalid env|非法的\s*env/i.test(raw)) hint = '微信端未识别目标云环境。需核对原生小程序调用链；不要再授权微搭。';
   else if (/IDENTITY_REQUIRED/.test(code)) hint = '云函数没有取得预期的微信身份，需要检查调用链；不要重置学习进度。';
   else if (/SYNC_TIMEOUT|timeout|超时/i.test(`${code} ${raw}`)) hint = '本次请求超时，记录仍在本机；稍后重试不会覆盖已有云档。';
   else if (/storage|disk|quota|存储|空间/i.test(raw)) hint = '本机写入未完成。请勿清理此小程序缓存，需先处理存储错误。';
   const request = safeText(error.syncRequestId || '', 100).replace(/[^a-zA-Z0-9_.:-]/g, '');
-  return { code, stage, label: LABELS[stage] || stage, detail: isQuota(error) ? '云端请求额度不足，暂时拒绝同步请求。' : safeText(raw), request, hint };
+  return { code, stage, label: stage === 'download' ? '下载云端存档分片' : LABELS[stage] || stage, detail: isQuota(error) ? '云端请求额度不足，暂时拒绝同步请求。' : safeText(raw), request, hint };
 }
 function isQuota(error = {}) {
   return /(?:^|\D)-501003(?:\D|$)|\bEXCEED_REQUEST_LIMIT\b/.test(`${error.code || ''} ${error.errCode || ''} ${error.errMsg || ''} ${error.message || ''}`);

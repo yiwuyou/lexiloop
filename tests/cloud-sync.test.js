@@ -137,6 +137,9 @@ function client(seed, clock, options = {}) {
           return { result: net.jsonResult ? JSON.stringify(result) : result, requestID: 'request-test-1234' };
         });
         if (net.hold && data.action === (net.holdAction || 'sync')) { net.hold = false; return new Promise((resolve, reject) => { net.release = () => net.holdFailure ? reject(net.holdFailure) : result.then(resolve, reject); }); }
+        if (net.downloadDelay && data.action === 'wire-get') {
+          return new Promise(resolve => clock.api.setTimeout(() => resolve(result), net.downloadDelay));
+        }
         return result;
       },
     },
@@ -151,7 +154,7 @@ function client(seed, clock, options = {}) {
     fn(local, module, module.exports);
     if (filename === path.join(root, 'utils/sync-wire.js') && options.legacyWire !== false) {
       const send = module.exports.send;
-      module.exports.send = (call, event) => send(call, event, { compress: false });
+      module.exports.send = (call, event, options) => send(call, event, { ...options, compress: false });
     }
     return module.exports;
   }
@@ -455,6 +458,40 @@ async function main() {
 
   // A realistic large archive must cross the same size-limited gateway in
   // both directions. Earlier tests with a one-card seed missed the phone bug.
+  // A desktop can retain the same revision number but lose learned cards.
+  // Use the real cloud handler and make each group of four reads take four seconds.
+  identity.OPENID = 'desktop-slow-repair';
+  const newest = blank();
+  for (let i = 0; i < 1885; i++) newest.state.cards['word-' + i] = { seen: true, reps: 2, lastAt: now, fsrs: { stability: 3, difficulty: 5, due: '2026-11-21T00:00:00.000Z' } };
+  await call('bootstrap', { device: 'latest-mobile', bundle: newest });
+  const behind = clone(newest);
+  for (let i = 1845; i < 1885; i++) delete behind.state.cards['word-' + i];
+  const slowClock = virtualClock();
+  const pc1845 = client(behind, slowClock, { values: { lexiloop_cloud_sync_v1: {
+    device: 'slow-desktop', enabled: true, seq: 0, rev: 1, outbox: [], fieldChangesVersion: 1,
+    observedRef: { version: 1, key: 'lexiloop_cloud_observed_a_v1', changes: [] },
+  } } });
+  pc1845.sync.start();
+  pc1845.net.downloadDelay = 4000;
+  pc1845.net.failAction = 'wire-get'; pc1845.net.failIndex = 12;
+  const interrupted = assert.rejects(pc1845.sync.flush());
+  await tick(); await tick(); await slowClock.advance(30000); await interrupted;
+  assert.equal(model.learned(pc1845.store.bundle()), 1845);
+  pc1845.net.failAction = null;
+  const retriedAt = pc1845.net.frames.length;
+  const compared = assert.rejects(pc1845.sync.flush(), e => e.code === 'SYNC_BASELINE_DIVERGED');
+  await tick(); await tick(); await slowClock.advance(90000); await compared;
+  const resumedReads = pc1845.net.frames.slice(retriedAt).filter(f => f.action === 'wire-get');
+  assert.ok(resumedReads.length > 20 && resumedReads.every(f => f.index >= 12), 'resume verified chunks of the same cloud snapshot');
+  assert.ok(pc1845.sync.status().errorText.includes('1845') && pc1845.sync.status().errorText.includes('1885'));
+  const confirmation = pc1845.net.frames.length;
+  assert.ok(await pc1845.sync.flush({ preferCloud: true }));
+  assert.deepEqual(pc1845.net.frames.slice(confirmation).map(f => f.action), ['status']);
+  assert.equal(model.learned(pc1845.store.bundle()), 1885);
+  assert.equal(model.learned(pc1845.sync.repairBackup()), 1845);
+  assert.equal(model.learned((await call('status')).bundle), 1885);
+  assert.ok(!pc1845.net.calls.includes('sync'), 'stale desktop never uploads inferred deletions');
+  pc1845.sync.dispose();
   identity.OPENID = 'large-archive-user';
   const rich = blank();
   for (let i = 0; i < 1036; i++) rich.state.cards[`c-${i}`] = { seen: true, reps: 2, interval: 3, lastAt: now, dueAt: now + 1000, note: '学习记录，保留中文含义和复习结果。' };

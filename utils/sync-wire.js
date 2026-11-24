@@ -69,12 +69,27 @@ async function send(call, event, options = {}) {
   if (!Number.isInteger(head.count) || head.count < 1 || head.count > 2100
     || !Number.isInteger(head.length) || head.length < 1 || head.length > MAX
     || head.count !== Math.ceil(head.length / SIZE) || head.encoding && head.encoding !== ENCODING) throw new Error('invalid-transfer');
-  const chunks = new Array(head.count);
+  // A retry always asks the server for a fresh manifest. Reuse only parts
+  // from the same encoded contents, and verify the complete result below.
+  const cache = options.downloadCache;
+  const signature = JSON.stringify([head.length, head.count, head.checksum, head.encoding, head.decodedLength, head.decodedChecksum]);
+  const chunks = cache && cache.signature === signature ? cache.chunks : new Array(head.count);
+  if (cache) { cache.signature = signature; cache.chunks = chunks; }
   await parts(head.count, async index => {
-    const part = await call({ action: 'wire-get', token: head.token, index });
-    if (typeof part.text !== 'string' || part.text.length > SIZE) throw new Error('invalid-transfer-part');
+    if (typeof chunks[index] === 'string') return;
+    let part;
+    try { part = await call({ action: 'wire-get', token: head.token, index }); }
+    catch (error) {
+      if (cache && error && typeof error === 'object' && error.code === 'SYNC_TIMEOUT') {
+        error.syncStage = 'download';
+        error.message = '云端存档第 ' + (index + 1) + '/' + head.count + ' 片读取超时';
+      }
+      throw error;
+    }
+    if (typeof part.text !== 'string' || part.text.length !== Math.min(SIZE, head.length - index * SIZE)) throw new Error('invalid-transfer-part');
     chunks[index] = part.text;
   });
+  if (cache) { delete cache.signature; delete cache.chunks; }
   const joined = chunks.join('');
   if (joined.length !== head.length || checksum(joined) !== head.checksum) throw new Error('transfer-checksum-mismatch');
   result = JSON.parse(head.encoding ? compression().unpack({ encoding: head.encoding, data: joined, length: head.decodedLength, checksum: head.decodedChecksum }) : joined);

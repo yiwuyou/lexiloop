@@ -23,6 +23,9 @@ let captureTimer = null;
 let dirtyAt = 0, pendingSaves = 0;
 let allWordsDirty = true;
 let baselineMissing = false;
+// In-memory only. Revalidate the revision before using a prior repair read.
+let repairSnapshot = null;
+const repairDownload = {};
 const dirtyWords = new Set();
 function resetWords() { allWordsDirty = false; dirtyWords.clear(); }
 function changedWordProjection(bundle) {
@@ -182,7 +185,8 @@ async function frame(data, deadline = Infinity) {
   if (!ready) throw Object.assign(new Error('本机云连接尚未初始化'), { code: 'SYNC_NOT_READY', syncStage: 'init' });
   let timeout;
   try {
-    const timeoutMs = Math.min(15000, deadline - Date.now());
+    const reading = data.action === 'status' || data.action === 'wire-get';
+    const timeoutMs = Math.min(reading ? 30000 : 15000, deadline - Date.now());
     if (timeoutMs <= 0) throw syncTimeout();
     budget.reserve(meta, data.action); save();
     const result = await Promise.race([
@@ -202,8 +206,8 @@ async function frame(data, deadline = Infinity) {
     throw error;
   } finally { clearTimeout(timeout); }
 }
-async function request(action, data = {}, deadline) {
-  try { return await wire.send(packet => frame(packet, deadline), Object.assign({ action, deltaVersion: meta.sessionBase ? 2 : 1 }, data, meta.forceFull ? { knownRev: 0 } : {})); }
+async function request(action, data = {}, deadline, options) {
+  try { return await wire.send(packet => frame(packet, deadline), Object.assign({ action, deltaVersion: meta.sessionBase ? 2 : 1 }, data, meta.forceFull ? { knownRev: 0 } : {}), options); }
   catch (error) { if (!error.syncStage) error.syncStage = action; throw error; }
 }
 function accept(result) {
@@ -238,6 +242,7 @@ function accept(result) {
   remaining.forEach(event => model.apply(combined, event, { owner: result.owner }));
   const localUnchanged = JSON.stringify(previous) === JSON.stringify(combined);
   if (!localUnchanged) {
+    if (missingLearned(previous, combined)) throw recoveryError('SYNC_LEARNED_CONFLICT', '云端结果缺少本机已学词，已保留本机记录');
     storage.write(BEFORE_KEY, { at: Date.now(), bundle: previous });
     try { store.replaceBundle(combined); }
     catch (error) { error.syncStage = 'apply'; throw error; }
@@ -260,9 +265,21 @@ function recoveryError(code, message) {
   return Object.assign(new Error(message), { code, syncStage: 'repair' });
 }
 
-async function recoverBaseline(preferCloud) {
-  const deadline = Date.now() + HANDOFF_TIMEOUT;
-  let result = await request('status', { knownRev: 0 }, deadline);
+function learnedIds(bundle) {
+  const { canonicalId } = require('./word-identity');
+  return new Set(Object.keys(bundle.state.cards).filter(id => bundle.state.cards[id].seen).map(canonicalId));
+}
+function missingLearned(source, destination) {
+  const available = learnedIds(destination);
+  return Array.from(learnedIds(source)).some(id => !available.has(id));
+}
+async function recoverBaseline(preferCloud, deadline) {
+  emit('正在核对本机与云端存档');
+  let result = await request('status', { knownRev: repairSnapshot ? repairSnapshot.rev : 0, deltaVersion: 0 }, deadline, { downloadCache: repairDownload });
+  if (result.unchanged && repairSnapshot && result.rev === repairSnapshot.rev) {
+    result = Object.assign({}, result, { bundle: repairSnapshot.bundle });
+    delete result.unchanged;
+  }
   if (!result.exists || !model.valid(result.bundle) || !Number.isSafeInteger(result.rev) || result.rev < meta.rev
     || !Number.isSafeInteger(result.ack) || result.ack < 0) {
     throw recoveryError('SYNC_BASELINE_UNVERIFIED', '云端存档无法用来校验本机记录');
@@ -271,6 +288,8 @@ async function recoverBaseline(preferCloud) {
   const contiguous = pending.length === meta.seq - result.ack
     && pending.every((event, index) => event.seq === result.ack + index + 1 && event.device === meta.device);
   if (!contiguous) throw recoveryError('SYNC_BASELINE_UNVERIFIED', '无法核对待上传记录的顺序');
+  repairSnapshot = { rev: result.rev, bundle: result.bundle };
+  const local = store.bundle();
 
   // At the same cloud revision, acknowledged state plus queued local writes
   // reconstructs the comparison point. Normal capture can then see fresh edits.
@@ -278,7 +297,9 @@ async function recoverBaseline(preferCloud) {
     try {
       const anchor = model.clone(result.bundle);
       pending.forEach(event => model.overlay(anchor, event.changes));
-      meta.observed = anchor;
+      // Even an equal revision cannot prove a damaged desktop kept every card.
+      // Never turn cloud-only learned words into inferred local deletions.
+      if (!missingLearned(result.bundle, anchor) && !missingLearned(anchor, local)) meta.observed = anchor;
     } catch (error) {
       if (!preferCloud) throw recoveryError('SYNC_BASELINE_DIVERGED', '无法用云端和待传记录重建本机同步基准');
     }
@@ -287,6 +308,7 @@ async function recoverBaseline(preferCloud) {
       try { save(true); }
       catch (error) { delete meta.observed; throw error; }
       baselineMissing = false;
+      repairSnapshot = null;
       capture();
       // A verified current snapshot already serves as the acknowledgement.
       if (!meta.outbox.some(event => event.seq > result.ack)) {
@@ -296,11 +318,17 @@ async function recoverBaseline(preferCloud) {
       return false;
     }
   }
-  if (!preferCloud) throw recoveryError('SYNC_BASELINE_DIVERGED', '云端已有更新，需要确认从云端接回');
+  if (!preferCloud) throw recoveryError('SYNC_BASELINE_DIVERGED',
+    '本机已学 ' + learnedIds(local).size + ' 词，云端已学 ' + learnedIds(result.bundle).size + ' 词，请核对后接回');
 
   // Send only the durable outbox, then save a separate local copy before
   // applying the cloud snapshot. An unknown difference never becomes an upload.
-  const local = store.bundle();
+  // Inspect the same pending operations before sending any of them.
+  const projected = model.clone(result.bundle);
+  pending.forEach(event => model.apply(projected, event, { owner: result.owner }));
+  if (missingLearned(result.bundle, projected) || missingLearned(local, projected)) {
+    throw recoveryError('SYNC_LEARNED_CONFLICT', '合并会遗漏已学词，已保留两端存档');
+  }
   let remaining = pending;
   for (let i = 0; remaining.length && i < 8; i++) {
     const next = await request('sync', { events: wire.batch(remaining), knownRev: result.rev }, deadline);
@@ -317,13 +345,15 @@ async function recoverBaseline(preferCloud) {
   if (remaining.length) throw recoveryError('SYNC_NO_PROGRESS', '仍有待上传记录，请再试一次');
   // If a local edit was made during recovery, keep it in place for a new pass.
   if (!model.equal(local, store.bundle())) throw recoveryError('SYNC_BASELINE_DIVERGED', '恢复期间本机记录有变化，请重新确认');
+  if (missingLearned(local, result.bundle)) throw recoveryError('SYNC_LEARNED_CONFLICT', '云端仍缺少本机已学词，已保留本机记录');
   if (!model.equal(local, result.bundle)) storage.write(REPAIR_BACKUP_KEY, local);
   accept(result);
   baselineMissing = false;
+  repairSnapshot = null;
   return true;
 }
 
-async function flush({ preferCloud = false } = {}) {
+async function flush({ preferCloud = false, repairDeadline = Infinity } = {}) {
   if (flight) return flight;
   if (!meta || !meta.enabled) return false;
   if (!ready) {
@@ -335,7 +365,7 @@ async function flush({ preferCloud = false } = {}) {
   flight = (async () => {
     try {
       checkedAt = Date.now();
-      if (baselineMissing && await recoverBaseline(preferCloud)) return true;
+      if (baselineMissing && await recoverBaseline(preferCloud, repairDeadline)) return true;
       let batches = 0, uploaded;
       do {
         const batch = wire.batch(meta.outbox);
@@ -423,7 +453,7 @@ async function handoffStudy() {
       return !blocked();
     }
     if (flight) await waitBefore(flight, deadline);
-    if (baselineMissing) await waitBefore(flush(), deadline);
+    if (baselineMissing) await waitBefore(flush({ repairDeadline: deadline }), deadline);
     capture();
     while (meta.outbox.length) {
       if (Date.now() >= deadline) throw syncTimeout();
