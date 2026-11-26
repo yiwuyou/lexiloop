@@ -4,8 +4,9 @@ const weak = require('../utils/weak-book');
 const sentences = require('../utils/sentence-book');
 const resources = require('../utils/audio');
 const clock = require('../utils/learning-clock');
+const cloudSync = require('../utils/cloud-sync');
 Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoading: false, relationsOpen: false },
-  onShow() { this.openingDetail = false; this.refresh(); clock.enter('detail', Date.now(), 'detail'); },
+  onShow() { cloudSync.enterLearning(this); this.openingDetail = false; this.refresh(); clock.enter('detail', Date.now(), 'detail'); },
   onLearningTouch() { clock.touch('detail', 'detail'); },
   onLoad(options) {
     const word = getWord(options.id);
@@ -41,6 +42,6 @@ Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoa
     this.returning = true;
     wx.navigateBack({ delta: 1, fail: () => { this.returning = false; wx.showToast({ title: '暂时无法返回，请重试', icon: 'none' }); } });
   },
-  onHide() { clock.pause('detail'); this.request = (this.request || 0) + 1; this.playRequested = false; this.setData({ audioLoading: false }); if (this.audio) this.audio.stop(); },
-  onUnload() { clock.pause('detail'); this.disposed = true; this.playRequested = false; this.request = (this.request || 0) + 1; if (this.audio) this.audio.destroy(); }
+  onHide() { cloudSync.leaveLearning(this); clock.pause('detail'); this.request = (this.request || 0) + 1; this.playRequested = false; this.setData({ audioLoading: false }); if (this.audio) this.audio.stop(); },
+  onUnload() { cloudSync.leaveLearning(this); clock.pause('detail'); this.disposed = true; this.playRequested = false; this.request = (this.request || 0) + 1; if (this.audio) this.audio.destroy(); }
 });

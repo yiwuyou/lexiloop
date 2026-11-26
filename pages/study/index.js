@@ -118,6 +118,7 @@ Page({
   },
 
   onShow() {
+    if (!this.data.completed) cloudSync.enterLearning(this);
     try { this.resumeStudyScreen(); } catch (error) { this.openReadFailure(); }
   },
   resumeStudyScreen() {
@@ -146,7 +147,9 @@ Page({
   },
 
   async takeOverStudy() {
-    if (!(await cloudSync.beginStudy())) return;
+    cloudSync.leaveLearning(this);
+    try { if (!(await cloudSync.beginStudy())) return; }
+    finally { if (!this.studyHidden) cloudSync.enterLearning(this); }
     this.session = store.getSession(this.data.isPractice ? 'practice' : undefined);
     if (!this.session) { wx.reLaunch({ url: '/pages/today/index' }); return; }
     this.setData({ syncBlocked: false, completed: false });
@@ -163,6 +166,7 @@ Page({
   },
 
   onHide() {
+    cloudSync.leaveLearning(this);
     if (this.stopSync) this.stopSync();
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
@@ -174,6 +178,7 @@ Page({
   },
 
   onUnload() {
+    cloudSync.leaveLearning(this);
     if (this.stopSync) this.stopSync();
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
@@ -631,6 +636,7 @@ Page({
 
   finishSession() {
     if (cloudSync.blocked()) return;
+    cloudSync.leaveLearning(this);
     clock.pause('study');
     const now = Date.now();
     const state = store.getState();

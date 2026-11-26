@@ -20,6 +20,36 @@ let dataRevision = 0;
 let studyFlight = null;
 let checkPeerOnReply = false, peerTimer = null;
 let captureTimer = null;
+const learningScreens = new Set();
+let idlePromise, resolveIdle, exitTimer, incomingOwner;
+function learningVisible() { return active && learningScreens.size > 0; }
+function enterLearning(screen) {
+  learningScreens.add(screen);
+  clearTimeout(exitTimer);
+  clearTimeout(captureTimer); captureTimer = null;
+}
+function releaseWork() {
+  if (resolveIdle) resolveIdle();
+  idlePromise = resolveIdle = null;
+}
+async function waitForLearningExit() {
+  while (learningVisible()) {
+    if (!idlePromise) idlePromise = new Promise(resolve => { resolveIdle = resolve; });
+    await idlePromise;
+  }
+}
+function leaveLearning(screen) {
+  if (!learningScreens.delete(screen) || learningVisible()) return;
+  clearTimeout(exitTimer);
+  exitTimer = setTimeout(() => {
+    if (learningVisible()) return;
+    releaseWork();
+    if (active && ready && meta.enabled && !baselineMissing && (dirtyAt || meta.outbox.length)) {
+      try { capture(); automatic(false); }
+      catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); }
+    }
+  }, 300);
+}
 let dirtyAt = 0, pendingSaves = 0;
 let allWordsDirty = true;
 let baselineMissing = false;
@@ -46,6 +76,7 @@ function captureSoon(wordIds) {
   const changes = ++pendingSaves;
   if (changes === 1) emit('有记录待同步');
   // The answer journal is already durable. Build one cloud delta for a batch.
+  if (learningVisible()) return;
   if (changes !== 10 && captureTimer) return;
   clearTimeout(captureTimer);
   captureTimer = setTimeout(() => {
@@ -119,13 +150,13 @@ function failed(error, stage, text) {
   } else emit(text);
 }
 function subscribe(fn) { listeners.add(fn); fn(status()); return () => listeners.delete(fn); }
-function blocked() { return !!(meta && meta.enabled && meta.owner && meta.owner.device !== meta.device); }
+function blocked() { const owner = incomingOwner || (meta && meta.owner); return !!(meta && meta.enabled && owner && owner.device !== meta.device); }
 function capture() {
   if (!dirtyAt && !allWordsDirty) return;
   const changedAt = dirtyAt || Date.now();
   pendingSaves = 0;
   clearTimeout(captureTimer); captureTimer = null;
-  if (!ready || baselineMissing || !meta || !meta.enabled || capturing) return;
+  if (learningVisible() || !ready || baselineMissing || !meta || !meta.enabled || capturing) return;
   capturing = true;
   const captureStarted = Date.now();
   try {
@@ -193,7 +224,16 @@ async function frame(data, deadline = Infinity) {
       wx.cloud.callFunction({ name: FUNCTION, config: { env: ENV }, data: Object.assign({ protocol: model.VERSION, wireVersion: 1, device: meta.device }, data) }),
       new Promise((resolve, reject) => { timeout = setTimeout(() => reject(syncTimeout()), timeoutMs); }),
     ]);
-    let body = result && result.result;
+    clearTimeout(timeout);
+    const raw = result && result.result;
+    if (learningVisible() && deadline === Infinity) {
+      if (raw && raw.ok && raw.owner && raw.owner.device !== meta.device) {
+        incomingOwner = raw.owner;
+        emit(message);
+      }
+      await waitForLearningExit();
+    }
+    let body = raw;
     if (typeof body === 'string') { try { body = JSON.parse(body); } catch (error) { body = null; } }
     if (!body || !body.ok) throw Object.assign(new Error(body && body.message || '云函数未返回有效的同步结果'), {
       code: body && body.code || 'SYNC_BAD_RESPONSE',
@@ -214,6 +254,7 @@ function accept(result) {
   // A network response can beat the deferred capture timer. Capture local
   // edits before applying its acknowledgement so no recent answer is lost.
   capture();
+  incomingOwner = null;
   if (result.unchanged) {
     // Even an unchanged revision acknowledges uploads already committed by a
     // previous attempt. Keep only later local edits captured during the call.
@@ -354,6 +395,7 @@ async function recoverBaseline(preferCloud, deadline) {
 }
 
 async function flush({ preferCloud = false, repairDeadline = Infinity } = {}) {
+  if (learningVisible()) await waitForLearningExit();
   if (flight) return flight;
   if (!meta || !meta.enabled) return false;
   if (!ready) {
@@ -440,7 +482,7 @@ async function enable() {
 async function handoffStudy() {
   // A known local owner can resume immediately, including offline. Background
   // verification still blocks answers if a different device has taken over.
-  if (meta && meta.enabled && meta.owner && meta.owner.device === meta.device) {
+  if (meta && meta.enabled && !blocked() && meta.owner && meta.owner.device === meta.device) {
     automatic(true);
     return true;
   }
@@ -531,6 +573,7 @@ function foreground(online) {
 }
 function background() {
   active = false;
+  releaseWork();
   clearTimeout(peerTimer); peerTimer = null; checkPeerOnReply = false;
   clearTimeout(timer); timer = null;
   try { capture(); } catch (error) { failed(error, 'local', '本机同步队列未保存，请勿清缓存'); }
@@ -540,6 +583,6 @@ function background() {
   if (flight) flight.then(checkpoint, checkpoint);
   else setTimeout(checkpoint, 0);
 }
-function dispose() { clearTimeout(peerTimer); clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
+function dispose() { learningScreens.clear(); clearTimeout(exitTimer); releaseWork(); clearTimeout(peerTimer); clearTimeout(timer); clearTimeout(captureTimer); store.onChange(null); listeners.clear(); }
 module.exports = { hasRepairBackup: () => Boolean(wx.getStorageSync(REPAIR_BACKUP_KEY)),
-  repairBackup: () => storage.read(REPAIR_BACKUP_KEY), start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };
+  enterLearning, leaveLearning, repairBackup: () => storage.read(REPAIR_BACKUP_KEY), start, foreground, background, status, subscribe, enable, flush, beginStudy, blocked, capture, dispose, ENV, FUNCTION };

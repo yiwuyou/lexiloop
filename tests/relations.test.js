@@ -542,6 +542,7 @@ function testDetailRelationsNavigation() {
     '../utils/sentence-book': { has: () => false },
     '../utils/audio': {},
     '../utils/learning-clock': { enter() {} },
+    '../utils/cloud-sync': { enterLearning() {}, leaveLearning() {} },
   };
   evaluate('word-detail/index.js', name => {
     assert.ok(dependencies[name], name); return dependencies[name];
