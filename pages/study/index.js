@@ -58,7 +58,6 @@ Page({
     waitSeconds: 0,
     pendingCount: 0,
     contentScrollTop: 0,
-    contentHeight: 0,
     isWeakMarked: false,
     isSentenceSaved: false,
     relationsOpen: false,
@@ -277,19 +276,19 @@ Page({
   },
   closeRelations() { this.setData({ relationsOpen: false }); },
 
-  renderCurrent(currentState, timing) {
+  renderCurrent(currentState, timing, reconciled = false) {
     clearTimeout(this.waitTimer);
     clearTimeout(this.contentLayoutTimer);
     const renderVersion = this.contentRenderVersion = (this.contentRenderVersion || 0) + 1;
     this.contentTouchActive = false;
     this.pendingPhrase = null;
-    this.pendingContentHeight = null;
     this.audioRequest = (this.audioRequest || 0) + 1;
     if (this.audioPlaying && this.audio) this.audio.stop();
     const state = currentState || store.getState();
     if (this.session.index >= this.session.queue.length && !this.data.isPractice) mastery.recover(this.session, state.cards);
+    const beforeAvailable = this.currentItem();
     mastery.available(this.session, Date.now());
-    if (!this.data.isPractice && studyOrder.reconcile(this.session, state) && !cloudSync.blocked()) store.saveAnswer(state, this.session, []);
+    if ((!reconciled || beforeAvailable !== this.currentItem() || !beforeAvailable) && !this.data.isPractice && studyOrder.reconcile(this.session, state) && !cloudSync.blocked()) store.saveAnswer(state, this.session, []);
     if (this.session.index >= this.session.queue.length) {
       this.finishSession();
       return;
@@ -324,7 +323,6 @@ Page({
       waiting: false,
       relationsOpen: false,
       contentScrollTop: this.data.contentScrollTop === 0 ? 1 : 0,
-      contentHeight: 0,
       pendingCount: this.data.isPractice ? 0 : mastery.remaining(this.session, state.cards).length,
       contextAnswered: Boolean(item.answered),
       audioLoading: false,
@@ -359,7 +357,7 @@ Page({
 
   revealAnswer() {
     const timing = trace.begin('reveal');
-    this.setData({ revealed: true, contentHeight: 0 }, () => { timing.mark('viewCallback'); timing.finish(); this.fitAnswerContent(); });
+    this.setData({ revealed: true }, () => { timing.mark('viewCallback'); timing.finish(); });
   },
   applyPhrase(phrase, wordId, version) {
     if (!phrase || version !== this.contentRenderVersion || !this.data.word || this.data.word.id !== wordId) return;
@@ -381,33 +379,8 @@ Page({
   flushContentUpdates() {
     if (this.contentTouchActive) return;
     const phrase = this.pendingPhrase;
-    const height = this.pendingContentHeight;
     this.pendingPhrase = null;
-    this.pendingContentHeight = null;
     if (phrase) this.applyPhrase(phrase.phrase, phrase.wordId, phrase.version);
-    if (height && height.version === this.contentRenderVersion && this.data.revealed && !this.data.completed) {
-      this.setData({ contentHeight: height.value });
-    }
-  },
-  fitAnswerContent() {
-    if (!this.data.revealed || this.data.isContext || this.data.completed || typeof wx.createSelectorQuery !== 'function') return;
-    const wordId = this.data.word.id;
-    const version = this.contentRenderVersion;
-    const measure = () => {
-      const query = wx.createSelectorQuery().in(this);
-      query.select('.study-content').boundingClientRect();
-      query.select('.study-word-card').boundingClientRect();
-      query.exec(rects => {
-        if (!rects[0] || !rects[1] || rects[0].height <= 0 || rects[1].height <= 0 || !this.data.revealed || this.data.word.id !== wordId || version !== this.contentRenderVersion) return;
-        const value = Math.max(1, Math.ceil(Math.min(rects[0].height, rects[1].height)));
-        if (this.contentTouchActive) this.pendingContentHeight = { value, version };
-        else this.setData({ contentHeight: value });
-      });
-    };
-    if (wx.nextTick) wx.nextTick(measure); else measure();
-  },
-  onResize() {
-    this.setData({ contentHeight: 0 }, () => this.fitAnswerContent());
   },
 
   async playPronunciation() {
@@ -626,6 +599,7 @@ Page({
     if (cloudSync.blocked()) return;
     if (this.rollToToday()) return;
     if (!this.data.contextAnswered) return;
+    const timing = trace.begin('continue');
     const previousSession = JSON.parse(JSON.stringify(this.session));
     try {
     if (this.resumePendingAnswer()) return;
@@ -639,13 +613,18 @@ Page({
       if (this.data.contextCorrect) this.session.contextCorrect += 1;
     }
     const state = store.getStudyState(this.data.word && this.data.word.id, this.session.day);
+    const commitTime = clock.stageAnswerTime(state, this.session.day);
     this.captureElapsed(state);
     this.session.index += 1;
     studyOrder.reconcile(this.session, state);
     this.writeDailyProgress(state);
+    timing.mark('prepare');
     store.saveAnswer(state, this.session, this.data.word.id);
-    this.renderCurrent(state);
+    if (commitTime) commitTime();
+    timing.mark('localSave');
+    this.renderCurrent(state, timing, true);
     } catch (error) {
+      timing.finish();
       this.answerFailed(error, previousSession);
     }
   },

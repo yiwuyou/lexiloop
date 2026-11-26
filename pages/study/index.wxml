@@ -14,7 +14,7 @@
 
     <view class="stage-status"><text user-select="{{true}}">{{phaseLabel}}{{stageDetail ? ' · ' + stageDetail : ''}}</text><text class="stage-time" user-select="{{true}}">已用 {{usedTime}}</text></view>
     <block wx:if="{{!waiting && !isContext}}">
-      <scroll-view class="study-content" style="{{contentHeight ? 'flex: none; height: ' + contentHeight + 'px;' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
+      <scroll-view class="study-content {{revealed ? 'answer-viewport' : ''}}" scroll-y="{{true}}" show-scrollbar="{{true}}" scroll-top="{{contentScrollTop}}" bindtouchstart="onContentTouchStart" bindtouchend="onContentTouchEnd" bindtouchcancel="onContentTouchEnd">
       <word-card class="study-word-card" word="{{word}}" revealed="{{revealed}}" phase-label="{{phaseLabel}}" is-weak-marked="{{isWeakMarked}}" is-sentence-saved="{{isSentenceSaved}}" audio-loading="{{audioLoading}}" bindaudio="playPronunciation" bindweak="toggleWeak" bindsentence="toggleSentence" bindreveal="revealAnswer" lookup-available="{{true}}" bindlookup="openLibrary" />
       </scroll-view>
 

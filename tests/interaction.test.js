@@ -54,18 +54,10 @@ try {
   page.session = { index: 5, queue: [{ wordId: page.data.word.id }], ratings: { good: 3 } };
   const sessionBefore = clone(page.session);
   const original = clone(store.getState());
-  let measure;
-  wx.createSelectorQuery = () => ({ in() { return this; }, select() { return this; }, boundingClientRect() { return this; }, exec(fn) { measure = fn; } });
-
-  // Delayed package/measurement completion during the very first save touch
-  // must not move its target or require a second tap.
   page.onContentTouchStart();
   page.sentenceTouchStart(event());
   page.applyPhrase('new phrase 新短语', page.data.word.id, 7);
   assert.ok(page.pendingPhrase);
-  page.fitAnswerContent();
-  measure([{ height: 600 }, { height: 420 }]);
-  assert.strictEqual(page.data.contentHeight, 320, 'do not resize a live touch target');
   page.sentenceTouchEnd(event());
   assert.strictEqual(page.data.isSentenceSaved, true, 'first short touch-end saves immediately');
   assert.strictEqual(writes, 1);
@@ -75,7 +67,6 @@ try {
   clearTimeout(page.contentLayoutTimer);
   page.flushContentUpdates();
   assert.strictEqual(page.data.word.phrase, 'new phrase 新短语');
-  assert.strictEqual(page.data.contentHeight, 420);
   const height = page.data.contentHeight;
   page.applyPhrase('another phrase 另一短语', page.data.word.id, 7);
   assert.strictEqual(page.data.contentHeight, height, 'late phrase must not reset the measured viewport');
@@ -123,11 +114,7 @@ try {
   page.toggleSentence();
   assert.strictEqual(page.data.isSentenceSaved, false, 'save remains usable after a failure');
 
-  page.fitAnswerContent();
   page.contentRenderVersion++;
-  const stableHeight = page.data.contentHeight;
-  measure([{ height: 50 }, { height: 50 }]);
-  assert.strictEqual(page.data.contentHeight, stableHeight, 'old measurements cannot resize a later card');
   page.applyPhrase('stale 旧数据', page.data.word.id, 7);
   assert.notStrictEqual(page.data.word.phrase, 'stale 旧数据');
 

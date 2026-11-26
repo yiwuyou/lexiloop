@@ -627,3 +627,5 @@
 @media (min-height: 850px) { .context-actions { padding-bottom: 72px; } }
 @media (max-height: 680px) { .context-actions { padding-bottom: 40px; } }
 @media (max-height: 480px) { .context-actions { padding-bottom: 24px; } }
+
+.study-content.answer-viewport { flex: 0 1 auto; height: auto; min-height: 0; }

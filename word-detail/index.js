@@ -12,7 +12,7 @@ Page({ data: { word: null, isWeakMarked: false, isSentenceSaved: false, audioLoa
     if (!word) { wx.showToast({ title: '没有找到这个单词', icon: 'none' }); wx.navigateBack(); return; }
     this.audio = require('../utils/audio-options').create();
     this.audio.onError(() => { if (this.playRequested && !this.disposed) { this.playRequested = false; wx.showToast({ title: '发音播放失败，请重试', icon: 'none' }); } });
-    this.setData({ word }); this.refresh();
+    this.setData({ word });
     require('../utils/phrases').phraseFor(word).then(phrase => { if (!this.disposed && phrase) this.setData({ 'word.phrase': phrase }); }).catch(() => {});
   },
   refresh() { if (!this.data.word) return; const state = store.getState(); this.setData({ isWeakMarked: weak.isMarked(state, this.data.word.id), isSentenceSaved: sentences.has(state, this.data.word.example) }); },

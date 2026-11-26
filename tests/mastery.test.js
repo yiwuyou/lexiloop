@@ -120,22 +120,8 @@ try {
   assert.strictEqual(page.data.completed, true);
   assert.strictEqual(store.getState().cards[word.id].needsContext, '');
   assert.ok(store.getState().cards[word.id].dueAt <= startOfDay(now) + DAY_MS);
-  let rects = [{ height: 600 }, { height: 320 }];
-  wx.createSelectorQuery = () => ({
-    in() { return this; }, select() { return this; }, boundingClientRect() { return this; },
-    exec(callback) { callback(rects); },
-  });
-  page.data.completed = false;
-  page.data.revealed = true;
-  page.data.isContext = false;
-  page.fitAnswerContent();
-  assert.strictEqual(page.data.contentHeight, 320, 'short explanation leaves no filler gap before ratings');
-  rects = [{ height: 600 }, { height: 950 }];
-  page.fitAnswerContent();
-  assert.strictEqual(page.data.contentHeight, 600, 'long explanation stays within space reserved above ratings');
-  page.data.revealed = false;
-  page.fitAnswerContent();
-  assert.strictEqual(page.data.contentHeight, 600, 'answer sizing does not change unrevealed layout');
+  const markup = require('fs').readFileSync(require.resolve('../pages/study/index.wxml'), 'utf8');
+  assert.ok(markup.includes('answer-viewport') && !markup.includes('contentHeight'));
   console.log('Mastery, spacing, resume, context retries and content-dependent answer layout passed.');
 } finally {
   clearTimeout(page.waitTimer);

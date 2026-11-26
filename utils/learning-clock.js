@@ -12,6 +12,22 @@ function initialize(daily, day) {
   const seconds = session && session.day === day ? session.elapsedSeconds || 0 : 0;
   daily.time = { version: 1, legacySeconds: Math.max((daily.minutes || 0) * 60, seconds), segments: {} };
 }
+function recordInterval(state, day, cursor, finish) {
+  const daily = state.daily[day] || (state.daily[day] = {});
+  initialize(daily, day);
+  const id = run + '-' + active.serial + '-' + day;
+  const old = daily.time.segments[id];
+  daily.time.segments[id] = { start: old ? old.start : cursor, end: finish, phase: active.phase };
+  daily.minutes = Math.floor(ledger.summary(daily, day).seconds / 60);
+}
+// Include the current same-day interval in the answer's durable save.
+function stageAnswerTime(state, day, now = Date.now()) {
+  if (!active || active.owner !== 'study' || blocked()) return null;
+  const segment = active, end = Math.min(now, lastTouch + IDLE_MS);
+  if (end - segment.cursor < 1000 || ledger.dayKey(segment.cursor) !== day || ledger.dayKey(end) !== day) return null;
+  recordInterval(state, day, segment.cursor, end);
+  return () => { segment.cursor = end; };
+}
 function capture(now = Date.now()) {
   if (!active) return;
   if (blocked()) { active = null; stopTimer(); return; }
@@ -23,12 +39,7 @@ function capture(now = Date.now()) {
     while (cursor < end) {
       const day = ledger.dayKey(cursor), dayEnd = ledger.bounds(day)[1];
       const finish = Math.min(end, dayEnd);
-      const daily = state.daily[day] || (state.daily[day] = {});
-      initialize(daily, day);
-      const id = run + '-' + active.serial + '-' + day;
-      const old = daily.time.segments[id];
-      daily.time.segments[id] = { start: old ? old.start : cursor, end: finish, phase: active.phase };
-      daily.minutes = Math.floor(ledger.summary(daily, day).seconds / 60);
+      recordInterval(state, day, cursor, finish);
       cursor = finish;
     }
     // Only advance the durable cursor after the local write succeeds.
@@ -53,5 +64,5 @@ function enter(phase, now = Date.now(), owner = 'study') {
 function touch(phase, owner = 'study') { enter(phase || active && active.phase || 'detail', Date.now(), owner); }
 function pause(owner) { if (owner && active && active.owner !== owner) return; try { capture(); } catch (error) { /* Learning records remain independently saved. */ } finally { active = null; stopTimer(); } }
 function status() { return { active: Boolean(active), phase: active && active.phase, idleMs: IDLE_MS }; }
-module.exports = { enter, touch, capture, pause, status, IDLE_MS,
+module.exports = { stageAnswerTime, enter, touch, capture, pause, status, IDLE_MS,
   subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); } };

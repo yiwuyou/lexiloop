@@ -1,25 +1,29 @@
 // Coalesce replaceable snapshots only. Never merge answer/card events, cross
 // ownership epochs, delete sequence IDs or mutate a batch already in flight.
-const samePath = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 function snapshots(outbox, changes, epoch) {
-  let pending = outbox;
+  const replacements = new Map();
   const next = changes.map(change => {
     const path = change.path;
-    const session = ['session', 'practiceSession'].includes(path[0]);
-    const daily = path.length >= 3 && path[0] === 'state' && path[1] === 'daily';
-    if (change.splice) return change;
-    if (!session && !daily) return change;
-    let before = change.before, found = false;
-    pending = pending.map(event => {
-      if (event.epoch !== epoch) return event;
-      const oldChanges = event.changes.filter(old => {
-        if (!samePath(old.path, path)) return true;
-        if (!found) { before = old.before; found = true; }
-        return false;
-      });
-      return oldChanges.length === event.changes.length ? event : Object.assign({}, event, { changes: oldChanges });
+    const session = path[0] === 'session' || path[0] === 'practiceSession';
+    const daily = path[0] === 'state' && path[1] === 'daily' && path.length >= 3;
+    if (change.splice || (!session && !daily)) return change;
+    const result = Object.assign({}, change);
+    const root = session && path.length === 1;
+    if (root) result.before = null;
+    const key = JSON.stringify(path);
+    if (!replacements.has(key)) replacements.set(key, { result, root, found: false });
+    return result;
+  });
+  const pending = !replacements.size ? outbox : outbox.map(event => {
+    if (event.epoch !== epoch) return event;
+    const kept = event.changes.filter(old => {
+      const entry = replacements.get(JSON.stringify(old.path));
+      if (!entry) return true;
+      if (!entry.found && !entry.root) entry.result.before = old.before;
+      entry.found = true;
+      return false;
     });
-    return Object.assign({}, change, { before: session && path.length === 1 ? null : before });
+    return kept.length === event.changes.length ? event : Object.assign({}, event, { changes: kept });
   });
   return { outbox: pending, changes: next };
 }
